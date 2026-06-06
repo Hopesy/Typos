@@ -1,0 +1,42 @@
+.dither-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* Changed from none to auto to allow interaction */
+}
+
+.dither-background-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    /* Changed from none to auto to allow interaction */
+    overflow: hidden;
+}
+
+.dither-background-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 50% 34%,
+            rgba(0, 0, 0, 0.1) 0%,
+            rgba(0, 0, 0, 0.28) 44%,
+            rgba(0, 0, 0, 0.64) 100%),
+        linear-gradient(to bottom,
+            transparent 0%,
+            rgba(0, 0, 0, 0.18) 30%,
+            rgba(0, 0, 0, 0.72) 78%,
+            #0f0f0f 100%);
+    z-index: 1;
+}

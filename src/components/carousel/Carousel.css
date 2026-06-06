@@ -1,0 +1,159 @@
+.carousel-container {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    --outer-r: 16px;
+    --p-distance: 12px;
+    transition: border-color 0.3s ease;
+}
+
+.carousel-container:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.carousel-track {
+    display: flex;
+}
+
+.carousel-item {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    background-color: #000000;
+    overflow: hidden;
+    cursor: grab;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.carousel-item:active {
+    cursor: grabbing;
+}
+
+.carousel-container.round {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.carousel-item.round {
+    background-color: #000;
+    position: relative;
+    bottom: 0.1em;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.carousel-item-header {
+    margin-bottom: 8px;
+    padding: 20px;
+}
+
+.carousel-icon-container {
+    display: flex;
+    height: 48px;
+    width: 48px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.carousel-item:hover .carousel-icon-container {
+    transform: scale(1.05);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.carousel-icon {
+    height: 24px;
+    width: 24px;
+}
+
+.carousel-item-content {
+    padding: 20px;
+    padding-top: 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.carousel-item-title {
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+
+.carousel-item-description {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 20px;
+}
+
+.carousel-item-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.carousel-item-link:hover {
+    background-color: #fff;
+    color: #000;
+}
+
+.carousel-indicators-container {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.carousel-indicators {
+    display: flex;
+    gap: 8px;
+    padding: 4px 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+}
+
+.carousel-indicator {
+    height: 4px;
+    width: 16px;
+    border-radius: 2px;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.carousel-indicator.active {
+    background-color: #fff;
+    width: 24px;
+}
+
+.carousel-indicator:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}

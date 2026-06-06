@@ -1,0 +1,94 @@
+.dock-outer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0 0.5rem;
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.dock-panel {
+  position: relative;
+  bottom: 0.5rem;
+  display: flex;
+  align-items: flex-end;
+  width: fit-content;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  background-color: #0a0a0a;
+  border: 1px solid #222;
+  padding: 0 0.5rem 0.5rem;
+  pointer-events: auto;
+}
+
+.dock-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: #141414;
+  border: 1px solid #222;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s;
+}
+
+.dock-item:hover {
+  background-color: #1a1a1a;
+}
+
+.dock-item.active {
+  background-color: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 0 15px rgba(255, 255, 255, 0.1),
+    0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dock-item.active .dock-icon {
+  color: #fff;
+}
+
+.dock-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 0 8px #fff;
+}
+
+.dock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a1a1aa;
+}
+
+.dock-label {
+  position: absolute;
+  top: -1.5rem;
+  left: 50%;
+  width: fit-content;
+  white-space: pre;
+  border-radius: 0.375rem;
+  border: 1px solid #222;
+  background-color: #0a0a0a;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.7rem;
+  color: #e4e4e7;
+  transform: translateX(-50%);
+}

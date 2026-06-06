@@ -1,0 +1,93 @@
+{
+  "name": "monotrace",
+  "version": "1.0.0",
+  "description": "MonoTrace — A minimal HUD-styled personal publishing system built with Next.js 16, Tailwind CSS 4, and Cloudflare D1",
+  "private": false,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && wrangler d1 migrations apply DB --remote && opennextjs-cloudflare deploy",
+    "db:migrations:apply": "wrangler d1 migrations apply DB --remote",
+    "db:migrations:apply:local": "wrangler d1 migrations apply DB --local",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@opennextjs/cloudflare": "^1.19.11",
+    "@react-three/fiber": "^9.5.0",
+    "@react-three/postprocessing": "^3.0.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "github-slugger": "^2.0.0",
+    "gray-matter": "^4.0.3",
+    "gsap": "^3.14.2",
+    "heic2any": "^0.0.4",
+    "lucide-react": "^0.563.0",
+    "mdast-util-to-string": "^4.0.0",
+    "motion": "^12.31.0",
+    "next": "16.2.7",
+    "ogl": "^1.0.11",
+    "postprocessing": "^6.38.2",
+    "radix-ui": "^1.4.3",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-icons": "^5.5.0",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-highlight": "^7.0.0",
+    "rehype-slug": "^6.0.0",
+    "rehype-stringify": "^10.0.0",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-html": "^16.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.0",
+    "tailwind-merge": "^3.4.0",
+    "three": "^0.182.0",
+    "tw-animate-css": "^1.4.0",
+    "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260206.0",
+    "@tailwindcss/postcss": "^4.0.7",
+    "@tailwindcss/typography": "^0.5.13",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.182.0",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.7",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.0.7",
+    "typescript": "^5",
+    "wrangler": "^4.98.0"
+  },
+  "overrides": {
+    "postcss": "$postcss"
+  },
+  "cloudflare": {
+    "bindings": {
+      "DB": {
+        "description": "Cloudflare D1 database used by MonoTrace for posts, daily logs, moments, comments, and rate limits. The Deploy to Cloudflare flow can provision this automatically."
+      },
+      "ADMIN_PASSWORD": {
+        "description": "Password for the `/admin` dashboard. Use a long random value."
+      },
+      "ADMIN_SESSION_SECRET": {
+        "description": "Random session signing secret. Generate one with `openssl rand -hex 32`."
+      },
+      "SITE_URL": {
+        "description": "Public site URL used in Telegram comment notifications."
+      },
+      "TELEGRAM_BOT_TOKEN": {
+        "description": "Optional Telegram bot token for comment notifications."
+      },
+      "TELEGRAM_CHAT_ID": {
+        "description": "Optional Telegram chat ID for comment notifications."
+      }
+    }
+  }
+}
