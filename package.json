@@ -74,19 +74,19 @@
         "description": "Cloudflare D1 database used by Typos for posts, daily logs, moments, comments, and rate limits. The Deploy to Cloudflare flow can provision this automatically."
       },
       "ADMIN_PASSWORD": {
-        "description": "Password for the `/admin` dashboard. Use a long random value."
+        "description": "Required. Password for the /admin dashboard. Cloudflare will not generate this automatically; set a long random value and keep it private."
       },
       "ADMIN_SESSION_SECRET": {
-        "description": "Random session signing secret. Generate one with `openssl rand -hex 32`."
+        "description": "Required. Random session signing secret. Cloudflare will not generate this automatically; generate one with openssl rand -hex 32 or Node crypto."
       },
       "SITE_URL": {
-        "description": "Public site URL used in Telegram comment notifications."
+        "description": "Optional at first deploy. Public site URL used in Telegram comment notifications; set it after Cloudflare gives you the final URL."
       },
       "TELEGRAM_BOT_TOKEN": {
-        "description": "Optional Telegram bot token for comment notifications."
+        "description": "Optional. Telegram bot token for comment notifications; leave unset if Telegram notifications are disabled."
       },
       "TELEGRAM_CHAT_ID": {
-        "description": "Optional Telegram chat ID for comment notifications."
+        "description": "Optional. Telegram chat ID for comment notifications; leave unset if Telegram notifications are disabled."
       }
     }
   }

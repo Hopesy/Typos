@@ -158,15 +158,15 @@ opennextjs-cloudflare deploy
 
 ### 4. Configure Required Variables
 
-Set these variables during the Cloudflare deploy flow or in the Cloudflare dashboard after deployment.
+Set these variables during the Cloudflare deploy flow or in the Cloudflare dashboard after deployment. Disable non-production branch builds for the initial personal-site deployment unless you need branch previews.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | Yes | Password for `/admin`. Use a long random value. |
-| `ADMIN_SESSION_SECRET` | Yes | Secret used to sign admin session cookies. |
-| `SITE_URL` | Recommended | Public site URL used in comment notification links. |
-| `TELEGRAM_BOT_TOKEN` | No | Telegram bot token for comment notifications. |
-| `TELEGRAM_CHAT_ID` | No | Telegram chat ID for comment notifications. |
+| `ADMIN_PASSWORD` | Yes | Password for `/admin`. Cloudflare does not generate it automatically; set a long random value and keep it private. |
+| `ADMIN_SESSION_SECRET` | Yes | Secret used to sign admin session cookies. Cloudflare does not generate it automatically; generate one with Node or `openssl rand -hex 32`. |
+| `SITE_URL` | No | Can be left unset on first deploy. Set it in the Cloudflare dashboard after Cloudflare gives you the final public URL. |
+| `TELEGRAM_BOT_TOKEN` | No | Telegram bot token for comment notifications. Leave unset when Telegram notifications are disabled. |
+| `TELEGRAM_CHAT_ID` | No | Telegram chat ID for comment notifications. Leave unset when Telegram notifications are disabled. |
 
 Generate a session secret with Node:
 
@@ -257,15 +257,9 @@ npx wrangler secret put TELEGRAM_CHAT_ID
 
 ### 5. Set the Public Site URL
 
-`SITE_URL` can be set in the Cloudflare dashboard, or in `wrangler.jsonc` under `vars`.
+`SITE_URL` is optional on first deploy. After Cloudflare gives you the final Workers URL or after you bind a custom domain, set `SITE_URL` in the Cloudflare dashboard environment variables.
 
-Example:
-
-```jsonc
-"vars": {
-  "SITE_URL": "https://YOUR_DOMAIN"
-}
-```
+Do not commit a temporary `SITE_URL` into `wrangler.jsonc`; keeping it out of Wrangler avoids duplicate deploy-form entries.
 
 ### 6. Deploy
 

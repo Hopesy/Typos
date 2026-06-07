@@ -47,15 +47,15 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、Reac
 2. 修改 README 顶部按钮 URL，把 `YOUR_GITHUB_USERNAME/typos` 换成你的仓库地址。
 3. 点击 Deploy to Cloudflare 按钮。
 4. 在 Cloudflare 页面按提示连接仓库并确认创建资源。
-5. 设置必填变量：
+5. 设置部署变量。`ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET` 需要手动填写；非生产分支构建建议先关闭。
 
 | 变量 | 必填 | 说明 |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | 是 | `/admin` 后台登录密码。使用长随机值。 |
-| `ADMIN_SESSION_SECRET` | 是 | 后台 session 签名密钥。可用 `openssl rand -hex 32` 生成。 |
-| `SITE_URL` | 建议 | 站点公开 URL，用于评论通知链接。 |
-| `TELEGRAM_BOT_TOKEN` | 否 | Telegram Bot Token。 |
-| `TELEGRAM_CHAT_ID` | 否 | 接收评论通知的 Telegram Chat ID。 |
+| `ADMIN_PASSWORD` | 是 | `/admin` 后台登录密码。Cloudflare 不会自动生成，使用你自己保存的长随机值。 |
+| `ADMIN_SESSION_SECRET` | 是 | 后台 session 签名密钥。Cloudflare 不会自动生成，可用 `openssl rand -hex 32` 或 Node crypto 生成。 |
+| `SITE_URL` | 否 | 首次部署可先不填；部署成功拿到真实地址后再在 Cloudflare dashboard 设置，用于评论通知链接。 |
+| `TELEGRAM_BOT_TOKEN` | 否 | Telegram Bot Token。不启用评论通知时留空。 |
+| `TELEGRAM_CHAT_ID` | 否 | 接收评论通知的 Telegram Chat ID。不启用评论通知时留空。 |
 
 部署脚本会执行：
 
