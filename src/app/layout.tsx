@@ -54,7 +54,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "MonoTrace",
+  title: "Typos",
   description: "The darkness is boundless",
   icons: {
     icon: [

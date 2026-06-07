@@ -67,7 +67,7 @@ export function Header() {
                 <Image src="/icon3.svg" alt="Avatar" width={20} height={20} className="h-5 w-5 invert brightness-0" />
               </div>
               <div className="flex flex-col">
-                <span className="font-press-start text-[10px] text-white/90">MINILOAD</span>
+                <span className="font-press-start text-[10px] text-white/90">TYPOS</span>
                 <span className="font-mono text-[8px] text-white/40 uppercase tracking-tighter mt-1">
                   Views: {viewCount.toLocaleString()}
                 </span>

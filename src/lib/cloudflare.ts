@@ -15,7 +15,7 @@ export type D1DatabaseLike = {
   prepare: (query: string) => D1StatementLike;
 };
 
-export type MonoTraceEnv = CloudflareEnv & {
+export type TyposEnv = CloudflareEnv & {
   DB?: D1DatabaseLike;
   ADMIN_PASSWORD?: string;
   ADMIN_SESSION_SECRET?: string;
@@ -24,21 +24,21 @@ export type MonoTraceEnv = CloudflareEnv & {
   TELEGRAM_CHAT_ID?: string;
 };
 
-export async function getMonoTraceEnv(): Promise<MonoTraceEnv> {
+export async function getTyposEnv(): Promise<TyposEnv> {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    return env as MonoTraceEnv;
+    return env as TyposEnv;
   } catch {
     return {};
   }
 }
 
 export async function getDatabase(): Promise<D1DatabaseLike | null> {
-  const env = await getMonoTraceEnv();
+  const env = await getTyposEnv();
   return env.DB ?? null;
 }
 
-export function readRuntimeEnv(env: MonoTraceEnv, key: keyof MonoTraceEnv) {
+export function readRuntimeEnv(env: TyposEnv, key: keyof TyposEnv) {
   const value = env[key];
   if (typeof value === "string") return value;
   if (typeof process !== "undefined") {

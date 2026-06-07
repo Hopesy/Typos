@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getMonoTraceEnv, readRuntimeEnv } from "@/lib/cloudflare";
+import { getTyposEnv, readRuntimeEnv } from "@/lib/cloudflare";
 
-const SESSION_COOKIE = "monotrace_admin";
+const SESSION_COOKIE = "typos_admin";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 function toBase64Url(bytes: Uint8Array) {
@@ -57,7 +57,7 @@ async function timingSafeTextEqual(left: string, right: string) {
 }
 
 async function getAdminConfig() {
-  const env = await getMonoTraceEnv();
+  const env = await getTyposEnv();
   const password = readRuntimeEnv(env, "ADMIN_PASSWORD");
   const sessionSecret = readRuntimeEnv(env, "ADMIN_SESSION_SECRET");
   return { password, sessionSecret };

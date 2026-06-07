@@ -1,6 +1,6 @@
 # Notice
 
-MonoTrace is a renamed and deployment-focused derivative of MiniLoad.
+Typos is a renamed and deployment-focused derivative of MiniLoad.
 
 Original source:
 

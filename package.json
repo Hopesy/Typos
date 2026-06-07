@@ -1,7 +1,7 @@
 {
-  "name": "monotrace",
+  "name": "typos",
   "version": "1.0.0",
-  "description": "MonoTrace — A minimal HUD-styled personal publishing system built with Next.js 16, Tailwind CSS 4, and Cloudflare D1",
+  "description": "Typos — A minimal HUD-styled personal publishing system built with Next.js 16, Tailwind CSS 4, and Cloudflare D1",
   "private": false,
   "scripts": {
     "dev": "next dev",
@@ -71,7 +71,7 @@
   "cloudflare": {
     "bindings": {
       "DB": {
-        "description": "Cloudflare D1 database used by MonoTrace for posts, daily logs, moments, comments, and rate limits. The Deploy to Cloudflare flow can provision this automatically."
+        "description": "Cloudflare D1 database used by Typos for posts, daily logs, moments, comments, and rate limits. The Deploy to Cloudflare flow can provision this automatically."
       },
       "ADMIN_PASSWORD": {
         "description": "Password for the `/admin` dashboard. Use a long random value."

@@ -1,12 +1,12 @@
-# MonoTrace Deployment Guide
+# Typos Deployment Guide
 
-This document records the current deployment shape, the production publishing flow, and the content publishing workflow for MonoTrace.
+This document records the current deployment shape, the production publishing flow, and the content publishing workflow for Typos.
 
-Original source: <https://github.com/arkleselect/MiniLoad>. MonoTrace is a renamed and deployment-focused derivative of MiniLoad.
+Original source: <https://github.com/arkleselect/MiniLoad>. Typos is a renamed and deployment-focused derivative of MiniLoad.
 
 ## Current Deployment Model
 
-MonoTrace is configured for Cloudflare Workers, not Cloudflare Pages.
+Typos is configured for Cloudflare Workers, not Cloudflare Pages.
 
 The production stack is:
 
@@ -80,8 +80,8 @@ Runtime smoke checks also passed under `npm run dev`:
 
 ```txt
 GET  /posts                            -> 200
-GET  /posts/hello-monotrace             -> 200
-GET  /api/comments?slug=hello-monotrace -> 200
+GET  /posts/hello-typos                 -> 200
+GET  /api/comments?slug=hello-typos     -> 200
 POST /api/admin/auth malformed JSON    -> 400
 POST /api/admin/auth wrong password    -> 401
 POST /api/admin/auth correct password  -> 200
@@ -103,7 +103,7 @@ git init
 git add .
 git commit -m "Prepare Cloudflare Workers deployment"
 git branch -M main
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/monotrace.git
+git remote add origin https://github.com/YOUR_GITHUB_USERNAME/typos.git
 git push -u origin main
 ```
 
@@ -114,7 +114,7 @@ Use a public GitHub repository for the deploy button flow.
 The README currently contains a placeholder repository URL:
 
 ```md
-https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/monotrace
+https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/typos
 ```
 
 Replace it with the real repository URL:
@@ -187,7 +187,7 @@ The Worker code, migrations, and deployment script all expect the D1 binding to 
 If Cloudflare asks you to create or select a D1 database, use:
 
 ```txt
-Database name: monotrace-db
+Database name: typos-db
 Binding name: DB
 ```
 
@@ -198,7 +198,7 @@ After deployment, open:
 ```txt
 https://YOUR_WORKER_DOMAIN/
 https://YOUR_WORKER_DOMAIN/posts
-https://YOUR_WORKER_DOMAIN/posts/hello-monotrace
+https://YOUR_WORKER_DOMAIN/posts/hello-typos
 https://YOUR_WORKER_DOMAIN/admin
 ```
 
@@ -223,7 +223,7 @@ npx wrangler login
 ### 3. Create a D1 Database
 
 ```bash
-npx wrangler d1 create monotrace-db
+npx wrangler d1 create typos-db
 ```
 
 Copy the returned `database_id` into `wrangler.jsonc`:
@@ -232,7 +232,7 @@ Copy the returned `database_id` into `wrangler.jsonc`:
 "d1_databases": [
   {
     "binding": "DB",
-    "database_name": "monotrace-db",
+    "database_name": "typos-db",
     "database_id": "PASTE_REAL_DATABASE_ID_HERE",
     "migrations_dir": "migrations"
   }

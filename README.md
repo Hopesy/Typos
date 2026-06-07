@@ -1,12 +1,12 @@
-# MonoTrace
+# Typos
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/monotrace)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/typos)
 
-MonoTrace 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、React 19、Tailwind CSS 4、OpenNext、Cloudflare Workers 和 Cloudflare D1 构建。目标部署方式是：上传到公开 GitHub 仓库后，点击上方 Deploy to Cloudflare 按钮，由 Cloudflare 创建 Worker、绑定 D1、运行迁移并部署。
+Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、React 19、Tailwind CSS 4、OpenNext、Cloudflare Workers 和 Cloudflare D1 构建。目标部署方式是：上传到公开 GitHub 仓库后，点击上方 Deploy to Cloudflare 按钮，由 Cloudflare 创建 Worker、绑定 D1、运行迁移并部署。
 
-> 上方按钮里的 `https://github.com/YOUR_GITHUB_USERNAME/monotrace` 是占位地址。上传仓库后，把它替换成你的公开 GitHub 仓库 URL。
+> 上方按钮里的 `https://github.com/YOUR_GITHUB_USERNAME/typos` 是占位地址。上传仓库后，把它替换成你的公开 GitHub 仓库 URL。
 
-> 原创来源：<https://github.com/arkleselect/MiniLoad>。MonoTrace 是在 MiniLoad 基础上整理、改名并适配 Cloudflare Workers + D1 一键部署的版本。
+> 原创来源：<https://github.com/arkleselect/MiniLoad>。Typos 是在 MiniLoad 基础上整理、改名并适配 Cloudflare Workers + D1 一键部署的版本。
 
 ## 功能特点
 
@@ -44,7 +44,7 @@ MonoTrace 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、
 ## 一键部署到 Cloudflare
 
 1. 把项目上传到一个公开 GitHub 仓库。
-2. 修改 README 顶部按钮 URL，把 `YOUR_GITHUB_USERNAME/monotrace` 换成你的仓库地址。
+2. 修改 README 顶部按钮 URL，把 `YOUR_GITHUB_USERNAME/typos` 换成你的仓库地址。
 3. 点击 Deploy to Cloudflare 按钮。
 4. 在 Cloudflare 页面按提示连接仓库并确认创建资源。
 5. 设置必填变量：
@@ -225,20 +225,20 @@ wrangler d1 migrations apply DB --remote
 本地开发没有 D1 绑定时，会回退读取 `content/` 下的 Markdown。文章放在 `content/posts/`，文件名会作为文章 slug，例如：
 
 ```txt
-content/posts/hello-monotrace.md
+content/posts/hello-typos.md
 ```
 
 文章 Front Matter 示例：
 
 ```md
 ---
-title: "Hello MonoTrace"
+title: "Hello Typos"
 date: 2026-01-01
-description: "Welcome to the MonoTrace publishing system"
+description: "Welcome to the Typos publishing system"
 category: "Getting Started"
 ---
 
-# Hello MonoTrace
+# Hello Typos
 
 这里是文章正文。
 ```

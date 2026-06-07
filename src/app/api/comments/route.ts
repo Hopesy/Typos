@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMonoTraceEnv, readRuntimeEnv } from "@/lib/cloudflare";
+import { getTyposEnv, readRuntimeEnv } from "@/lib/cloudflare";
 import { isAdminRequest } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Slug is required" }, { status: 400 });
   }
 
-  const env = await getMonoTraceEnv();
+  const env = await getTyposEnv();
   const db = env.DB ?? null;
 
   if (!db) {
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const env = await getMonoTraceEnv();
+    const env = await getTyposEnv();
     const db = env.DB ?? null;
 
     if (!db) {

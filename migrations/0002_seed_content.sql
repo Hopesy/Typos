@@ -1,13 +1,13 @@
 INSERT OR IGNORE INTO posts (slug, title, date, description, category, content)
 VALUES (
-  'hello-monotrace',
-  'Hello MonoTrace',
+  'hello-typos',
+  'Hello Typos',
   '2026-01-01',
-  'Welcome to MonoTrace - a minimal, HUD-styled personal publishing system built with Next.js and Cloudflare Workers',
+  'Welcome to Typos - a minimal, HUD-styled personal publishing system built with Next.js and Cloudflare Workers',
   'Getting Started',
-  '# Hello MonoTrace
+  '# Hello Typos
 
-Welcome to **MonoTrace** - a minimal, HUD-styled personal publishing system built with Next.js 16, Tailwind CSS 4, OpenNext, Cloudflare Workers, and Cloudflare D1.
+Welcome to **Typos** - a minimal, HUD-styled personal publishing system built with Next.js 16, Tailwind CSS 4, OpenNext, Cloudflare Workers, and Cloudflare D1.
 
 ## Features
 
@@ -22,7 +22,7 @@ Welcome to **MonoTrace** - a minimal, HUD-styled personal publishing system buil
 
 ```bash
 git clone <your-repo>
-cd monotrace
+cd typos
 npm install
 npm run dev
 ```

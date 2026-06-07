@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "monotrace",
+  "name": "typos",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-06-06",
   "compatibility_flags": [
@@ -14,7 +14,7 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "monotrace"
+      "service": "typos"
     }
   ],
   "observability": {
@@ -23,12 +23,12 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "monotrace-db",
+      "database_name": "typos-db",
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
   ],
   "vars": {
-    "SITE_URL": "https://monotrace.example.com"
+    "SITE_URL": "https://typos.example.com"
   }
 }
