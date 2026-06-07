@@ -24,6 +24,7 @@
     {
       "binding": "DB",
       "database_name": "typos-db",
+      "database_id": "9c1c8e42-7453-4729-ac55-ca2242af094a",
       "migrations_dir": "migrations"
     }
   ]
