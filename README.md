@@ -1,12 +1,10 @@
 # Typos
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/typos)
+Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、React 19、Tailwind CSS 4、OpenNext、Cloudflare Workers 和 Cloudflare D1 构建。目标部署方式是：在 Cloudflare Dashboard 中通过 Workers Git Integration 的 `Import a repository` 连接现有 GitHub 仓库，由 Cloudflare 在每次推送后构建、运行迁移并部署。
 
-Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、React 19、Tailwind CSS 4、OpenNext、Cloudflare Workers 和 Cloudflare D1 构建。目标部署方式是：上传到公开 GitHub 仓库后，点击上方 Deploy to Cloudflare 按钮，由 Cloudflare 创建 Worker、绑定 D1、运行迁移并部署。
+> 不使用 Deploy to Cloudflare Button。Deploy Button 会把源仓库克隆成新的目标仓库，更适合作为模板分发；本项目部署自己的 `Hopesy/Typos` 仓库时应直接使用 Workers Git Integration。
 
-> 上方按钮里的 `https://github.com/YOUR_GITHUB_USERNAME/typos` 是占位地址。上传仓库后，把它替换成你的公开 GitHub 仓库 URL。
-
-> 原创来源：<https://github.com/arkleselect/MiniLoad>。Typos 是在 MiniLoad 基础上整理、改名并适配 Cloudflare Workers + D1 一键部署的版本。
+> 原创来源：<https://github.com/arkleselect/MiniLoad>。Typos 是在 MiniLoad 基础上整理、改名并适配 Cloudflare Workers + D1 Git 集成部署的版本。
 
 ## 功能特点
 
@@ -16,7 +14,7 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、Reac
 - 后台管理：内置 `/admin`，使用 HttpOnly cookie session，不再把后台密码保存到浏览器 `localStorage`。
 - 评论系统：评论写入 Cloudflare D1，包含真实评论 `id`、回复关系、基础限流、蜜罐字段和管理员回复识别。
 - Telegram 通知：评论提交后可选通过 Telegram Bot 推送通知。
-- Cloudflare 一键部署：使用 Workers + `@opennextjs/cloudflare`，不依赖已弃用的 `@cloudflare/next-on-pages`。
+- Cloudflare Git 集成部署：使用 Workers + `@opennextjs/cloudflare`，不依赖已弃用的 `@cloudflare/next-on-pages`。
 
 ## 技术栈
 
@@ -41,22 +39,25 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、Reac
 | `/about` | 关于页 |
 | `/admin` | 内容管理后台 |
 
-## 一键部署到 Cloudflare
+## 通过 Workers Git Integration 部署
 
-1. 把项目上传到一个公开 GitHub 仓库。
-2. 修改 README 顶部按钮 URL，把 `YOUR_GITHUB_USERNAME/typos` 换成你的仓库地址。
-3. 点击 Deploy to Cloudflare 按钮。
-4. 在 Cloudflare 页面按提示连接仓库并确认创建资源。
-5. 设置首次部署变量。`ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET` 需要手动填写，项目不提供默认值；非生产分支构建建议先关闭。
+1. 确认代码已经推送到 GitHub，例如 `Hopesy/Typos`。
+2. 不要提前创建 D1。`wrangler.jsonc` 使用无 `database_id` 的 D1 绑定，`npm run deploy` 会在首次远程 migration 时自动创建 `typos-db`。
+3. 打开 Cloudflare Dashboard -> `Workers & Pages` -> `Create application` -> `Import a repository`。
+4. 选择现有仓库 `Hopesy/Typos`，不要使用 Deploy Button，也不要创建复制仓库。
+5. Worker 名称使用 `typos`，必须和 `wrangler.jsonc` 里的 `name` 保持一致。
+6. 生产分支选择 `main`；首次个人站部署建议关闭非生产分支构建，除非你确实需要分支预览。
+7. 构建配置使用项目的部署脚本：Deploy command 设置为 `npm run deploy`。如果页面强制填写 Build command，可以留空或使用 `npx opennextjs-cloudflare build`，但不要重复运行两套互相冲突的部署命令。
+8. 设置首次部署变量。`ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET` 需要手动填写，项目不提供默认值。
 
 | 变量 | 必填 | 说明 |
 | --- | --- | --- |
 | `ADMIN_PASSWORD` | 是 | `/admin` 后台登录密码。Cloudflare 不会自动生成，项目也不提供默认值；使用你自己保存的长随机值。 |
 | `ADMIN_SESSION_SECRET` | 是 | 后台 session 签名密钥。Cloudflare 不会自动生成，项目也不提供默认值；可用 `openssl rand -hex 32` 或 Node crypto 生成。 |
 
-`SITE_URL` 不是首次部署必填项，也不应放进 Deploy to Cloudflare 表单。部署成功拿到 Cloudflare URL 或绑定自定义域名后，再到 Cloudflare dashboard 的 runtime variables 中设置；未设置时评论通知会使用当前请求来源作为链接前缀。
+`SITE_URL` 不是首次部署必填项。部署成功拿到 Cloudflare URL 或绑定自定义域名后，再到 Cloudflare dashboard 的 runtime variables 中设置；未设置时评论通知会使用当前请求来源作为链接前缀。
 
-Telegram 评论通知是可选功能，不应参与首次 Deploy to Cloudflare 表单。需要启用时，在部署成功后到 Cloudflare dashboard 的 runtime variables / secrets 中添加 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID`。
+Telegram 评论通知是可选功能。需要启用时，在部署成功后到 Cloudflare dashboard 的 runtime variables / secrets 中添加 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID`。
 
 部署脚本会执行：
 
@@ -66,7 +67,7 @@ wrangler d1 migrations apply DB --remote
 opennextjs-cloudflare deploy
 ```
 
-`wrangler.jsonc` 中声明了 D1 绑定 `DB`，`migrations/` 中包含初始化 schema 和示例文章 seed。Cloudflare Deploy flow 会读取 Wrangler 配置和 `package.json.cloudflare.bindings` 中的说明来创建或提示配置资源。
+`wrangler.jsonc` 中声明了 D1 绑定 `DB`，但不提交 `database_id`。Wrangler 的自动资源创建会在首次远程 migration 或 deploy 时创建 D1；`migrations/` 中包含初始化 schema 和示例文章 seed，部署脚本会先应用远程 migrations，再发布 Worker。
 
 ## 本地开发
 

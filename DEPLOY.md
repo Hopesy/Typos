@@ -22,7 +22,8 @@ Official references:
 
 - Cloudflare Next.js guide: <https://developers.cloudflare.com/workers/frameworks/framework-guides/nextjs/>
 - OpenNext Cloudflare guide: <https://opennext.js.org/cloudflare/get-started>
-- Cloudflare Deploy Button: <https://developers.cloudflare.com/workers/platform/deploy-buttons/>
+- Cloudflare Workers Builds: <https://developers.cloudflare.com/workers/ci-cd/builds/>
+- Cloudflare Wrangler automatic provisioning: <https://developers.cloudflare.com/workers/wrangler/configuration/#automatic-provisioning>
 
 ## What Was Optimized
 
@@ -90,65 +91,65 @@ GET  /api/admin/list?type=post no auth -> 401
 GET  /api/admin/list?type=post authed  -> 200
 ```
 
-## Deploy With the Cloudflare Button
+## Deploy With Workers Git Integration
 
-This is the intended one-click deployment path.
+This is the intended deployment path for this repository. Do not use the Deploy to Cloudflare Button for deploying your own existing repo: that button clones the source repository into a newly created target repository and can cause duplicate names such as `typos-blog`.
 
 ### 1. Push the Project to GitHub
 
-This workspace was not a Git repository when the deployment work was done. Initialize it before publishing:
-
-```bash
-git init
-git add .
-git commit -m "Prepare Cloudflare Workers deployment"
-git branch -M main
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/typos.git
-git push -u origin main
-```
-
-Use a public GitHub repository for the deploy button flow.
-
-### 2. Replace the README Deploy Button URL
-
-The README currently contains a placeholder repository URL:
-
-```md
-https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/typos
-```
-
-Replace it with the real repository URL:
-
-```md
-https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY
-```
-
-Commit and push that change:
-
-```bash
-git add README.md
-git commit -m "Update Cloudflare deploy button URL"
-git push
-```
-
-### 3. Click Deploy to Cloudflare
-
-Open the README on GitHub and click the Deploy to Cloudflare button.
-
-The button URL can also be opened directly:
+The current repository is expected to be pushed to GitHub, for example:
 
 ```txt
-https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY
+https://github.com/Hopesy/Typos
 ```
 
-Cloudflare will read:
+Workers Git Integration connects to this existing repository. It does not need a copied repository.
 
-- `package.json`
-- `wrangler.jsonc`
-- `package.json.cloudflare.bindings`
-- `migrations/`
+### 2. Let Wrangler Auto-Provision D1
 
-The deployment script is:
+Do not create the production D1 database manually before the first Git Integration deployment. Wrangler supports beta automatic provisioning for D1 when the binding is configured without a resource ID.
+
+Keep `wrangler.jsonc` in this shape:
+
+```jsonc
+"d1_databases": [
+  {
+    "binding": "DB",
+    "database_name": "typos-db",
+    "migrations_dir": "migrations"
+  }
+]
+```
+
+Do not add `database_id` with a placeholder value. With no ID present, Wrangler creates the remote D1 database during the first remote migration or deploy. When deploying from the dashboard through GitHub, Cloudflare creates the resource but does not write the generated ID back to your repository.
+
+### 3. Import the Existing Repository
+
+In the Cloudflare dashboard:
+
+1. Open `Workers & Pages`.
+2. Select `Create application`.
+3. Select `Import a repository`.
+4. Choose the GitHub account and select `Hopesy/Typos`.
+5. Set the Worker name to `typos`.
+6. Select `main` as the production branch.
+7. Disable non-production branch builds unless branch previews are needed.
+
+The Worker name in the dashboard must match `wrangler.jsonc`:
+
+```jsonc
+"name": "typos"
+```
+
+### 4. Configure Build Settings
+
+Use the project deploy script as the deploy command:
+
+```bash
+npm run deploy
+```
+
+The deploy script is:
 
 ```bash
 opennextjs-cloudflare build
@@ -156,18 +157,26 @@ wrangler d1 migrations apply DB --remote
 opennextjs-cloudflare deploy
 ```
 
-### 4. Configure Deploy Variables
+If Cloudflare requires a separate build command, leave it blank when allowed. If the UI forces a value, use:
 
-Set these variables during the Cloudflare deploy flow or in the Cloudflare dashboard after deployment. No default values are provided for admin credentials. Disable non-production branch builds for the initial personal-site deployment unless you need branch previews.
+```bash
+npx opennextjs-cloudflare build
+```
+
+The deploy command still must run `npm run deploy`, because it applies D1 migrations before publishing the Worker.
+
+### 5. Configure Runtime Variables
+
+Set these variables in the Cloudflare dashboard for the Worker after creating the project. No default values are provided for admin credentials.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `ADMIN_PASSWORD` | Yes | Password for `/admin`. Cloudflare does not generate it automatically and the project provides no default; set your own long random value and keep it private. |
 | `ADMIN_SESSION_SECRET` | Yes | Secret used to sign admin session cookies. Cloudflare does not generate it automatically and the project provides no default; generate one with Node or `openssl rand -hex 32`. |
 
-`SITE_URL` is not required for the first deployment and should not be listed in the Deploy to Cloudflare binding prompts. After Cloudflare gives you the public URL, or after you bind a custom domain, set it as a runtime variable in the Cloudflare dashboard. When it is unset, comment notifications fall back to the current request origin.
+`SITE_URL` is not required for the first deployment. After Cloudflare gives you the public URL, or after you bind a custom domain, set it as a runtime variable in the Cloudflare dashboard. When it is unset, comment notifications fall back to the current request origin.
 
-Telegram notifications are optional and should not be listed in the Deploy to Cloudflare binding prompts. To enable them, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as runtime secrets in the Cloudflare dashboard after the first deployment.
+Telegram notifications are optional. To enable them, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as runtime secrets in the Cloudflare dashboard after the first deployment.
 
 Generate a session secret with Node:
 
@@ -175,7 +184,7 @@ Generate a session secret with Node:
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 5. Confirm D1 Binding
+### 6. Confirm D1 Binding
 
 The required D1 binding name is:
 
@@ -185,14 +194,14 @@ DB
 
 The Worker code, migrations, and deployment script all expect the D1 binding to be named `DB`.
 
-If Cloudflare asks you to create or select a D1 database, use:
+Use:
 
 ```txt
 Database name: typos-db
 Binding name: DB
 ```
 
-### 6. Verify the Deployment
+### 7. Verify the Deployment
 
 After deployment, open:
 
@@ -207,7 +216,7 @@ Log in to `/admin` with `ADMIN_PASSWORD`.
 
 ## Manual Wrangler Deployment
 
-Use this path only if the deploy button flow is not enough or you want to deploy from your local machine.
+Use this path only if Workers Git Integration is not enough or you want to deploy from your local machine.
 
 ### 1. Install Dependencies
 
@@ -221,7 +230,9 @@ npm install
 npx wrangler login
 ```
 
-### 3. Create a D1 Database
+### 3. Optional: Create a D1 Database Manually
+
+This step is optional and only needed if you disable beta automatic provisioning or want to pin an explicit `database_id` in `wrangler.jsonc`. Workers Git Integration uses the automatic provisioning configuration above and does not require this manual D1 creation step.
 
 ```bash
 npx wrangler d1 create typos-db
@@ -407,13 +418,15 @@ When D1 is bound in production, D1 takes priority over these local Markdown file
 
 ## Troubleshooting
 
-### Deploy Button Cannot Find the Repository
+### Git Integration Cannot Find the Repository
 
 Check that:
 
-- The GitHub repository is public.
-- The deploy button URL points to the real repository.
+- The Cloudflare GitHub App has access to the repository.
+- The repository is selected through `Workers & Pages` -> `Create application` -> `Import a repository`.
 - The pushed branch contains `package.json` and `wrangler.jsonc`.
+
+Do not use the Deploy to Cloudflare Button for this path. It clones the source repository into a new target repository instead of connecting directly to the existing `Hopesy/Typos` repo.
 
 ### D1 Errors After Deployment
 

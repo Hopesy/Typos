@@ -67,18 +67,5 @@
   },
   "overrides": {
     "postcss": "$postcss"
-  },
-  "cloudflare": {
-    "bindings": {
-      "DB": {
-        "description": "Cloudflare D1 database used by Typos for posts, daily logs, moments, comments, and rate limits. The Deploy to Cloudflare flow can provision this automatically."
-      },
-      "ADMIN_PASSWORD": {
-        "description": "Required. No default is provided. Set your own long password for the /admin dashboard and keep it private."
-      },
-      "ADMIN_SESSION_SECRET": {
-        "description": "Required. No default is provided. Generate a random 32-byte session signing secret with openssl rand -hex 32 or Node crypto."
-      }
-    }
   }
 }
