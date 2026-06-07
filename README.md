@@ -47,15 +47,16 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、Reac
 2. 修改 README 顶部按钮 URL，把 `YOUR_GITHUB_USERNAME/typos` 换成你的仓库地址。
 3. 点击 Deploy to Cloudflare 按钮。
 4. 在 Cloudflare 页面按提示连接仓库并确认创建资源。
-5. 设置部署变量。`ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET` 需要手动填写；非生产分支构建建议先关闭。
+5. 设置首次部署变量。`ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET` 需要手动填写，项目不提供默认值；非生产分支构建建议先关闭。
 
 | 变量 | 必填 | 说明 |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | 是 | `/admin` 后台登录密码。Cloudflare 不会自动生成，使用你自己保存的长随机值。 |
-| `ADMIN_SESSION_SECRET` | 是 | 后台 session 签名密钥。Cloudflare 不会自动生成，可用 `openssl rand -hex 32` 或 Node crypto 生成。 |
-| `SITE_URL` | 否 | 首次部署可先不填；部署成功拿到真实地址后再在 Cloudflare dashboard 设置，用于评论通知链接。 |
-| `TELEGRAM_BOT_TOKEN` | 否 | Telegram Bot Token。不启用评论通知时留空。 |
-| `TELEGRAM_CHAT_ID` | 否 | 接收评论通知的 Telegram Chat ID。不启用评论通知时留空。 |
+| `ADMIN_PASSWORD` | 是 | `/admin` 后台登录密码。Cloudflare 不会自动生成，项目也不提供默认值；使用你自己保存的长随机值。 |
+| `ADMIN_SESSION_SECRET` | 是 | 后台 session 签名密钥。Cloudflare 不会自动生成，项目也不提供默认值；可用 `openssl rand -hex 32` 或 Node crypto 生成。 |
+
+`SITE_URL` 不是首次部署必填项，也不参与 Deploy to Cloudflare 表单。部署成功拿到 Cloudflare URL 或绑定自定义域名后，再到 Cloudflare dashboard 的 runtime variables 中设置；未设置时评论通知会使用当前请求来源作为链接前缀。
+
+Telegram 评论通知是可选功能，不参与首次 Deploy to Cloudflare 表单。需要启用时，在部署成功后到 Cloudflare dashboard 的 runtime variables / secrets 中添加：`TELEGRAM_BOT_TOKEN`、`TELEGRAM_CHAT_ID`。
 
 部署脚本会执行：
 
@@ -75,15 +76,7 @@ opennextjs-cloudflare deploy
 npm install
 ```
 
-创建 `.env.local`：
-
-```env
-ADMIN_PASSWORD=your-secure-password
-ADMIN_SESSION_SECRET=replace-with-a-long-random-secret
-SITE_URL=http://localhost:3000
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
-```
+本地使用 `/admin` 前，创建 `.env.local` 并写入你自己生成的 `ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET`。`SITE_URL` 与 Telegram 变量都是可选项，本地不启用评论通知时可以不设置。
 
 启动 Next.js 本地开发服务：
 

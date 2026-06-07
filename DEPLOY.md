@@ -156,17 +156,18 @@ wrangler d1 migrations apply DB --remote
 opennextjs-cloudflare deploy
 ```
 
-### 4. Configure Required Variables
+### 4. Configure Deploy Variables
 
-Set these variables during the Cloudflare deploy flow or in the Cloudflare dashboard after deployment. Disable non-production branch builds for the initial personal-site deployment unless you need branch previews.
+Set these variables during the Cloudflare deploy flow or in the Cloudflare dashboard after deployment. No default values are provided for admin credentials. Disable non-production branch builds for the initial personal-site deployment unless you need branch previews.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `ADMIN_PASSWORD` | Yes | Password for `/admin`. Cloudflare does not generate it automatically; set a long random value and keep it private. |
-| `ADMIN_SESSION_SECRET` | Yes | Secret used to sign admin session cookies. Cloudflare does not generate it automatically; generate one with Node or `openssl rand -hex 32`. |
-| `SITE_URL` | No | Can be left unset on first deploy. Set it in the Cloudflare dashboard after Cloudflare gives you the final public URL. |
-| `TELEGRAM_BOT_TOKEN` | No | Telegram bot token for comment notifications. Leave unset when Telegram notifications are disabled. |
-| `TELEGRAM_CHAT_ID` | No | Telegram chat ID for comment notifications. Leave unset when Telegram notifications are disabled. |
+| `ADMIN_PASSWORD` | Yes | Password for `/admin`. Cloudflare does not generate it automatically and the project provides no default; set your own long random value and keep it private. |
+| `ADMIN_SESSION_SECRET` | Yes | Secret used to sign admin session cookies. Cloudflare does not generate it automatically and the project provides no default; generate one with Node or `openssl rand -hex 32`. |
+
+`SITE_URL` is not required for the first deployment and is intentionally not listed in the Deploy to Cloudflare binding prompts. After Cloudflare gives you the public URL, or after you bind a custom domain, set `SITE_URL` as a runtime variable in the Cloudflare dashboard. When it is unset, comment notifications fall back to the current request origin.
+
+Telegram notifications are optional and are intentionally not listed in the Deploy to Cloudflare binding prompts. To enable them, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as runtime secrets in the Cloudflare dashboard after the first deployment.
 
 Generate a session secret with Node:
 
@@ -271,15 +272,7 @@ The script will build OpenNext output, apply remote D1 migrations, and deploy th
 
 ## Local Development
 
-Create `.env.local`:
-
-```env
-ADMIN_PASSWORD=your-secure-password
-ADMIN_SESSION_SECRET=replace-with-a-long-random-secret
-SITE_URL=http://localhost:3000
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
-```
+Before using `/admin` locally, create `.env.local` with your own generated values for `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET`. `SITE_URL` and Telegram variables are optional and can be omitted when local comment notifications are disabled.
 
 Start the Next.js development server:
 

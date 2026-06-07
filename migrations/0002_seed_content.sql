@@ -27,12 +27,7 @@ npm install
 npm run dev
 ```
 
-Set up your environment variables in `.env.local`:
-
-```env
-ADMIN_PASSWORD=your-secure-password
-ADMIN_SESSION_SECRET=replace-with-a-long-random-secret
-```
+Set your own `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` in `.env.local` before using the admin dashboard. The project does not provide default admin credentials.
 
 ## Directory Structure
 
