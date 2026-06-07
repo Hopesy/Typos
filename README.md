@@ -1,17 +1,63 @@
 # Typos
 
-Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、React 19、Tailwind CSS 4、OpenNext、Cloudflare Workers 和 Cloudflare D1 构建。目标部署方式是：在 Cloudflare Dashboard 中通过 Workers Git Integration 的 `Import a repository` 连接现有 GitHub 仓库，由 Cloudflare 在每次推送后构建、运行迁移并部署。
+Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、React 19、Tailwind CSS 4、OpenNext、Cloudflare Workers 和 Cloudflare D1 构建。
 
-> 不使用 Deploy to Cloudflare Button。Deploy Button 会把源仓库克隆成新的目标仓库，更适合作为模板分发；本项目部署自己的 `Hopesy/Typos` 仓库时应直接使用 Workers Git Integration。
+当前生产部署方式是 **Cloudflare Workers Git Integration**：Cloudflare 连接现有 GitHub 仓库 `Hopesy/Typos`，每次 `main` 分支推送后在 Cloudflare 的 Linux 构建环境中安装依赖、构建、运行 D1 migration 并部署 Worker。
+
+> 不使用 Deploy to Cloudflare Button。Deploy Button 会把源仓库克隆成新的目标仓库，适合模板分发，不适合维护当前 `Hopesy/Typos` 仓库。
+
+> 不推荐在 Windows 本机执行 `npm run deploy` 作为生产发布方式。OpenNext 在 Windows 原生构建下可能生成线上 runtime 无法加载的 chunk；本项目已经用 Cloudflare Linux 构建环境验证通过。
 
 > 原创来源：<https://github.com/arkleselect/MiniLoad>。Typos 是在 MiniLoad 基础上整理、改名并适配 Cloudflare Workers + D1 Git 集成部署的版本。
+
+## 当前线上状态
+
+| 项目 | 值 |
+| --- | --- |
+| GitHub 仓库 | `https://github.com/Hopesy/Typos` |
+| Cloudflare Worker | `typos` |
+| 线上地址 | `https://typos.hopesy.workers.dev` |
+| 生产分支 | `main` |
+| Cloudflare 构建方式 | Workers Git Integration |
+| D1 数据库 | `typos-db` |
+| D1 database id | `9c1c8e42-7453-4729-ac55-ca2242af094a` |
+| D1 binding | `DB` |
+
+Cloudflare 构建配置：
+
+| 字段 | 值 |
+| --- | --- |
+| Project name | `typos` |
+| Build command | `npm run build` |
+| Deploy command | `npm run deploy` |
+| Root directory | `/` |
+
+`npm run deploy` 会执行：
+
+```bash
+opennextjs-cloudflare build
+wrangler d1 migrations apply DB --remote
+opennextjs-cloudflare deploy
+```
+
+部署成功后已验证：
+
+```txt
+GET /                                      -> 200
+GET /posts                                 -> 200
+GET /posts/hello-typos                     -> 200
+GET /api/comments?slug=hello-typos         -> 200
+GET /admin                                 -> 200
+POST /api/admin/auth                       -> 200
+GET /api/admin/list?type=post with session -> 200
+```
 
 ## 功能特点
 
 - HUD 风格界面：暗色背景、Dither 动态纹理、终端信息块、像素字体和极简导航。
 - 多内容类型：支持文章合集、日常时间线、照片瞬间瀑布流、关于页和首页项目展示。
 - Markdown 写作：本地开发可读取 `content/` 下的 Markdown，生产环境优先读取 D1。
-- 后台管理：内置 `/admin`，使用 HttpOnly cookie session，不再把后台密码保存到浏览器 `localStorage`。
+- 后台管理：内置 `/admin`，使用 HttpOnly cookie session。
 - 评论系统：评论写入 Cloudflare D1，包含真实评论 `id`、回复关系、基础限流、蜜罐字段和管理员回复识别。
 - Telegram 通知：评论提交后可选通过 Telegram Bot 推送通知。
 - Cloudflare Git 集成部署：使用 Workers + `@opennextjs/cloudflare`，不依赖已弃用的 `@cloudflare/next-on-pages`。
@@ -39,150 +85,264 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、Reac
 | `/about` | 关于页 |
 | `/admin` | 内容管理后台 |
 
-## 通过 Workers Git Integration 部署
+## 首次部署或重建部署
 
-1. 确认代码已经推送到 GitHub，例如 `Hopesy/Typos`。
-2. 不要提前创建 D1。`wrangler.jsonc` 使用无 `database_id` 的 D1 绑定，`npm run deploy` 会在首次远程 migration 时自动创建 `typos-db`。
-3. 打开 Cloudflare Dashboard -> `Workers & Pages` -> `Create application` -> `Import a repository`。
-4. 选择现有仓库 `Hopesy/Typos`，不要使用 Deploy Button，也不要创建复制仓库。
-5. Worker 名称使用 `typos`，必须和 `wrangler.jsonc` 里的 `name` 保持一致。
-6. 生产分支选择 `main`；首次个人站部署建议关闭非生产分支构建，除非你确实需要分支预览。
-7. 构建配置使用项目的部署脚本：Deploy command 设置为 `npm run deploy`。如果页面强制填写 Build command，可以留空或使用 `npx opennextjs-cloudflare build`，但不要重复运行两套互相冲突的部署命令。
-8. 设置首次部署变量。`ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET` 需要手动填写，项目不提供默认值。
+正常情况下不需要重复做本节。只有删除 Cloudflare 项目、迁移账号、重建 Worker 或从零部署时才使用。
 
-| 变量 | 必填 | 说明 |
-| --- | --- | --- |
-| `ADMIN_PASSWORD` | 是 | `/admin` 后台登录密码。Cloudflare 不会自动生成，项目也不提供默认值；使用你自己保存的长随机值。 |
-| `ADMIN_SESSION_SECRET` | 是 | 后台 session 签名密钥。Cloudflare 不会自动生成，项目也不提供默认值；可用 `openssl rand -hex 32` 或 Node crypto 生成。 |
+### 1. 准备仓库
 
-`SITE_URL` 不是首次部署必填项。部署成功拿到 Cloudflare URL 或绑定自定义域名后，再到 Cloudflare dashboard 的 runtime variables 中设置；未设置时评论通知会使用当前请求来源作为链接前缀。
-
-Telegram 评论通知是可选功能。需要启用时，在部署成功后到 Cloudflare dashboard 的 runtime variables / secrets 中添加 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID`。
-
-部署脚本会执行：
+确认本地代码已经推送到 GitHub：
 
 ```bash
-opennextjs-cloudflare build
+git status --short --branch
+git push origin main
+```
+
+目标仓库：
+
+```txt
+https://github.com/Hopesy/Typos
+```
+
+### 2. 准备 D1
+
+当前项目已经使用远端 D1：
+
+```jsonc
+"d1_databases": [
+  {
+    "binding": "DB",
+    "database_name": "typos-db",
+    "database_id": "9c1c8e42-7453-4729-ac55-ca2242af094a",
+    "migrations_dir": "migrations"
+  }
+]
+```
+
+不要改 `binding`，代码和部署脚本都要求它叫 `DB`。
+
+如果是新账号或 D1 已被删除，先手动创建 D1：
+
+```bash
+npx wrangler d1 create typos-db
+```
+
+把返回的真实 `database_id` 写入 `wrangler.jsonc`，然后提交并推送：
+
+```bash
+git add wrangler.jsonc
+git commit -m "Pin Cloudflare D1 database"
+git push origin main
+```
+
+### 3. 清理同名手动 Worker
+
+如果 Cloudflare 中已经存在手动上传版 `typos` Worker，Git Integration 创建同名项目时会报：
+
+```txt
+已存在具有该名称的项目。请选择其他名称
+```
+
+确认 D1 还在：
+
+```bash
+npx wrangler d1 list
+```
+
+只删除 Worker，不删除 D1：
+
+```bash
+npx wrangler delete typos --force
+```
+
+再次确认 `typos-db` 还在：
+
+```bash
+npx wrangler d1 list
+npx wrangler d1 execute DB --remote --command "SELECT slug, title FROM posts ORDER BY slug;"
+```
+
+### 4. 连接 Workers Git Integration
+
+打开 Cloudflare Dashboard：
+
+```txt
+https://dash.cloudflare.com/
+```
+
+进入：
+
+```txt
+Workers & Pages -> Create application -> Continue with GitHub
+```
+
+选择：
+
+```txt
+GitHub account: Hopesy
+Repository: Hopesy/Typos
+```
+
+创建 Worker 配置：
+
+```txt
+Project name: typos
+Build command: npm run build
+Deploy command: npm run deploy
+Root directory: /
+Production branch: main
+```
+
+然后点击 `Deploy`。
+
+Cloudflare 应该在 Linux 构建环境里显示类似信息：
+
+```txt
+Detected the following tools from environment: npm, nodejs
+Installing project dependencies: npm clean-install --progress=false
+npm run build
+npm run deploy
 wrangler d1 migrations apply DB --remote
 opennextjs-cloudflare deploy
 ```
 
-`wrangler.jsonc` 中声明了 D1 绑定 `DB`，但不提交 `database_id`。Wrangler 的自动资源创建会在首次远程 migration 或 deploy 时创建 D1；`migrations/` 中包含初始化 schema 和示例文章 seed，部署脚本会先应用远程 migrations，再发布 Worker。
+### 5. 设置生产 Secrets
 
-## 本地开发
-
-安装依赖：
+删除旧 Worker 或重建 Worker 后，Worker secrets 会丢失，需要重新设置：
 
 ```bash
-npm install
+npx wrangler secret put ADMIN_PASSWORD
+npx wrangler secret put ADMIN_SESSION_SECRET
 ```
 
-本地使用 `/admin` 前，创建 `.env.local` 并写入你自己生成的 `ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET`。`SITE_URL`、`TELEGRAM_BOT_TOKEN`、`TELEGRAM_CHAT_ID` 都是可选项，本地不启用评论通知时可以不设置。
-
-启动 Next.js 本地开发服务：
+生成 session secret：
 
 ```bash
-npm run dev
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-访问：
+可选变量：
+
+| 变量 | 用途 |
+| --- | --- |
+| `SITE_URL` | 最终站点 URL，用于评论通知链接 |
+| `TELEGRAM_BOT_TOKEN` | Telegram 评论通知 |
+| `TELEGRAM_CHAT_ID` | Telegram 评论通知目标 chat |
+
+`SITE_URL` 不是首次部署必填项。Telegram 不启用时不需要设置。
+
+### 6. 验证线上状态
+
+部署完成后检查：
 
 ```txt
-http://localhost:3000
+https://typos.hopesy.workers.dev/
+https://typos.hopesy.workers.dev/posts
+https://typos.hopesy.workers.dev/posts/hello-typos
+https://typos.hopesy.workers.dev/api/comments?slug=hello-typos
+https://typos.hopesy.workers.dev/admin
 ```
 
-本地开发默认会从 `content/` 读取 Markdown。需要测试 D1 时，先应用本地迁移：
+命令行 smoke test：
+
+```powershell
+$urls = @(
+  'https://typos.hopesy.workers.dev/',
+  'https://typos.hopesy.workers.dev/posts',
+  'https://typos.hopesy.workers.dev/posts/hello-typos',
+  'https://typos.hopesy.workers.dev/api/comments?slug=hello-typos',
+  'https://typos.hopesy.workers.dev/admin'
+)
+
+foreach ($url in $urls) {
+  $res = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 30
+  "$($res.StatusCode) $url"
+}
+```
+
+## 日常更新流程
+
+这是以后最常用的流程。
+
+### 代码、样式、文档更新
+
+1. 本地修改代码。
+2. 运行验证：
+
+   ```bash
+   npm run lint
+   npx tsc --noEmit
+   npm run build
+   ```
+
+3. 提交并推送：
+
+   ```bash
+   git status --short
+   git add <changed-files>
+   git commit -m "Describe the change"
+   git push origin main
+   ```
+
+4. Cloudflare Workers Git Integration 会自动构建和部署。
+5. 到 Cloudflare Dashboard 查看构建日志：
+
+   ```txt
+   Workers & Pages -> typos -> Deployments / Builds
+   ```
+
+6. 验证线上地址：
+
+   ```txt
+   https://typos.hopesy.workers.dev/
+   ```
+
+### 数据库 schema 或 migration 更新
+
+新增 migration 文件：
+
+```txt
+migrations/0003_describe_change.sql
+```
+
+本地先验证：
 
 ```bash
 npm run db:migrations:apply:local
+npm run lint
+npx tsc --noEmit
+npm run build
 ```
 
-然后使用 Workers runtime 预览：
+提交推送：
 
 ```bash
-npm run preview
+git add migrations/0003_describe_change.sql
+git commit -m "Add D1 migration"
+git push origin main
 ```
 
-> OpenNext 在 Windows 原生环境会提示 runtime 兼容性风险。如果 `npm run preview` 在 Windows 上出现 `ChunkLoadError`，请用 WSL/Linux 或 Cloudflare 构建环境复验 Workers runtime。
+Cloudflare 的 `npm run deploy` 会在发布 Worker 前执行：
 
-## 常用命令
+```bash
+wrangler d1 migrations apply DB --remote
+```
 
-| 命令 | 说明 |
-| --- | --- |
-| `npm run dev` | 启动 Next.js 本地开发服务 |
-| `npm run build` | 执行 Next.js 构建 |
-| `npm run lint` | 运行 ESLint |
-| `npm run preview` | 构建并在本地 Workers runtime 中预览 |
-| `npm run deploy` | 构建、应用远程 D1 migration、部署到 Cloudflare Workers |
-| `npm run cf-typegen` | 根据 Wrangler 配置生成 Cloudflare 类型 |
+### 普通内容发布
 
-## 内容写作
-
-生产环境中，只要 Cloudflare D1 绑定 `DB` 存在，页面会优先读取 D1。日常写文章、改文章、删文章，推荐直接使用线上 `/admin` 后台，不需要重新部署，也不需要 `git push`。
-
-### 推荐流程：通过 `/admin` 发布
-
-打开后台：
+生产环境优先读取 D1。日常写文章、改文章、删文章，推荐直接使用线上后台：
 
 ```txt
-https://你的域名/admin
+https://typos.hopesy.workers.dev/admin
 ```
 
-使用部署时设置的 `ADMIN_PASSWORD` 登录。
+这类内容变更写入 D1，不需要 `git push`，也不会触发重新部署。
 
-发布文章时选择 `post`，填写：
+### GitOps 内容导入
 
-| 字段 | 说明 |
-| --- | --- |
-| `Title` | 文章标题 |
-| `Date` | 发布日期 |
-| `Description` | 文章摘要 |
-| `Slug` | URL 路径，例如 `my-first-post` |
-| `Category` | 分类 |
-| `Content` | Markdown 正文 |
+如果你希望内容变更进入 Git 历史，或需要批量导入，可以新增 D1 migration。
 
-保存后会直接写入 Cloudflare D1，并立即在前台生效：
-
-```txt
-https://你的域名/posts/my-first-post
-```
-
-发布日常日志时选择 `daily`，填写：
-
-| 字段 | 说明 |
-| --- | --- |
-| `Date` | 日期 |
-| `Image URL` | 可选图片地址 |
-| `Log` | 日志正文 |
-
-发布照片瞬间时选择 `moment`，填写：
-
-| 字段 | 说明 |
-| --- | --- |
-| `Title` | 标题 |
-| `Date` | 日期 |
-| `Image URL` | 图片地址 |
-| `Caption` | 说明文字 |
-
-### 什么时候需要推送代码
-
-普通内容发布不需要推送代码。只有这些情况需要 `git commit` / `git push` 并触发 Cloudflare 重新部署：
-
-- 修改页面样式或组件代码。
-- 修改后台功能。
-- 修改数据库 schema 或新增 migration。
-- 修改 README / DEPLOY 文档。
-- 修改首页、关于页等写在源码里的内容。
-
-### GitOps 方式：用 D1 migration 发布文章
-
-如果你希望文章变更进入 Git 历史，或者要批量导入内容，可以新增 D1 migration。例如创建：
-
-```txt
-migrations/0003_add_my_first_post.sql
-```
-
-写入：
+示例：
 
 ```sql
 INSERT OR REPLACE INTO posts (slug, title, date, description, category, content)
@@ -198,46 +358,110 @@ VALUES (
 );
 ```
 
-然后提交并推送：
+提交推送后，Cloudflare 会自动运行远端 migration。这个方式适合批量导入和版本化内容，不适合日常频繁写作。
 
-```bash
-git add migrations/0003_add_my_first_post.sql
-git commit -m "Add my first post"
-git push
-```
+## 手动兜底流程
 
-Cloudflare 重新部署时会执行远端 D1 migration：
+优先使用 Cloudflare Git Integration。下面流程只用于排障或紧急恢复。
 
-```bash
-wrangler d1 migrations apply DB --remote
-```
-
-这个方式适合批量导入、版本化内容变更、从旧站迁移内容；不适合日常频繁写作和改错字。
-
-### 本地 Markdown fallback
-
-本地开发没有 D1 绑定时，会回退读取 `content/` 下的 Markdown。文章放在 `content/posts/`，文件名会作为文章 slug，例如：
+### 重新触发 Cloudflare 构建
 
 ```txt
-content/posts/hello-typos.md
+Workers & Pages -> typos -> Deployments / Builds -> Retry build
 ```
 
-文章 Front Matter 示例：
+这是首选兜底方式，因为仍然使用 Cloudflare Linux 构建环境。
 
-```md
----
-title: "Hello Typos"
-date: 2026-01-01
-description: "Welcome to the Typos publishing system"
-category: "Getting Started"
----
+### 只重新设置 Secret
 
-# Hello Typos
-
-这里是文章正文。
+```bash
+npx wrangler secret put ADMIN_PASSWORD
+npx wrangler secret put ADMIN_SESSION_SECRET
 ```
 
-日常日志放在 `content/daily/`，照片瞬间放在 `content/moments/`。这些 Markdown 文件主要用于本地开发 fallback 和初始示例内容；生产环境绑定 D1 后，不要把“只改 Markdown 后 git push”当作日常发布主流程。
+设置 secret 会生成新的 Worker version。设置后重新验证 `/admin` 登录。
+
+### 手动检查远端 D1
+
+```bash
+npx wrangler d1 list
+npx wrangler d1 execute DB --remote --command "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name;"
+npx wrangler d1 execute DB --remote --command "SELECT slug, title FROM posts ORDER BY slug;"
+```
+
+### 本机 Wrangler 部署
+
+不要在 Windows 原生环境把 `npm run deploy` 当作常规生产发布方式。OpenNext 已提示 Windows runtime 兼容性风险，本项目曾出现 Windows 构建上传后线上 `ChunkLoadError` 和 500。
+
+如果必须手动部署，使用 Linux/WSL/CI 环境，并确保构建出的 `.open-next/worker.js` 来自 Linux 环境：
+
+```bash
+npm ci
+npm run deploy
+```
+
+部署后必须验证：
+
+```txt
+GET /posts/hello-typos -> 200
+GET /api/comments?slug=hello-typos -> 200
+POST /api/admin/auth -> 200
+```
+
+## 本地开发
+
+安装依赖：
+
+```bash
+npm install
+```
+
+本地使用 `/admin` 前，创建 `.env.local`：
+
+```txt
+ADMIN_PASSWORD=your-local-password
+ADMIN_SESSION_SECRET=your-local-session-secret
+```
+
+启动开发服务：
+
+```bash
+npm run dev
+```
+
+访问：
+
+```txt
+http://localhost:3000
+```
+
+本地应用 D1 migration：
+
+```bash
+npm run db:migrations:apply:local
+```
+
+Workers runtime 预览：
+
+```bash
+npm run preview
+```
+
+Windows 原生 `npm run preview` 如果出现 OpenNext chunk/runtime 问题，用 Cloudflare 构建环境或 Linux 环境复验。
+
+## 常用命令
+
+| 命令 | 说明 |
+| --- | --- |
+| `npm run dev` | 启动 Next.js 本地开发服务 |
+| `npm run build` | 执行 Next.js 构建 |
+| `npm run lint` | 运行 ESLint |
+| `npx tsc --noEmit` | TypeScript 类型检查 |
+| `npm run preview` | 构建并在本地 Workers runtime 中预览 |
+| `npm run deploy` | OpenNext 构建、远端 D1 migration、部署 Worker |
+| `npm run db:migrations:apply` | 应用远端 D1 migration |
+| `npm run db:migrations:apply:local` | 应用本地 D1 migration |
+| `npm run cf-typegen` | 根据 Wrangler 配置生成 Cloudflare 类型 |
 
 ## D1 数据表
 
@@ -249,7 +473,7 @@ category: "Getting Started"
 - `comments`：评论和回复，使用 `id TEXT PRIMARY KEY`
 - `rate_limits`：评论限流记录
 
-`migrations/0002_seed_content.sql` 会写入一篇示例文章，确保首次部署后站点有可见内容。
+`migrations/0002_seed_content.sql` 会写入示例文章 `hello-typos`，确保首次部署后站点有可见内容。
 
 ## 个性化配置
 
@@ -260,6 +484,70 @@ category: "Getting Started"
 - 内容读取与 Markdown 渲染：`src/lib/content.ts`
 - 后台数据读写：`src/lib/admin-content.ts`
 - Cloudflare 配置：`wrangler.jsonc`
+
+## 故障排查
+
+### GitHub 仓库不可见
+
+检查 Cloudflare GitHub App 是否有 `Hopesy/Typos` 权限：
+
+```txt
+Workers & Pages -> Create application -> Continue with GitHub
+```
+
+如果看不到仓库，重新配置 GitHub 连接权限。
+
+### 项目名已存在
+
+如果创建 Git Integration 时提示 `typos` 已存在，说明 Cloudflare 已有同名 Worker。
+
+确认不是误删 D1 后，删除旧 Worker：
+
+```bash
+npx wrangler d1 list
+npx wrangler delete typos --force
+```
+
+然后重新走 Git Integration 创建。
+
+### D1 绑定错误
+
+确认 `wrangler.jsonc` 里：
+
+```txt
+binding: DB
+database_name: typos-db
+database_id: 9c1c8e42-7453-4729-ac55-ca2242af094a
+```
+
+远端检查：
+
+```bash
+npx wrangler d1 execute DB --remote --command "SELECT slug, title FROM posts ORDER BY slug;"
+```
+
+### 后台登录失败
+
+重新设置：
+
+```bash
+npx wrangler secret put ADMIN_PASSWORD
+npx wrangler secret put ADMIN_SESSION_SECRET
+```
+
+确认浏览器访问的是同一个域名：
+
+```txt
+https://typos.hopesy.workers.dev/admin
+```
+
+### 线上 500 或 ChunkLoadError
+
+不要用 Windows 本机构建结果覆盖生产 Worker。到 Cloudflare Dashboard 里重试 Git Integration 构建：
+
+```txt
+Workers & Pages -> typos -> Deployments / Builds -> Retry build
+```
 
 ## 许可证
 
