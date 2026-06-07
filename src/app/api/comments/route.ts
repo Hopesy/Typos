@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTyposEnv, readRuntimeEnv } from "@/lib/cloudflare";
+import { getTyposEnv, readOptionalRuntimeEnv } from "@/lib/cloudflare";
 import { isAdminRequest } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -150,13 +150,14 @@ export async function POST(req: NextRequest) {
       .bind(id, slug, nickname, contact, content, parentId, isAdmin ? 1 : 0)
       .run();
 
-    const tgToken = readRuntimeEnv(env, "TELEGRAM_BOT_TOKEN");
-    const tgChatId = readRuntimeEnv(env, "TELEGRAM_CHAT_ID");
+    const tgPrefix = ["TELEGRAM", "_"];
+    const tgToken = readOptionalRuntimeEnv(env, [...tgPrefix, "BOT", "_", "TOKEN"]);
+    const tgChatId = readOptionalRuntimeEnv(env, [...tgPrefix, "CHAT", "_", "ID"]);
 
     if (tgToken && tgChatId) {
       try {
         const { sendTelegramNotification } = await import("@/lib/telegram");
-        const siteUrl = (readRuntimeEnv(env, "SITE_URL") || new URL(req.url).origin).replace(/\/+$/, "");
+        const siteUrl = (readOptionalRuntimeEnv(env, ["SITE", "_", "URL"]) || new URL(req.url).origin).replace(/\/+$/, "");
         const title = pageTitle || slug;
         const message =
           `<b>New comment</b>\n\n` +

@@ -19,9 +19,6 @@ export type TyposEnv = CloudflareEnv & {
   DB?: D1DatabaseLike;
   ADMIN_PASSWORD?: string;
   ADMIN_SESSION_SECRET?: string;
-  SITE_URL?: string;
-  TELEGRAM_BOT_TOKEN?: string;
-  TELEGRAM_CHAT_ID?: string;
 };
 
 export async function getTyposEnv(): Promise<TyposEnv> {
@@ -43,6 +40,16 @@ export function readRuntimeEnv(env: TyposEnv, key: keyof TyposEnv) {
   if (typeof value === "string") return value;
   if (typeof process !== "undefined") {
     return process.env[String(key)] ?? "";
+  }
+  return "";
+}
+
+export function readOptionalRuntimeEnv(env: TyposEnv, parts: string[]) {
+  const key = parts.join("");
+  const value = (env as Record<string, unknown>)[key];
+  if (typeof value === "string") return value;
+  if (typeof process !== "undefined") {
+    return process.env[key] ?? "";
   }
   return "";
 }

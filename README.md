@@ -54,9 +54,9 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js 16、Reac
 | `ADMIN_PASSWORD` | 是 | `/admin` 后台登录密码。Cloudflare 不会自动生成，项目也不提供默认值；使用你自己保存的长随机值。 |
 | `ADMIN_SESSION_SECRET` | 是 | 后台 session 签名密钥。Cloudflare 不会自动生成，项目也不提供默认值；可用 `openssl rand -hex 32` 或 Node crypto 生成。 |
 
-`SITE_URL` 不是首次部署必填项，也不参与 Deploy to Cloudflare 表单。部署成功拿到 Cloudflare URL 或绑定自定义域名后，再到 Cloudflare dashboard 的 runtime variables 中设置；未设置时评论通知会使用当前请求来源作为链接前缀。
+公开站点 URL 不是首次部署必填项，也不参与 Deploy to Cloudflare 表单。部署成功拿到 Cloudflare URL 或绑定自定义域名后，再到 Cloudflare dashboard 的 runtime variables 中设置；未设置时评论通知会使用当前请求来源作为链接前缀。
 
-Telegram 评论通知是可选功能，不参与首次 Deploy to Cloudflare 表单。需要启用时，在部署成功后到 Cloudflare dashboard 的 runtime variables / secrets 中添加：`TELEGRAM_BOT_TOKEN`、`TELEGRAM_CHAT_ID`。
+Telegram 评论通知是可选功能，不参与首次 Deploy to Cloudflare 表单。需要启用时，在部署成功后到 Cloudflare dashboard 的 runtime variables / secrets 中添加机器人 token 和 chat id。
 
 部署脚本会执行：
 
@@ -76,7 +76,7 @@ opennextjs-cloudflare deploy
 npm install
 ```
 
-本地使用 `/admin` 前，创建 `.env.local` 并写入你自己生成的 `ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET`。`SITE_URL` 与 Telegram 变量都是可选项，本地不启用评论通知时可以不设置。
+本地使用 `/admin` 前，创建 `.env.local` 并写入你自己生成的 `ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET`。公开站点 URL 与 Telegram 通知变量都是可选项，本地不启用评论通知时可以不设置。
 
 启动 Next.js 本地开发服务：
 

@@ -165,9 +165,9 @@ Set these variables during the Cloudflare deploy flow or in the Cloudflare dashb
 | `ADMIN_PASSWORD` | Yes | Password for `/admin`. Cloudflare does not generate it automatically and the project provides no default; set your own long random value and keep it private. |
 | `ADMIN_SESSION_SECRET` | Yes | Secret used to sign admin session cookies. Cloudflare does not generate it automatically and the project provides no default; generate one with Node or `openssl rand -hex 32`. |
 
-`SITE_URL` is not required for the first deployment and is intentionally not listed in the Deploy to Cloudflare binding prompts. After Cloudflare gives you the public URL, or after you bind a custom domain, set `SITE_URL` as a runtime variable in the Cloudflare dashboard. When it is unset, comment notifications fall back to the current request origin.
+The public site URL is not required for the first deployment and is intentionally not listed in the Deploy to Cloudflare binding prompts. After Cloudflare gives you the public URL, or after you bind a custom domain, set it as a runtime variable in the Cloudflare dashboard. When it is unset, comment notifications fall back to the current request origin.
 
-Telegram notifications are optional and are intentionally not listed in the Deploy to Cloudflare binding prompts. To enable them, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as runtime secrets in the Cloudflare dashboard after the first deployment.
+Telegram notifications are optional and are intentionally not listed in the Deploy to Cloudflare binding prompts. To enable them, add the bot token and chat id as runtime secrets in the Cloudflare dashboard after the first deployment.
 
 Generate a session secret with Node:
 
@@ -249,18 +249,13 @@ npx wrangler secret put ADMIN_PASSWORD
 npx wrangler secret put ADMIN_SESSION_SECRET
 ```
 
-Optional Telegram secrets:
-
-```bash
-npx wrangler secret put TELEGRAM_BOT_TOKEN
-npx wrangler secret put TELEGRAM_CHAT_ID
-```
+Optional Telegram secrets can be added after the first deployment from the Cloudflare dashboard.
 
 ### 5. Set the Public Site URL
 
-`SITE_URL` is optional on first deploy. After Cloudflare gives you the final Workers URL or after you bind a custom domain, set `SITE_URL` in the Cloudflare dashboard environment variables.
+The public site URL is optional on first deploy. After Cloudflare gives you the final Workers URL or after you bind a custom domain, set it in the Cloudflare dashboard environment variables.
 
-Do not commit a temporary `SITE_URL` into `wrangler.jsonc`; keeping it out of Wrangler avoids duplicate deploy-form entries.
+Do not commit a temporary public URL variable into `wrangler.jsonc`; keeping it out of Wrangler avoids duplicate deploy-form entries.
 
 ### 6. Deploy
 
@@ -272,7 +267,7 @@ The script will build OpenNext output, apply remote D1 migrations, and deploy th
 
 ## Local Development
 
-Before using `/admin` locally, create `.env.local` with your own generated values for `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET`. `SITE_URL` and Telegram variables are optional and can be omitted when local comment notifications are disabled.
+Before using `/admin` locally, create `.env.local` with your own generated values for `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET`. Public URL and Telegram variables are optional and can be omitted when local comment notifications are disabled.
 
 Start the Next.js development server:
 
@@ -446,7 +441,7 @@ Check that:
 
 ### Comment Notification Links Are Wrong
 
-Set `SITE_URL` to the final public URL:
+Set the public site URL runtime variable to the final public URL:
 
 ```txt
 https://YOUR_DOMAIN
