@@ -19,7 +19,8 @@ import {
     FiMessageSquare,
     FiCornerUpLeft,
     FiBarChart2,
-    FiTrendingUp
+    FiTrendingUp,
+    FiUpload
 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,8 @@ type DashboardData = {
 };
 
 type ChartRange = '7d' | '30d';
+
+const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] uppercase leading-none tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white";
 
 const visitorSeries: Record<ChartRange, number[]> = {
     '7d': [18, 24, 21, 32, 27, 15, 17],
@@ -304,8 +307,86 @@ const renderMarkdownPreview = (markdown: string) => {
     }).join('');
 };
 
+const cleanFrontmatterValue = (value: string) => {
+    const trimmed = value.trim();
+    if (
+        (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+        (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
+        return trimmed.slice(1, -1).trim();
+    }
+    return trimmed;
+};
+
+const parseMarkdownUpload = (raw: string) => {
+    const source = raw.replace(/^\uFEFF/, '');
+    const match = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)([\s\S]*)$/.exec(source);
+
+    if (!match) {
+        return { data: {} as Record<string, string>, content: source };
+    }
+
+    const data: Record<string, string> = {};
+    for (const line of match[1].split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+
+        const separator = trimmed.indexOf(':');
+        if (separator <= 0) continue;
+
+        const key = trimmed.slice(0, separator).trim().toLowerCase();
+        data[key] = cleanFrontmatterValue(trimmed.slice(separator + 1));
+    }
+
+    return { data, content: match[2] || '' };
+};
+
+const safeSlug = (value: string, fallback: string) => {
+    const slug = value
+        .replace(/\\/g, '/')
+        .split('/')
+        .pop()
+        ?.replace(/\.md$/i, '')
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]+/g, '-')
+        .replace(/^-+|-+$/g, '') || '';
+
+    return slug || fallback;
+};
+
+const titleFromMarkdown = (content: string) => {
+    const heading = content.match(/^#\s+(.+)$/m);
+    return heading?.[1]?.trim() || '';
+};
+
+const titleFromFilename = (filename: string) => {
+    return filename
+        .replace(/\\/g, '/')
+        .split('/')
+        .pop()
+        ?.replace(/\.md$/i, '')
+        .replace(/[-_]+/g, ' ')
+        .trim() || 'Untitled';
+};
+
+const buildPostDataFromMarkdown = (raw: string, filename: string, fallbackDate: string): PostData => {
+    const { data, content } = parseMarkdownUpload(raw);
+    const fallbackSlug = fallbackDate.replace(/-/g, '').slice(2);
+    const fileSlug = safeSlug(filename, fallbackSlug);
+
+    return {
+        title: data.title || titleFromMarkdown(content) || titleFromFilename(filename),
+        date: (data.date || fallbackDate).split('T')[0],
+        description: data.description || '',
+        content: content.trimStart(),
+        slug: safeSlug(data.slug || fileSlug, fallbackSlug),
+        category: data.category || data.categories || '',
+    };
+};
+
 export default function AdminPage() {
     const postContentRef = useRef<HTMLTextAreaElement | null>(null);
+    const postUploadInputRef = useRef<HTMLInputElement | null>(null);
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [password, setPassword] = useState('');
     const [authError, setAuthError] = useState(false);
@@ -588,6 +669,36 @@ export default function AdminPage() {
         }
     };
 
+    const handlePostMarkdownUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const input = event.currentTarget;
+        const file = input.files?.[0];
+        input.value = '';
+
+        if (!file) return;
+
+        setMessage(null);
+
+        try {
+            if (!file.name.toLowerCase().endsWith('.md')) {
+                setMessage({ text: 'ERROR: SELECT_A_MARKDOWN_FILE', isError: true });
+                return;
+            }
+
+            const raw = await file.text();
+            const importedPost = buildPostDataFromMarkdown(raw, file.name, today);
+            setType('post');
+            setPostData(importedPost);
+            setIsSlugModified(true);
+            setIsEditing(false);
+            setCurrentFilename(null);
+            setViewMode('edit');
+            setMessage({ text: `MARKDOWN_LOADED: ${file.name}`, isError: false });
+            setTimeout(() => setMessage(null), 3000);
+        } catch {
+            setMessage({ text: 'ERROR: MARKDOWN_FILE_READ_FAILED', isError: true });
+        }
+    };
+
     const handleReply = (e: React.MouseEvent, item: AdminItem) => {
         e.stopPropagation();
         setReplyTarget(item);
@@ -834,15 +945,37 @@ export default function AdminPage() {
                         <div className="flex items-center gap-3">
                             <ThemeToggle compact />
                             {type !== 'comment' && type !== 'dashboard' && (
-                                <Button
-                                    onClick={() => viewMode === 'edit' ? setViewMode('list') : handleNewItem()}
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800 font-mono text-[10px] uppercase tracking-[0.18em] px-3"
-                                >
-                                    {viewMode === 'edit' ? <FiList className="mr-2 w-3 h-3" /> : <FiPlus className="mr-2 w-3 h-3" />}
-                                    {viewMode === 'edit' ? 'Library' : `New_${type}`}
-                                </Button>
+                                <>
+                                    {type === 'post' && (
+                                        <input
+                                            ref={postUploadInputRef}
+                                            type="file"
+                                            accept=".md,text/markdown,text/plain"
+                                            className="hidden"
+                                            onChange={handlePostMarkdownUpload}
+                                        />
+                                    )}
+                                    {type === 'post' && (
+                                        <Button
+                                            onClick={() => postUploadInputRef.current?.click()}
+                                            variant="outline"
+                                            size="sm"
+                                            className={adminActionButtonClass}
+                                        >
+                                            <FiUpload className="h-3 w-3" />
+                                            Upload_MD
+                                        </Button>
+                                    )}
+                                    <Button
+                                        onClick={() => viewMode === 'edit' ? setViewMode('list') : handleNewItem()}
+                                        variant="outline"
+                                        size="sm"
+                                        className={adminActionButtonClass}
+                                    >
+                                        {viewMode === 'edit' ? <FiList className="h-3 w-3" /> : <FiPlus className="h-3 w-3" />}
+                                        {viewMode === 'edit' ? 'Library' : `New_${type}`}
+                                    </Button>
+                                </>
                             )}
                         </div>
 
@@ -850,6 +983,14 @@ export default function AdminPage() {
                     </div>
 
                     <div className="bg-neutral-950">
+                        {viewMode === 'list' && message && (
+                            <div className={`mb-4 rounded-md border p-3 text-[10px] font-mono leading-tight transition-all duration-300 ${message.isError ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}`}>
+                                <div className="flex items-center gap-2">
+                                    <div className={`h-1.5 w-1.5 rounded-full ${message.isError ? 'bg-red-500' : 'bg-green-500'} animate-pulse`}></div>
+                                    {message.text}
+                                </div>
+                            </div>
+                        )}
                         {type === 'dashboard' ? (
                             <DashboardView data={dashboardData} loading={dashboardLoading} />
                         ) : viewMode === 'list' ? (

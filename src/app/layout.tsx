@@ -62,13 +62,12 @@ export const metadata: Metadata = {
   description: "The darkness is boundless",
   icons: {
     icon: [
-      { url: "/icon3.svg", type: "image/svg+xml", sizes: "any" },
-      { url: "/icon3.png", type: "image/png", sizes: "32x32" },
-      { url: "/icon3.png", type: "image/png", sizes: "16x16" },
-      { url: "/icon3.png", type: "image/png", sizes: "192x192" },
+      { url: "/favicon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-192.png", type: "image/png", sizes: "192x192" },
     ],
     apple: [
-      { url: "/icon3.png", sizes: "180x180", type: "image/png" },
+      { url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
     ],
   },
 };
@@ -96,12 +95,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col relative bg-background`}
       >
+        <script
+          id="typos-theme-script"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
 
         <Suspense fallback={null}>
           <Header />
