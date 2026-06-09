@@ -9,6 +9,11 @@ type MarkdownContentProps = {
 
 const MAX_HEIGHT = 400;
 
+function getCodeThemeLabel() {
+  if (typeof document === 'undefined') return 'Typos Dark';
+  return document.documentElement.classList.contains('dark') ? 'Typos Dark' : 'Typos Light';
+}
+
 const LANGUAGE_LABELS: Record<string, string> = {
   plaintext: 'text',
   text: 'text',
@@ -45,6 +50,13 @@ export default function MarkdownContent({ html, className = '' }: MarkdownConten
 
     const pres = Array.from(container.querySelectorAll<HTMLPreElement>('pre'));
 
+    const updateCodeThemeLabels = () => {
+      const label = getCodeThemeLabel();
+      container.querySelectorAll<HTMLSpanElement>('.code-block-theme').forEach((themeLabel) => {
+        themeLabel.textContent = label;
+      });
+    };
+
     pres.forEach((pre) => {
       if (pre.closest('.code-block-wrapper')) return;
 
@@ -67,7 +79,7 @@ export default function MarkdownContent({ html, className = '' }: MarkdownConten
 
       const themeLabel = document.createElement('span');
       themeLabel.className = 'code-block-theme';
-      themeLabel.textContent = 'Vitesse Dark';
+      themeLabel.textContent = getCodeThemeLabel();
 
       const copyBtn = document.createElement('button');
       copyBtn.type = 'button';
@@ -126,6 +138,21 @@ export default function MarkdownContent({ html, className = '' }: MarkdownConten
         }
       });
     });
+
+    updateCodeThemeLabels();
+
+    const themeObserver = new MutationObserver(updateCodeThemeLabels);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
+
+    window.addEventListener('typos-theme-change', updateCodeThemeLabels);
+
+    return () => {
+      themeObserver.disconnect();
+      window.removeEventListener('typos-theme-change', updateCodeThemeLabels);
+    };
   }, [html]);
 
   return (

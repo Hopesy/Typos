@@ -119,6 +119,13 @@
   --code-muted: #706d66;
   --code-line: rgba(23, 23, 23, 0.12);
   --code-shadow: rgba(23, 23, 23, 0.12);
+  --code-token-keyword: #9a3f4c;
+  --code-token-type: #2f7358;
+  --code-token-string: #8a4f38;
+  --code-token-number: #1f7776;
+  --code-token-comment: #6b7564;
+  --code-token-function: #806128;
+  --code-token-meta: #665f55;
   --toc-label: rgba(23, 23, 23, 0.72);
   --toc-label-active: rgba(23, 23, 23, 0.95);
   --toc-line: rgba(23, 23, 23, 0.34);
@@ -184,6 +191,13 @@
   --code-muted: #807d75;
   --code-line: rgba(255, 255, 255, 0.08);
   --code-shadow: rgba(0, 0, 0, 0.34);
+  --code-token-keyword: #cb7676;
+  --code-token-type: #4d9375;
+  --code-token-string: #c98a7d;
+  --code-token-number: #4c9a91;
+  --code-token-comment: #758575dd;
+  --code-token-function: #bd976a;
+  --code-token-meta: #8d887f;
   --toc-label: rgba(255, 255, 255, 0.78);
   --toc-label-active: rgba(255, 255, 255, 0.95);
   --toc-line: rgba(255, 255, 255, 0.35);
@@ -557,42 +571,55 @@
     background: transparent !important;
   }
 
+  .prose pre .hljs {
+    background: transparent !important;
+    color: var(--code-foreground) !important;
+  }
+
   .prose pre .hljs-keyword,
   .prose pre .hljs-selector-tag,
   .prose pre .hljs-title,
   .prose pre .hljs-section {
-    color: #cb7676 !important;
+    color: var(--code-token-keyword) !important;
   }
 
   .prose pre .hljs-type,
   .prose pre .hljs-class,
   .prose pre .hljs-title.class_ {
-    color: #4d9375 !important;
+    color: var(--code-token-type) !important;
   }
 
   .prose pre .hljs-string,
   .prose pre .hljs-attr,
   .prose pre .hljs-symbol,
-  .prose pre .hljs-name {
-    color: #c98a7d !important;
+  .prose pre .hljs-name,
+  .prose pre .hljs-regexp {
+    color: var(--code-token-string) !important;
   }
 
   .prose pre .hljs-number,
   .prose pre .hljs-literal,
   .prose pre .hljs-built_in,
   .prose pre .hljs-doctag {
-    color: #4c9a91 !important;
+    color: var(--code-token-number) !important;
   }
 
   .prose pre .hljs-comment,
   .prose pre .hljs-quote {
-    color: #758575dd !important;
+    color: var(--code-token-comment) !important;
   }
 
   .prose pre .hljs-function,
   .prose pre .hljs-params,
   .prose pre .hljs-variable {
-    color: #bd976a !important;
+    color: var(--code-token-function) !important;
+  }
+
+  .prose pre .hljs-meta,
+  .prose pre .hljs-operator,
+  .prose pre .hljs-punctuation,
+  .prose pre .hljs-property {
+    color: var(--code-token-meta) !important;
   }
 
   .prose pre .line {
