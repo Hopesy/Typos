@@ -5,7 +5,7 @@ import Shuffle from './shuffle/Shuffle';
 export function HeroTitle() {
   return (
     <Shuffle
-      text="Minimal Load"
+      text="Typos Blog"
       className="hero-title-style"
       shuffleDirection="right"
       duration={0.35}
