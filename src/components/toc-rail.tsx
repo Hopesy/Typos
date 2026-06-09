@@ -131,7 +131,7 @@ export default function TocRail({ toc }: TocRailProps) {
     <nav className={`toc-rail hidden md:flex ${isRevealed ? 'is-revealed' : ''}`} aria-label="文章目录">
       {canScrollUp ? (
         <div className="toc-scroll-hint toc-scroll-hint-top" aria-hidden>
-          <ChevronUp className="h-3.5 w-3.5 text-white/20" />
+          <ChevronUp className="h-3.5 w-3.5 text-hud-faint" />
         </div>
       ) : null}
       <div ref={listRef} className="toc-ticks">
@@ -154,7 +154,7 @@ export default function TocRail({ toc }: TocRailProps) {
       </div>
       {canScrollDown ? (
         <div className="toc-scroll-hint toc-scroll-hint-bottom" aria-hidden>
-          <ChevronDown className="h-3.5 w-3.5 text-white/20" />
+          <ChevronDown className="h-3.5 w-3.5 text-hud-faint" />
         </div>
       ) : null}
     </nav>

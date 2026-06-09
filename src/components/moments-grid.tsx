@@ -45,7 +45,7 @@ export function MomentsGrid({ moments }: MomentsGridProps) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         key={`${moment.date}-${index}`}
-                        className="group relative overflow-hidden bg-white/5 break-inside-avoid"
+                        className="group relative overflow-hidden bg-hud-panel break-inside-avoid"
                     >
                         {moment.image ? (
                             <HeicImage
@@ -54,7 +54,7 @@ export function MomentsGrid({ moments }: MomentsGridProps) {
                                 className="w-full h-auto block transition-opacity duration-300"
                             />
                         ) : (
-                            <div className="flex aspect-square w-full items-center justify-center text-[10px] text-white/10 uppercase font-mono">
+                            <div className="flex aspect-square w-full items-center justify-center text-[11px] text-hud-faint uppercase font-mono">
                                 No Image
                             </div>
                         )}
@@ -62,7 +62,7 @@ export function MomentsGrid({ moments }: MomentsGridProps) {
                         {/* Hover Overlay - Bottom-up gradient */}
                         <div className="absolute inset-0 z-10 flex flex-col items-center justify-end pb-8 bg-gradient-to-t from-black/55 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                             {moment.title && (
-                                <div className="text-[10px] text-white/90 line-clamp-2 px-6 font-mono uppercase tracking-widest text-center leading-relaxed">
+                                <div className="text-[11px] text-white/90 line-clamp-2 px-6 font-mono uppercase tracking-[0.18em] text-center leading-relaxed">
                                     {moment.title}
                                 </div>
                             )}

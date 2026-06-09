@@ -135,8 +135,8 @@ export function HeicImage({ src, alt, className, ...props }: HeicImageProps) {
 
     if (loading) {
         return (
-            <div className={`${className} bg-white/5 flex items-center justify-center animate-pulse min-h-[200px]`}>
-                <span className="font-mono text-[8px] text-white/20">PREPARING_IMAGE...</span>
+            <div className={`${className} bg-hud-panel flex items-center justify-center animate-pulse min-h-[200px]`}>
+                <span className="font-mono text-[11px] text-hud-dim">PREPARING_IMAGE...</span>
             </div>
         );
     }
@@ -144,7 +144,7 @@ export function HeicImage({ src, alt, className, ...props }: HeicImageProps) {
     if (error) {
         return (
             <div className={`${className} bg-red-500/10 flex items-center justify-center min-h-[100px]`}>
-                <span className="font-mono text-[8px] text-red-400/50">UNABLE_TO_LOAD_IMAGE</span>
+                <span className="font-mono text-[11px] text-red-400/65">UNABLE_TO_LOAD_IMAGE</span>
             </div>
         );
     }

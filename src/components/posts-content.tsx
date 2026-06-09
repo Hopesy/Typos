@@ -39,7 +39,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                         <button
                             key={category}
                             onClick={() => setSelectedCategory(category!)}
-                            className={`relative transition-all duration-300 hover:text-white cursor-pointer font-mono text-[10px] uppercase tracking-widest ${selectedCategory === category ? "text-white" : "text-white/40"
+                            className={`relative transition-all duration-300 hover:text-hud-strong cursor-pointer font-mono text-[11px] uppercase tracking-[0.18em] ${selectedCategory === category ? "text-hud-strong" : "text-hud-muted"
                                 }`}
                         >
                             <span className="relative z-10">{category}</span>
@@ -52,41 +52,37 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
             <section className="mx-auto max-w-3xl space-y-4">
                 {filteredPosts.map((post) => (
                     <a key={post.slug} href={`/posts/${encodeURIComponent(post.slug.trim())}`} className="block group">
-                        <Card className="rounded-none border-white/5 bg-transparent hover:bg-white/[0.02] transition-all duration-500 relative overflow-hidden p-1">
+                        <Card className="rounded-none border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 relative overflow-hidden p-1">
 
                             <CardHeader className="gap-2 px-6 py-4 pr-12">
                                 <div className="flex items-start justify-between">
                                     <div className="flex flex-col gap-3 flex-1">
                                         <div className="flex items-center gap-4">
-                                            <CardTitle className="text-base font-bold text-white/80 group-hover:text-white transition-colors tracking-tight">
+                                            <CardTitle className="text-[17px] font-bold text-hud-strong transition-colors tracking-tight">
                                                 {post.title}
                                             </CardTitle>
                                             {post.category && (
-                                                <span className="text-[9px] font-mono px-2 py-0.5 border border-white/5 text-white/20 uppercase tracking-widest group-hover:text-white/40 group-hover:border-white/20 transition-all">
+                                                <span className="text-[10px] font-mono px-2 py-0.5 border border-hud-line-soft text-hud-dim uppercase tracking-[0.16em] group-hover:text-hud-muted group-hover:border-hud-line-strong transition-all">
                                                     {post.category}
                                                 </span>
                                             )}
                                         </div>
-                                        <CardDescription className="text-white/30 text-[13px] leading-relaxed group-hover:text-white/50 transition-colors">
+                                        <CardDescription className="text-hud-muted text-sm leading-relaxed transition-colors">
                                             {post.description}
                                         </CardDescription>
                                     </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                        {/* <span className="text-[9px] font-mono text-white/10 group-hover:text-white/30 transition-colors">
-                                            {post.date}
-                                        </span> */}
-                                    </div>
+                                    <div className="flex flex-col items-end gap-1" />
                                 </div>
                                 <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
-                                    <ChevronRight className="h-3.5 w-3.5 text-white/15 group-hover:text-white/45 transition-colors duration-300" />
+                                    <ChevronRight className="h-3.5 w-3.5 text-hud-faint group-hover:text-hud-muted transition-colors duration-300" />
                                 </span>
                             </CardHeader>
                         </Card>
                     </a>
                 ))}
                 {filteredPosts.length === 0 && (
-                    <div className="text-center py-20 border border-dashed border-white/5">
-                        <span className="font-mono text-[10px] text-white/10 uppercase tracking-[0.3em]">
+                    <div className="text-center py-20 border border-dashed border-hud-line-soft">
+                        <span className="font-mono text-[11px] text-hud-faint uppercase tracking-[0.22em]">
                             NO_MODULES_DETECTED
                         </span>
                     </div>

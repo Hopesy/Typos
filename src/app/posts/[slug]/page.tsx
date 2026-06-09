@@ -34,26 +34,26 @@ export default async function PostPage({
     <div className="max-w-3xl mx-auto pt-24 pb-32 px-6">
       <div className="bg-transparent">
         <header className="mb-12" data-post-title-block>
-          <div className="flex items-center gap-3 text-[11px] font-mono text-[#8a8a8a] mb-4 uppercase tracking-[0.24em]">
+          <div className="flex items-center gap-3 text-[11px] font-mono text-hud-muted mb-4 uppercase tracking-[0.24em]">
             <span>POST / {post.category || 'SECURITY'}</span>
-            <span className="h-[1px] w-8 bg-white/10"></span>
+            <span className="h-[1px] w-8 bg-hud-line"></span>
             <span>{post.date}</span>
           </div>
-          <h1 className="text-[clamp(2rem,7vw,3.25rem)] font-extrabold leading-[1.16] text-[#f5f5f5] tracking-[-0.045em] mb-6">
+          <h1 className="text-[clamp(2rem,7vw,3.25rem)] font-extrabold leading-[1.16] text-hud-strong tracking-[-0.045em] mb-6">
             {post.title}
           </h1>
-          <div className="flex items-center gap-2 text-xs text-[#8a8a8a] font-mono italic">
+          <div className="flex items-center gap-2 text-xs text-hud-muted font-mono italic">
             <span>AUTHOR: </span>
-            <span className="text-[#b8b8b8] underline decoration-white/10 underline-offset-4">Author</span>
+            <span className="text-hud underline decoration-hud-line underline-offset-4">Author</span>
           </div>
         </header>
 
-        <div className="mt-12 border-t border-white/10 pt-12">
+        <div className="mt-12 border-t border-hud-line pt-12">
 
           <div className="relative">
             <MarkdownContent
               html={post.html}
-              className="prose prose-invert max-w-none"
+              className="prose max-w-none"
             />
 
             {post.toc.length > 0 ? <TocRail toc={post.toc} /> : null}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { name: "首页", href: "/" },
@@ -13,7 +14,7 @@ const navItems = [
     name: "分类",
     href: "/moments",
     target: "_blank",
-    icon: <Image src="/icon3.svg" alt="分类" width={42} height={42} className="opacity-90 invert" />,
+    icon: <Image src="/icon3.svg" alt="分类" width={42} height={42} className="opacity-90 dark:invert" />,
   },
   { name: "日常", href: "/daily" },
   { name: "关于", href: "/about" },
@@ -63,12 +64,12 @@ export function Header() {
           // Moments Page Special Header
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full border border-white/10 flex items-center justify-center bg-white/5">
-                <Image src="/icon3.svg" alt="Avatar" width={20} height={20} className="h-5 w-5 invert brightness-0" />
+              <div className="h-8 w-8 rounded-full border border-hud-line flex items-center justify-center bg-hud-panel">
+                <Image src="/icon3.svg" alt="Avatar" width={20} height={20} className="h-5 w-5 dark:invert dark:brightness-0" />
               </div>
               <div className="flex flex-col">
-                <span className="font-press-start text-[10px] text-white/90">TYPOS</span>
-                <span className="font-mono text-[8px] text-white/40 uppercase tracking-tighter mt-1">
+                <span className="font-press-start text-[10px] text-hud-strong">TYPOS</span>
+                <span className="font-mono text-[10px] text-hud-muted uppercase tracking-normal mt-1">
                   Views: {viewCount.toLocaleString()}
                 </span>
               </div>
@@ -76,14 +77,14 @@ export function Header() {
 
             <div className="flex items-center gap-6">
               {/* Layout Switcher */}
-              <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/5 border border-white/5 cursor-pointer">
+              <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-hud-panel border border-hud-line cursor-pointer">
                 {[2, 4, 6].map((cols) => (
                   <button
                     key={cols}
                     onClick={() => handleLayoutChange(cols.toString())}
                     className={`h-6 w-6 rounded flex items-center justify-center transition-all ${currentCols === cols.toString()
-                      ? "bg-white/10 text-white/90 shadow-sm"
-                      : "text-white/20 hover:text-white/40 hover:bg-white/5"
+                      ? "bg-hud-soft text-hud-strong shadow-sm"
+                      : "text-hud-faint hover:text-hud-muted hover:bg-hud-panel-strong"
                       }`}
                     title={`Switch to ${cols} columns`}
                   >
@@ -102,33 +103,37 @@ export function Header() {
               {/* Status Info */}
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="font-mono text-[9px] text-white/20 uppercase tracking-widest leading-none">Live_Proto</span>
+                <span className="font-mono text-[10px] text-hud-dim uppercase tracking-[0.18em] leading-none">Live_Proto</span>
               </div>
+              <ThemeToggle compact />
             </div>
           </div>
         ) : (
           // Standard Global Navigation
-          <nav className="flex items-center gap-2 mx-auto">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href ?? "#"}
-                  target={item.target}
-                  rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
-                  className={`px-3 py-1.5 text-sm transition-colors ${active ? 'text-white font-medium' : 'text-white/40 hover:text-white/90'}`}
-                  aria-label={item.name}
-                  title={item.name}
-                  onClick={(event) => {
-                    if (!item.href) event.preventDefault();
-                  }}
-                >
-                  {item.icon ? item.icon : item.name}
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="mx-auto flex items-center gap-2">
+            <nav className="flex items-center gap-2">
+              {navItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href ?? "#"}
+                    target={item.target}
+                    rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+                    className={`px-3 py-1.5 text-sm transition-colors ${active ? 'text-hud-strong font-medium' : 'text-hud-muted hover:text-hud-strong'}`}
+                    aria-label={item.name}
+                    title={item.name}
+                    onClick={(event) => {
+                      if (!item.href) event.preventDefault();
+                    }}
+                  >
+                    {item.icon ? item.icon : item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+            <ThemeToggle compact />
+          </div>
         )}
       </div>
     </header>

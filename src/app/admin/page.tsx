@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment';
 
@@ -144,7 +145,7 @@ function TrendChart({
             <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
                     <h2 className="text-sm font-bold text-neutral-200">{title}</h2>
-                    <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-neutral-600">
+                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-600">
                         最新: <span className="text-neutral-400">{formatMetric(latest)} {unit}</span>
                         <span className={delta >= 0 ? 'ml-2 text-green-400/70' : 'ml-2 text-red-400/70'}>
                             {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}
@@ -157,7 +158,7 @@ function TrendChart({
                             key={option}
                             type="button"
                             onClick={() => onRangeChange(option)}
-                            className={`h-7 rounded-[3px] px-3 font-mono text-[9px] uppercase tracking-widest transition-colors ${range === option
+                            className={`h-7 rounded-[3px] px-3 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${range === option
                                 ? 'bg-neutral-800 text-white'
                                 : 'text-neutral-500 hover:text-neutral-300'
                                 }`}
@@ -176,15 +177,15 @@ function TrendChart({
                 </defs>
                 {grid.map((lineY) => {
                     const y = 30 + lineY * 150;
-                    return <line key={lineY} x1="30" x2="610" y1={y} y2={y} stroke="rgba(255,255,255,.14)" strokeWidth="1" />;
+                    return <line key={lineY} x1="30" x2="610" y1={y} y2={y} stroke="var(--admin-grid)" strokeWidth="1" />;
                 })}
-                <line x1="30" x2="610" y1="180" y2="180" stroke="rgba(255,255,255,.2)" strokeWidth="1" />
+                <line x1="30" x2="610" y1="180" y2="180" stroke="var(--admin-line-strong)" strokeWidth="1" />
                 <text x="8" y="35" className="fill-neutral-600 font-mono text-[10px]">{max}</text>
                 <text x="14" y="184" className="fill-neutral-600 font-mono text-[10px]">0</text>
                 <path d={area} fill={`url(#${title}-area)`} />
                 <path d={line} fill="none" stroke="#75a7ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 {points.map(([x, y], index) => (
-                    <circle key={`${x}-${y}`} cx={x} cy={y} r={index === points.length - 1 ? 4 : 2.5} fill="#9abfff" stroke="#090a0a" strokeWidth="2" />
+                    <circle key={`${x}-${y}`} cx={x} cy={y} r={index === points.length - 1 ? 4 : 2.5} fill="#75a7ff" stroke="var(--admin-bg)" strokeWidth="2" />
                 ))}
                 <text x="30" y="205" className="fill-neutral-600 font-mono text-[10px]">{range === '7d' ? '前6天' : '前29天'}</text>
                 <text x="566" y="205" className="fill-neutral-600 font-mono text-[10px]">今天</text>
@@ -226,7 +227,7 @@ function DashboardView({
                         <div className="mt-5 text-4xl font-semibold tracking-tight text-neutral-100">
                             {loading ? '...' : formatMetric(card.value)}
                         </div>
-                        <p className="mt-4 font-mono text-[10px] uppercase tracking-widest text-neutral-600">{card.meta}</p>
+                        <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-600">{card.meta}</p>
                     </section>
                 ))}
             </div>
@@ -271,7 +272,7 @@ const renderInlineMarkdown = (value: string) => {
 
 const renderMarkdownPreview = (markdown: string) => {
     if (!markdown.trim()) {
-        return '<p class="text-neutral-600 font-mono text-xs uppercase tracking-widest">Preview_Waiting_For_Input</p>';
+        return '<p class="text-neutral-600 font-mono text-xs uppercase tracking-[0.18em]">Preview_Waiting_For_Input</p>';
     }
 
     const blocks = markdown.split(/\n{2,}/);
@@ -683,12 +684,22 @@ export default function AdminPage() {
 
 
     if (checkingAuth) {
-        return <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono">Checking access...</div>;
+        return (
+            <div className="admin-shell min-h-screen bg-neutral-950 text-white flex items-center justify-center font-mono">
+                <div className="fixed right-4 top-4">
+                    <ThemeToggle compact />
+                </div>
+                Checking access...
+            </div>
+        );
     }
 
     if (!isAuthorized) {
         return (
-            <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-white selection:text-black font-sans">
+            <div className="admin-shell min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-white selection:text-black font-sans">
+                <div className="fixed right-4 top-4">
+                    <ThemeToggle compact />
+                </div>
                 <Card className="w-full max-w-[320px] border-neutral-800 bg-neutral-900/50 shadow-2xl">
                     <CardHeader className="space-y-1 text-center pb-2 pt-6">
                         <div className="flex justify-center mb-3">
@@ -701,7 +712,7 @@ export default function AdminPage() {
                     <CardContent className="px-6 pb-6 space-y-4">
                         <form onSubmit={handleLogin} className="space-y-3">
                             <div className="space-y-1.5">
-                                <Label htmlFor="password" title="Security_Key" className="text-[10px] uppercase tracking-widest text-neutral-500 font-mono">
+                                <Label htmlFor="password" title="Security_Key" className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 font-mono">
                                     Security_Key
                                 </Label>
                                 <Input
@@ -711,10 +722,10 @@ export default function AdminPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    className={`bg-neutral-950 border-neutral-800 text-center tracking-[0.4em] focus:border-white/20 transition-all h-9 text-xs py-2 ${authError ? 'border-red-900/50' : ''}`}
+                                    className={`bg-neutral-950 border-neutral-800 text-center tracking-[0.24em] focus:border-white/20 transition-all h-9 text-sm py-2 ${authError ? 'border-red-900/50' : ''}`}
                                 />
                                 {authError && (
-                                    <p className="text-[9px] text-red-500 font-mono flex items-center justify-center gap-1 mt-1.5 uppercase tracking-tighter">
+                                    <p className="text-[10px] text-red-500 font-mono flex items-center justify-center gap-1 mt-1.5 uppercase tracking-normal">
                                         <FiAlertTriangle className="w-2.5 h-2.5" />
                                         Access Denied
                                     </p>
@@ -723,14 +734,14 @@ export default function AdminPage() {
                             <Button
                                 disabled={loading}
                                 type="submit"
-                                className="w-full bg-white text-black hover:bg-neutral-200 transition-colors font-mono text-[10px] tracking-widest h-9"
+                                className="w-full bg-white text-black hover:bg-neutral-200 transition-colors font-mono text-[10px] tracking-[0.18em] h-9"
                             >
                                 {loading ? '...' : 'ENTER'}
                             </Button>
                         </form>
                     </CardContent>
                     <CardFooter className="flex justify-center border-t border-neutral-800/50 py-3">
-                        <p className="text-[8px] text-neutral-600 font-mono uppercase tracking-[0.2em]">
+                        <p className="text-[10px] text-neutral-600 font-mono uppercase tracking-[0.2em]">
                             Admin_V.2.1
                         </p>
                     </CardFooter>
@@ -740,7 +751,7 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="flex h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-white selection:text-black overflow-hidden">
+        <div className="admin-shell flex h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-white selection:text-black overflow-hidden">
             <aside
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 className={`${isSidebarCollapsed ? 'w-16' : 'w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full transition-all duration-300 relative group cursor-pointer`}
@@ -748,7 +759,7 @@ export default function AdminPage() {
                 <div className="p-4" onClick={(e) => e.stopPropagation()}>
                     <nav className="space-y-1">
                         {!isSidebarCollapsed && (
-                            <Label className="text-[9px] text-neutral-600 uppercase tracking-widest px-2 font-mono mb-2 block animate-in fade-in duration-300">Content Type</Label>
+                            <Label className="text-[10px] text-neutral-600 uppercase tracking-[0.18em] px-2 font-mono mb-2 block animate-in fade-in duration-300">Content Type</Label>
                         )}
                         {(['dashboard', 'post', 'daily', 'moment', 'comment'] as const).map((t) => (
 
@@ -761,21 +772,21 @@ export default function AdminPage() {
                                     setViewMode('list');
                                 }}
 
-                                className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center' : 'px-3'} py-2 rounded-md text-xs transition-all cursor-pointer ${type === t
+                                className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} rounded-md ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} transition-all cursor-pointer ${type === t
                                     ? 'bg-neutral-900 text-white shadow-sm border border-neutral-800'
                                     : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900/50'
                                     }`}
                             >
-                                <span className={`p-1 rounded text-[10px] shrink-0 ${type === t ? 'bg-neutral-950 text-white shadow-inner' : 'bg-transparent text-neutral-600'}`}>
-                                    {t === 'dashboard' && <FiBarChart2 className="w-3 h-3" />}
-                                    {t === 'post' && <FiEdit3 className="w-3 h-3" />}
-                                    {t === 'daily' && <FiTerminal className="w-3 h-3" />}
-                                    {t === 'moment' && <FiImage className="w-3 h-3" />}
-                                    {t === 'comment' && <FiMessageSquare className="w-3 h-3" />}
+                                <span className={`p-1 rounded text-[11px] shrink-0 ${type === t ? 'bg-neutral-950 text-white shadow-inner' : 'bg-transparent text-neutral-600'}`}>
+                                    {t === 'dashboard' && <FiBarChart2 className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
+                                    {t === 'post' && <FiEdit3 className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
+                                    {t === 'daily' && <FiTerminal className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
+                                    {t === 'moment' && <FiImage className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
+                                    {t === 'comment' && <FiMessageSquare className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
                                 </span>
 
                                 {!isSidebarCollapsed && (
-                                    <span className="font-medium capitalize tracking-wide truncate animate-in fade-in duration-300">{t}</span>
+                                    <span className="font-medium capitalize tracking-normal truncate animate-in fade-in duration-300">{t}</span>
                                 )}
                                 {!isSidebarCollapsed && type === t && <FiCheck className="ml-auto w-3 h-3 text-neutral-500 shrink-0" />}
                             </button>
@@ -785,15 +796,15 @@ export default function AdminPage() {
                 <div className="mt-auto p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
                     <Separator className="bg-neutral-900" />
                     <nav className="space-y-1">
-                        <Link href="/" className={`flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center' : 'px-3'} py-2 text-xs text-neutral-500 hover:text-white transition-colors group rounded-md hover:bg-neutral-900/50 cursor-pointer`}>
-                            <FiHome className="w-3.5 h-3.5 group-hover:scale-105 transition-transform shrink-0" />
+                        <Link href="/" className={`flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} text-neutral-500 hover:text-white transition-colors group rounded-md hover:bg-neutral-900/50 cursor-pointer`}>
+                            <FiHome className={isSidebarCollapsed ? "w-3.5 h-3.5 group-hover:scale-105 transition-transform shrink-0" : "w-4 h-4 group-hover:scale-105 transition-transform shrink-0"} />
                             {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">View Site</span>}
                         </Link>
                         <button
                             onClick={handleLogout}
-                            className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center' : 'px-3'} py-2 text-xs text-red-500/60 hover:text-red-500 transition-colors group rounded-md hover:bg-red-950/20 cursor-pointer`}
+                            className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} text-red-500/60 hover:text-red-500 transition-colors group rounded-md hover:bg-red-950/20 cursor-pointer`}
                         >
-                            <FiLogOut className="w-3.5 h-3.5 shrink-0" />
+                            <FiLogOut className={isSidebarCollapsed ? "w-3.5 h-3.5 shrink-0" : "w-4 h-4 shrink-0"} />
                             {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">Logout</span>}
                         </button>
                     </nav>
@@ -821,12 +832,13 @@ export default function AdminPage() {
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
+                            <ThemeToggle compact />
                             {type !== 'comment' && type !== 'dashboard' && (
                                 <Button
                                     onClick={() => viewMode === 'edit' ? setViewMode('list') : handleNewItem()}
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800 font-mono text-[9px] uppercase tracking-widest px-3"
+                                    className="h-7 border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-white hover:bg-neutral-800 font-mono text-[10px] uppercase tracking-[0.18em] px-3"
                                 >
                                     {viewMode === 'edit' ? <FiList className="mr-2 w-3 h-3" /> : <FiPlus className="mr-2 w-3 h-3" />}
                                     {viewMode === 'edit' ? 'Library' : `New_${type}`}
@@ -850,7 +862,7 @@ export default function AdminPage() {
                                         </div>
                                     ) : existingPosts.length === 0 ? (
                                         <div className="py-12 text-center border border-dashed border-neutral-900 rounded-lg bg-neutral-900/20">
-                                            <p className="text-neutral-600 font-mono text-xs uppercase tracking-widest">Empty_Registry</p>
+                                            <p className="text-neutral-600 font-mono text-xs uppercase tracking-[0.18em]">Empty_Registry</p>
                                         </div>
                                     ) : (
 
@@ -867,14 +879,14 @@ export default function AdminPage() {
                                                         <h3 className="text-sm font-bold text-neutral-200 truncate group-hover:text-white transition-colors">
                                                             {type === 'daily' ? post.date : (type === 'comment' ? post.content : post.title)}
                                                         </h3>
-                                                        <span className="text-[10px] font-mono text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800 uppercase tracking-tighter shrink-0">{post.date || post.created_at}</span>
+                                                        <span className="text-[10px] font-mono text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800 uppercase tracking-normal shrink-0">{post.date || post.created_at}</span>
                                                         {type === 'comment' && (
-                                                            <span className="text-[9px] font-mono text-green-500/60 bg-green-500/5 px-2 py-0.5 rounded border border-green-500/10 uppercase tracking-tighter shrink-0">
+                                                            <span className="text-[10px] font-mono text-green-500/60 bg-green-500/5 px-2 py-0.5 rounded border border-green-500/10 uppercase tracking-normal shrink-0">
                                                                 @{post.nickname} {post.contact && `(${post.contact})`}
                                                             </span>
                                                         )}
                                                         {type === 'comment' && post.articleTitle && (
-                                                            <span className="text-[9px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-tighter shrink-0 truncate max-w-[250px]">
+                                                            <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-normal shrink-0 truncate max-w-[250px]">
                                                                 FROM: {post.articleTitle}
                                                             </span>
                                                         )}
@@ -911,17 +923,17 @@ export default function AdminPage() {
                                                                 className="absolute right-0 bottom-full mb-2 z-10 p-2 bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl animate-in fade-in slide-in-from-bottom-1 duration-200 min-w-[140px]"
                                                                 onClick={(e) => e.stopPropagation()}
                                                             >
-                                                                <p className="text-[10px] font-mono uppercase tracking-tighter text-neutral-400 mb-2 px-1">Confirm_Purge?</p>
+                                                                <p className="text-[10px] font-mono uppercase tracking-normal text-neutral-400 mb-2 px-1">Confirm_Purge?</p>
                                                                 <div className="flex gap-1">
                                                                     <button
                                                                         onClick={() => setDeleteTargetId(null)}
-                                                                        className="flex-1 py-1 text-[9px] font-mono uppercase bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded transition-colors"
+                                                                        className="flex-1 py-1 text-[10px] font-mono uppercase bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded transition-colors"
                                                                     >
                                                                         No
                                                                     </button>
                                                                     <button
                                                                         onClick={() => confirmDelete(type, post.filename)}
-                                                                        className="flex-1 py-1 text-[9px] font-mono uppercase bg-red-900/40 hover:bg-red-900/60 text-red-200 rounded transition-colors border border-red-900/50"
+                                                                        className="flex-1 py-1 text-[10px] font-mono uppercase bg-red-900/40 hover:bg-red-900/60 text-red-200 rounded transition-colors border border-red-900/50"
                                                                     >
                                                                         Yes
                                                                     </button>
@@ -953,7 +965,7 @@ export default function AdminPage() {
                                                     <FiEdit3 className="text-blue-500 w-3 h-3" />
                                                     <p className="text-[10px] uppercase tracking-wider text-blue-400 font-mono">Editing: <span className="text-white">{currentFilename}</span></p>
                                                 </div>
-                                                <Button type="button" onClick={handleNewPost} variant="ghost" size="sm" className="h-6 text-[9px] uppercase font-mono tracking-wider text-blue-400/60 hover:text-blue-300 p-0 hover:bg-transparent">
+                                                <Button type="button" onClick={handleNewPost} variant="ghost" size="sm" className="h-6 text-[10px] uppercase font-mono tracking-wider text-blue-400/60 hover:text-blue-300 p-0 hover:bg-transparent">
                                                     Close
                                                 </Button>
                                             </div>
@@ -961,25 +973,25 @@ export default function AdminPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div className="space-y-1">
                                                 <Label htmlFor="post-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Title</Label>
-                                                <Input id="post-title" placeholder="New Entry..." value={postData.title} onChange={(e) => setPostData({ ...postData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-xs focus:bg-neutral-900 text-white placeholder:text-neutral-700" />
+                                                <Input id="post-title" placeholder="New Entry..." value={postData.title} onChange={(e) => setPostData({ ...postData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white placeholder:text-neutral-700" />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label htmlFor="post-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Date</Label>
-                                                <Input id="post-date" type="date" value={postData.date} onChange={(e) => { const val = e.target.value; setPostData(prev => ({ ...prev, date: val, slug: isSlugModified ? prev.slug : dateToSlug(val) })); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-xs focus:bg-neutral-900 text-white [&::-webkit-calendar-picker-indicator]:invert" />
+                                                <Input id="post-date" type="date" value={postData.date} onChange={(e) => { const val = e.target.value; setPostData(prev => ({ ...prev, date: val, slug: isSlugModified ? prev.slug : dateToSlug(val) })); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white [&::-webkit-calendar-picker-indicator]:invert" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
                                             <Label htmlFor="post-desc" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Description</Label>
-                                            <Input id="post-desc" value={postData.description} onChange={(e) => setPostData({ ...postData, description: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-xs focus:bg-neutral-900 text-neutral-300" />
+                                            <Input id="post-desc" value={postData.description} onChange={(e) => setPostData({ ...postData, description: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300" />
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div className="space-y-1">
                                                 <Label htmlFor="post-slug" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Slug</Label>
-                                                <Input id="post-slug" value={postData.slug} onChange={(e) => { setPostData({ ...postData, slug: e.target.value }); setIsSlugModified(true); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-xs font-mono text-neutral-400 focus:bg-neutral-900" />
+                                                <Input id="post-slug" value={postData.slug} onChange={(e) => { setPostData({ ...postData, slug: e.target.value }); setIsSlugModified(true); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm font-mono text-neutral-400 focus:bg-neutral-900" />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label htmlFor="post-category" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Category</Label>
-                                                <Input id="post-category" value={postData.category} onChange={(e) => setPostData({ ...postData, category: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-xs focus:bg-neutral-900 text-neutral-300" />
+                                                <Input id="post-category" value={postData.category} onChange={(e) => setPostData({ ...postData, category: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
@@ -997,24 +1009,24 @@ export default function AdminPage() {
                                                     <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
-                                                    <span className="ml-auto hidden font-mono text-[9px] uppercase tracking-widest text-neutral-600 md:inline">Source / Preview</span>
+                                                    <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-600 md:inline">Source / Preview</span>
                                                 </div>
                                                 <div className="grid grid-cols-1 lg:grid-cols-2">
                                                     <div className="border-b border-neutral-900 lg:border-b-0 lg:border-r">
-                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-600">Markdown_Source</div>
+                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">Markdown_Source</div>
                                                         <textarea
                                                             ref={postContentRef}
                                                             id="post-content"
                                                             rows={25}
                                                             value={postData.content}
                                                             onChange={(e) => updatePostContent(e.target.value)}
-                                                            className="flex min-h-[560px] w-full resize-y border-0 bg-neutral-950 p-4 font-mono text-xs leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
+                                                            className="flex min-h-[560px] w-full resize-y border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                                                         />
                                                     </div>
                                                     <div className="min-h-[560px] bg-[#111]">
-                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-600">Rendered_Preview</div>
+                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">Rendered_Preview</div>
                                                         <div
-                                                            className="prose prose-invert max-w-none p-5 text-sm"
+                                                            className="prose max-w-none p-5 text-[15px]"
                                                             dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(postData.content) }}
                                                         />
                                                     </div>
@@ -1036,7 +1048,7 @@ export default function AdminPage() {
                                         </div>
                                         <div className="space-y-1.5">
                                             <Label htmlFor="daily-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Log</Label>
-                                            <Textarea id="daily-content" rows={10} value={dailyData.content} onChange={(e) => setDailyData({ ...dailyData, content: e.target.value })} className="bg-neutral-900/50 border-neutral-800 min-h-[200px] resize-none leading-normal p-4 text-xs font-mono text-neutral-300 focus:bg-neutral-900" />
+                                            <Textarea id="daily-content" rows={10} value={dailyData.content} onChange={(e) => setDailyData({ ...dailyData, content: e.target.value })} className="bg-neutral-900/50 border-neutral-800 min-h-[200px] resize-none leading-relaxed p-4 text-sm font-mono text-neutral-300 focus:bg-neutral-900" />
                                         </div>
                                     </div>
                                 )}
@@ -1046,11 +1058,11 @@ export default function AdminPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div className="space-y-1">
                                                 <Label htmlFor="moment-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Title</Label>
-                                                <Input id="moment-title" value={momentData.title} onChange={(e) => setMomentData({ ...momentData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-xs focus:bg-neutral-900 text-white" />
+                                                <Input id="moment-title" value={momentData.title} onChange={(e) => setMomentData({ ...momentData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white" />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label htmlFor="moment-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Date</Label>
-                                                <Input id="moment-date" type="date" value={momentData.date} onChange={(e) => setMomentData({ ...momentData, date: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-xs focus:bg-neutral-900 text-white [&::-webkit-calendar-picker-indicator]:invert" />
+                                                <Input id="moment-date" type="date" value={momentData.date} onChange={(e) => setMomentData({ ...momentData, date: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white [&::-webkit-calendar-picker-indicator]:invert" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
@@ -1059,7 +1071,7 @@ export default function AdminPage() {
                                         </div>
                                         <div className="space-y-1.5">
                                             <Label htmlFor="moment-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Caption</Label>
-                                            <Textarea id="moment-content" rows={4} value={momentData.content} onChange={(e) => setMomentData({ ...momentData, content: e.target.value })} className="bg-neutral-900/50 border-neutral-800 min-h-[100px] resize-none leading-normal p-3 text-xs focus:bg-neutral-900 text-neutral-300" />
+                                            <Textarea id="moment-content" rows={4} value={momentData.content} onChange={(e) => setMomentData({ ...momentData, content: e.target.value })} className="bg-neutral-900/50 border-neutral-800 min-h-[100px] resize-none leading-relaxed p-3 text-sm focus:bg-neutral-900 text-neutral-300" />
                                         </div>
                                     </div>
                                 )}
@@ -1074,7 +1086,7 @@ export default function AdminPage() {
                                 )}
 
                                 <div className="pt-4 border-t border-neutral-900">
-                                    <Button disabled={loading} type="submit" size="sm" className="w-full md:w-auto min-w-[120px] bg-white text-black hover:bg-neutral-200 transition-all font-bold tracking-widest text-[10px] h-9 shadow-lg shadow-white/5 active:scale-95 cursor-pointer">
+                                    <Button disabled={loading} type="submit" size="sm" className="w-full md:w-auto min-w-[120px] bg-white text-black hover:bg-neutral-200 transition-all font-bold tracking-[0.18em] text-[10px] h-9 shadow-lg shadow-white/5 active:scale-95 cursor-pointer">
                                         {loading ? (
                                             <div className="flex items-center gap-2 italic">
                                                 <div className="animate-spin h-2.5 w-2.5 border-2 border-current border-t-transparent rounded-full" />
@@ -1098,7 +1110,7 @@ export default function AdminPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="w-full max-w-lg bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
                         <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
-                            <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-400">Reply_Channel: [Admin]</h3>
+                            <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-neutral-400">Reply_Channel: [Admin]</h3>
                             <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                         </div>
                         <div className="p-6 space-y-4">
@@ -1107,11 +1119,11 @@ export default function AdminPage() {
                                 <p className="text-xs text-neutral-400 italic">@{replyTarget?.nickname}: {replyTarget?.content}</p>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="reply-content" className="text-[10px] text-neutral-500 font-mono uppercase tracking-widest">Input_Message</Label>
+                                <Label htmlFor="reply-content" className="text-[10px] text-neutral-500 font-mono uppercase tracking-[0.18em]">Input_Message</Label>
                                 <Textarea
                                     id="reply-content"
                                     autoFocus
-                                    className="min-h-[120px] bg-neutral-950 border-neutral-800 text-xs font-mono text-neutral-300 focus:border-blue-500/50 resize-none"
+                                    className="min-h-[120px] bg-neutral-950 border-neutral-800 text-sm font-mono text-neutral-300 focus:border-blue-500/50 resize-none"
                                     placeholder="Enter response signals..."
                                     value={replyContent}
                                     onChange={(e) => setReplyContent(e.target.value)}
@@ -1123,7 +1135,7 @@ export default function AdminPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setReplyModalOpen(false)}
-                                className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest hover:text-white"
+                                className="text-[10px] font-mono text-neutral-500 uppercase tracking-[0.18em] hover:text-white"
                             >
                                 Cancel
                             </Button>
@@ -1131,7 +1143,7 @@ export default function AdminPage() {
                                 disabled={loading || !replyContent.trim()}
                                 size="sm"
                                 onClick={submitAdminReply}
-                                className="bg-white text-black hover:bg-neutral-200 text-[10px] font-mono uppercase tracking-widest px-6"
+                                className="bg-white text-black hover:bg-neutral-200 text-[10px] font-mono uppercase tracking-[0.18em] px-6"
                             >
                                 {loading ? 'Sending...' : 'Transmit_Signal'}
                             </Button>

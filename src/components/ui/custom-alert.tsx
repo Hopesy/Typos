@@ -14,20 +14,20 @@ export function CustomAlertDialog({ isOpen, onClose, onConfirm, title, descripti
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-neutral-800 bg-neutral-950 p-6 shadow-2xl duration-200 sm:rounded-lg md:w-full animate-in zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-hud-line bg-card p-6 shadow-2xl duration-200 sm:rounded-lg md:w-full animate-in zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%]">
                 <div className="flex flex-col space-y-2 text-center sm:text-left">
-                    <div className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight text-neutral-100">
+                    <div className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight text-hud-strong">
                         <FiAlertTriangle className="h-5 w-5 text-red-500" />
                         {title}
                     </div>
-                    <div className="text-sm text-neutral-400">
+                    <div className="text-sm text-hud-muted">
                         {description}
                     </div>
                 </div>
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
                     <button
-                        className="mt-2 sm:mt-0 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-700 disabled:pointer-events-none disabled:opacity-50 border border-neutral-800 bg-transparent shadow-sm hover:bg-neutral-800 hover:text-neutral-100 h-9 px-4 py-2"
+                        className="mt-2 sm:mt-0 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-hud-line-strong disabled:pointer-events-none disabled:opacity-50 border border-hud-line bg-transparent shadow-sm hover:bg-hud-panel hover:text-hud-strong h-9 px-4 py-2"
                         onClick={onClose}
                         disabled={loading}
                     >

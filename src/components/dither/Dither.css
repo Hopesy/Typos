@@ -40,3 +40,16 @@
             #0f0f0f 100%);
     z-index: 1;
 }
+
+html:not(.dark) .dither-background-wrapper::after {
+    background:
+        radial-gradient(circle at 50% 34%,
+            rgba(247, 246, 241, 0.08) 0%,
+            rgba(247, 246, 241, 0.34) 44%,
+            rgba(247, 246, 241, 0.74) 100%),
+        linear-gradient(to bottom,
+            transparent 0%,
+            rgba(247, 246, 241, 0.24) 30%,
+            rgba(247, 246, 241, 0.78) 78%,
+            #f7f6f1 100%);
+}

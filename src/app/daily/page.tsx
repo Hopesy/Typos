@@ -8,16 +8,16 @@ export default async function DailyPage() {
       {/* Main Content Stream */}
       <div className="relative space-y-16">
         {/* Timeline Connector (Vertical Dotted Line) */}
-        <div className="absolute left-[7px] top-2 bottom-0 w-px border-l border-dashed border-white/10 pointer-events-none"></div>
+        <div className="absolute left-[7px] top-2 bottom-0 w-px border-l border-dashed border-hud-line pointer-events-none"></div>
 
         {dailyPosts.map((post, index) => (
           <article key={`${post.date}-${index}`} className="relative group mb-[24px]">
             {/* Command Line Prompt - Refined Circle style */}
             <div className="flex items-center gap-4 text-[15px] font-mono mb-4 relative z-10">
-              <div className="w-[15px] h-[15px] rounded-full bg-black border border-white/20 flex items-center justify-center">
-                <span className="text-[8px] text-white/40">➜</span>
+              <div className="w-[15px] h-[15px] rounded-full bg-background border border-hud-line-strong flex items-center justify-center">
+                <span className="text-[10px] text-hud-muted">➜</span>
               </div>
-              <span className="text-white/40 group-hover:text-white/80 transition-colors uppercase tracking-widest text-[10px]">
+              <span className="text-hud-muted group-hover:text-hud-strong transition-colors uppercase tracking-[0.18em] text-[11px]">
                 cat log_{post.date}.txt
               </span>
             </div>
@@ -30,13 +30,13 @@ export default async function DailyPage() {
                   <img
                     src={post.image}
                     alt={post.title || post.date}
-                    className="max-h-96 w-auto object-contain border border-white/10 opacity-80 group-hover/image:opacity-100 transition-opacity duration-700 rounded-[2px]"
+                    className="max-h-96 w-auto object-contain border border-hud-line opacity-80 group-hover/image:opacity-100 transition-opacity duration-700 rounded-[2px]"
                   />
                   {/* HUD Corner Accents on Image */}
-                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/40"></div>
-                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/40"></div>
+                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-hud-muted"></div>
+                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-hud-muted"></div>
                   {/* Metadata overlay on image */}
-                  <div className="absolute top-2 right-2 font-mono text-[8px] text-white/20 px-1 bg-black/40">
+                  <div className="absolute top-2 right-2 font-mono text-[10px] text-white/30 px-1.5 py-0.5 bg-black/40">
                     CAPTURE_PROT_01
                   </div>
                 </div>
@@ -45,18 +45,18 @@ export default async function DailyPage() {
               {/* Text Content */}
               <div className="space-y-3">
                 {post.title && (
-                  <div className="text-[14px] font-bold text-white/90 font-mono uppercase tracking-tight">
+                  <div className="text-[15px] font-bold text-hud-strong font-mono uppercase tracking-tight">
                     {post.title}
                   </div>
                 )}
                 <div
-                  className="prose prose-[14px] prose-invert max-w-none text-[14px] leading-relaxed font-sans text-white/70"
+                  className="prose max-w-none text-[15px] leading-7 font-sans sm:text-base sm:leading-8"
                   dangerouslySetInnerHTML={{ __html: post.html }}
                 />
               </div>
 
               {/* System Metadata Tags */}
-              <div className="flex items-center gap-4 font-mono text-[9px] uppercase tracking-widest text-white/10 group-hover:text-white/30 transition-colors">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[10px] uppercase tracking-[0.16em] text-hud-faint group-hover:text-hud-muted transition-colors">
                 <span>[STATUS: ARCHIVED]</span>
                 <span>[CRC: 0x{post.date.slice(-4)}]</span>
                 <span>[SOURCE: OMEGA_DRIVE]</span>
@@ -68,12 +68,12 @@ export default async function DailyPage() {
         {/* Terminal Footer Indicator */}
         <div className="relative group mb-[24px]">
           <div className="flex items-center gap-4 text-[10px] font-mono relative z-10">
-            <div className="w-[15px] h-[15px] rounded-full bg-black border border-white/20 flex items-center justify-center">
-              <span className="text-[8px] text-white/40">➜</span>
+            <div className="w-[15px] h-[15px] rounded-full bg-background border border-hud-line-strong flex items-center justify-center">
+              <span className="text-[10px] text-hud-muted">➜</span>
             </div>
             <div className="flex gap-1 items-center">
-              <span className="text-white/20 tracking-widest uppercase">system_idle</span>
-              <span className="w-2 h-4 bg-white/40 cursor-blink ml-1"></span>
+              <span className="text-hud-dim tracking-[0.18em] uppercase">system_idle</span>
+              <span className="w-2 h-4 bg-hud-muted cursor-blink ml-1"></span>
             </div>
           </div>
         </div>

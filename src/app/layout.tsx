@@ -62,7 +62,7 @@ export const metadata: Metadata = {
   description: "The darkness is boundless",
   icons: {
     icon: [
-      { url: "/icon3-white.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/icon3.svg", type: "image/svg+xml", sizes: "any" },
       { url: "/icon3.png", type: "image/png", sizes: "32x32" },
       { url: "/icon3.png", type: "image/png", sizes: "16x16" },
       { url: "/icon3.png", type: "image/png", sizes: "192x192" },
@@ -75,13 +75,30 @@ export const metadata: Metadata = {
 
 import { Suspense } from "react";
 
+const themeScript = `
+(() => {
+  try {
+    const stored = localStorage.getItem('typos-theme');
+    const theme = stored === 'light' ? 'light' : 'dark';
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.dataset.theme = theme;
+  } catch {
+    document.documentElement.classList.add('dark');
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className="dark">
+    <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col relative bg-background`}
       >

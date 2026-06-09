@@ -76,10 +76,10 @@ export default function AboutPage() {
 
       {/* Header Section */}
       <section className="mb-13 space-y-4">
-        <div className="flex items-center gap-4 text-white/13 font-mono text-[10px] tracking-widest uppercase">
-          <span className="h-px flex-1 bg-white/10"></span>
+        <div className="flex items-center gap-4 text-hud-faint font-mono text-[11px] tracking-[0.18em] uppercase">
+          <span className="h-px flex-1 bg-hud-line"></span>
           <span>About page</span>
-          <span className="h-px flex-1 bg-white/10"></span>
+          <span className="h-px flex-1 bg-hud-line"></span>
         </div>
 
         <div>
@@ -96,15 +96,15 @@ export default function AboutPage() {
       <section className="mt-24 flex flex-col items-center">
         <div className="relative group">
           {/* Corner Accents */}
-          <div className="absolute -top-2 -left-2 w-2 h-2 border-t border-l border-white/20"></div>
-          <div className="absolute -top-2 -right-2 w-2 h-2 border-t border-r border-white/20"></div>
-          <div className="absolute -bottom-2 -left-2 w-2 h-2 border-b border-l border-white/20"></div>
-          <div className="absolute -bottom-2 -right-2 w-2 h-2 border-b border-r border-white/20"></div>
+          <div className="absolute -top-2 -left-2 w-2 h-2 border-t border-l border-hud-faint"></div>
+          <div className="absolute -top-2 -right-2 w-2 h-2 border-t border-r border-hud-faint"></div>
+          <div className="absolute -bottom-2 -left-2 w-2 h-2 border-b border-l border-hud-faint"></div>
+          <div className="absolute -bottom-2 -right-2 w-2 h-2 border-b border-r border-hud-faint"></div>
 
-          <div className="px-10 py-6 border border-white/5 bg-transparent backdrop-blur-[2px]">
+          <div className="px-10 py-6 border border-hud-line-soft bg-transparent backdrop-blur-[2px]">
             <div className="flex flex-col items-center gap-3">
-              <FiCommand className="w-3 h-3 text-white/20 animate-pulse" />
-              <p className="font-press-start text-[7px] text-white/40 text-center tracking-[0.2em] leading-relaxed max-w-[300px]">
+              <FiCommand className="w-3 h-3 text-hud-faint animate-pulse" />
+              <p className="font-press-start text-[10px] text-hud-muted text-center tracking-[0.12em] leading-relaxed max-w-[340px]">
                 &ldquo;YOUR IDENTITY IS TRANSITORY, BUT DATA PERSISTS.&rdquo;
               </p>
             </div>
@@ -112,7 +112,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="mt-16 border-t border-white/5 pt-12 overflow-hidden mx-auto max-w-full">
+      <section className="mt-16 border-t border-hud-line-soft pt-12 overflow-hidden mx-auto max-w-full">
         <div className="relative w-full">
           <LogoLoop
             logos={techLogos}
@@ -121,7 +121,7 @@ export default function AboutPage() {
             logoHeight={20}
             gap={44}
             fadeOut
-            fadeOutColor="#0a0a0a"
+            fadeOutColor="var(--background)"
           />
         </div>
       </section>
@@ -146,32 +146,32 @@ function AboutSection({ section }: { section: AboutSectionData }) {
   return (
     <section
       key={section.id}
-      className="group relative p-8 bg-card transition-all duration-400 border border-white/[0.05]"
+      className="group relative p-8 bg-card transition-all duration-400 border border-hud-line-soft"
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="text-white/40 group-hover:text-white transition-colors">
+          <div className="text-hud-muted group-hover:text-hud-strong transition-colors">
             {section.icon}
           </div>
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-200 font-mono">
+          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-hud-strong font-mono">
             {section.title}
           </h2>
         </div>
-        <span className="text-[9px] font-mono text-white/10 group-hover:text-white/30 min-w-10 text-right">
+        <span className="text-[10px] font-mono text-hud-faint group-hover:text-hud-dim min-w-10 text-right">
           {hexId || "----"}
         </span>
       </div>
 
-      <div className="space-y-4 text-[14px] text-white/60 leading-relaxed font-sans">
+      <div className="space-y-4 text-[15px] leading-7 text-hud font-sans sm:text-base sm:leading-8">
         {section.content?.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
         {section.items && (
-          <div className="grid gap-2 border-t border-white/5 pt-4">
+          <div className="grid gap-2 border-t border-hud-line-soft pt-4">
             {section.items.map((item, i) => (
               <div key={i} className="flex items-center justify-between group/line">
-                <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest">{item.label}</span>
-                <span className="text-[10px] font-mono text-white/60 group-hover/line:text-white transition-colors">{item.value}</span>
+                <span className="text-[10px] font-mono text-hud-dim uppercase tracking-[0.18em]">{item.label}</span>
+                <span className="text-[11px] font-mono text-hud group-hover/line:text-hud-strong transition-colors">{item.value}</span>
               </div>
             ))}
           </div>
@@ -179,7 +179,7 @@ function AboutSection({ section }: { section: AboutSectionData }) {
       </div>
 
       <div className="mt-8 flex justify-end">
-        <span className="text-[8px] font-mono text-white/5 uppercase tracking-[0.4em] group-hover:text-white/20 transition-colors">
+        <span className="text-[10px] font-mono text-hud-faint uppercase tracking-[0.22em] group-hover:text-hud-dim transition-colors">
           ACC_PROTO // {section.id}
         </span>
       </div>
