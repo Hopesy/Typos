@@ -1,0 +1,190 @@
+{
+  "nav": {
+    "home": "首页",
+    "posts": "合集",
+    "category": "分类",
+    "daily": "日常",
+    "about": "关于"
+  },
+  "home": {
+    "section": {
+      "footprint": "足迹",
+      "tools": "工具",
+      "books": "书架"
+    },
+    "signalDesc": "把折腾过的东西、偶尔的日常、喜欢的瞬间都放在这里。保持轻量，慢慢更新。",
+    "toolSample": "示例项目"
+  },
+  "about": {
+    "label": "关于本站",
+    "intel": {
+      "title": "站点含义",
+      "body": [
+        "在这个信息的荒原中，此站点旨在作为一个极简的锚点。",
+        "名字源于对效率与留白的某种执念，或者仅仅是一个随机生成的 ID。",
+        "我们在此记录碎片，在黑暗中寻找微弱的逻辑连线。"
+      ]
+    },
+    "core": {
+      "title": "搭建环境",
+      "body": [
+        "核心引擎基于 Next.js 15+ 构建，采用最新的 React Server Components 架构。",
+        "视觉层由 Tailwind CSS v4 驱动，融合了战术 HUD 与 8-bit 像素美学。",
+        "部署于 Cloudflare 边缘节点，确保数据流的高速传输与稳定。"
+      ]
+    },
+    "build": {
+      "title": "搭建过程",
+      "body": [
+        "本项目从 0 开始搭建，使用 ReactBits 组件库的设计。",
+        "全过程在 Warp 环境下完成，期间借助 Manus 生成初始 UI 原型。",
+        "在 AI 生成的基础上进行手工操作与逻辑重构，以确保视觉的独特性。"
+      ]
+    },
+    "comm": {
+      "title": "通信协议"
+    }
+  },
+  "posts": {
+    "all": "全部",
+    "notFound": "文章未找到"
+  },
+  "comments": {
+    "title": "Terminal_Comments / 终端评论系统",
+    "identity": "Identity / 称呼",
+    "contact": {
+      "label": "Correspondence / 联系方式",
+      "placeholder": "选填"
+    },
+    "observation": "Observation / 内容",
+    "nicknamePlaceholder": "昵称",
+    "replyingTo": "回复 @",
+    "cancelReply": "[ 取消回复 ]"
+  },
+  "dock": {
+    "home": "首页",
+    "posts": "合集",
+    "moments": "瞬间",
+    "daily": "日常",
+    "about": "关于",
+    "categoryAlt": "分类"
+  },
+  "aria": {
+    "themeToLight": "切换到亮色主题",
+    "themeToDark": "切换到暗色主题",
+    "toc": "文章目录",
+    "langSwitch": "Switch to English"
+  },
+  "markdown": {
+    "copyCode": "复制代码",
+    "expandAll": "展开全部",
+    "collapseCode": "收起代码"
+  },
+  "carousel": {
+    "view": "查看 →"
+  },
+  "admin": {
+    "checking": "正在检查访问权限...",
+    "login": {
+      "title": "控制台访问",
+      "key": "安全密钥",
+      "denied": "访问被拒绝",
+      "enter": "进入",
+      "version": "管理后台 V.2.1"
+    },
+    "nav": {
+      "dashboard": "仪表盘",
+      "post": "文章",
+      "daily": "日常",
+      "moment": "瞬间",
+      "comment": "评论",
+      "contentType": "内容类型",
+      "viewSite": "查看站点",
+      "logout": "退出登录"
+    },
+    "type": {
+      "post": "文章",
+      "daily": "日常",
+      "moment": "瞬间",
+      "comment": "评论"
+    },
+    "dash": {
+      "posts": { "label": "文章数", "meta": "文章档案" },
+      "words": { "label": "总字数", "meta": "Markdown 字符" },
+      "total": { "label": "总内容数", "meta": "文章 + 日常 + 瞬间" },
+      "visits": { "label": "总访问量", "meta": "今日新增 167 次" }
+    },
+    "chart": {
+      "visitors": "访客趋势图",
+      "views": "访问量趋势图",
+      "latestPeople": "最新: <strong>{value} 人</strong>",
+      "latestTimes": "最新: <strong>{value} 次</strong>",
+      "range7d": "近一周",
+      "range30d": "近30天",
+      "axis7dStart": "前6天",
+      "axis30dStart": "前29天",
+      "axisToday": "今天"
+    },
+    "title": {
+      "dashboard": "仪表盘",
+      "editPost": "编辑文章",
+      "commentMgmt": "评论管理",
+      "libraryTyped": "{name}库",
+      "newTyped": "新建{name}"
+    },
+    "sub": {
+      "overview": "概览",
+      "library": "库",
+      "editor": "编辑器"
+    },
+    "action": {
+      "uploadMd": "上传_MD",
+      "library": "库"
+    },
+    "form": {
+      "title": "标题",
+      "date": "日期",
+      "description": "描述",
+      "slug": "别名",
+      "category": "分类",
+      "content": "正文",
+      "log": "日志",
+      "caption": "说明",
+      "imageUrl": "图片地址",
+      "imageUrlOptional": "图片地址（选填）"
+    },
+    "editing": "正在编辑:",
+    "close": "关闭",
+    "md": {
+      "quote": "引用 / 摘录",
+      "source": "Markdown 源码",
+      "preview": "渲染预览",
+      "sourcePreview": "源码 / 预览"
+    },
+    "list": {
+      "empty": "空记录",
+      "reply": "回复",
+      "delete": "删除",
+      "from": "来自: {title}"
+    },
+    "confirm": {
+      "purge": "确认删除？",
+      "yes": "是",
+      "no": "否"
+    },
+    "btn": {
+      "saving": "保存中...",
+      "publish": "发布",
+      "update": "更新"
+    },
+    "reply": {
+      "channel": "回复通道: [管理员]",
+      "target": "目标信号:",
+      "input": "输入消息",
+      "placeholder": "输入回复内容...",
+      "cancel": "取消",
+      "send": "发送信号",
+      "sending": "发送中..."
+    }
+  }
+}

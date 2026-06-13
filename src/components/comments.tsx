@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 
 interface Comment {
@@ -19,6 +20,7 @@ interface CommentsProps {
 }
 
 export default function Comments({ pageId, pageTitle }: CommentsProps) {
+    const t = useTranslations('comments');
     const [comments, setComments] = useState<Comment[]>([]);
     const [nickname, setNickname] = useState('');
     const [contact, setContact] = useState('');
@@ -104,7 +106,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
             <div className="flex items-center gap-2">
                 <div className="h-1 w-[1px] bg-hud-faint" />
                 <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-hud-dim">
-                    Terminal_Comments / 终端评论系统
+                    {t('title')}
                 </span>
             </div>
 
@@ -119,14 +121,14 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                         <div className="flex items-center gap-2 mb-[-1.5rem] animate-in slide-in-from-left duration-300">
                             <span className="text-[10px] font-mono text-hud-muted italic flex items-center gap-1">
                                 <span className="w-1 h-1 bg-hud-faint"></span>
-                                Replying to @{replyTo.name}
+                                {t('replyingTo')}{replyTo.name}
                             </span>
                             <button
                                 type="button"
                                 onClick={() => setReplyTo(null)}
                                 className="text-[10px] font-mono text-hud-faint hover:text-hud-strong transition-colors"
                             >
-                                [ CANCEL_REPLY ]
+                                {t('cancelReply')}
                             </button>
                         </div>
                     )}
@@ -134,26 +136,26 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
 
                         <div className="flex-1 border-b border-hud-line pb-2 group focus-within:border-hud-line-strong transition-colors">
                             <label className="text-[10px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
-                                Identity / 称呼
+                                {t('identity')}
                             </label>
                             <input
                                 type="text"
                                 value={nickname}
                                 onChange={(e) => setNickname(e.target.value)}
                                 required
-                                placeholder="Nickname"
+                                placeholder={t('nicknamePlaceholder')}
                                 className="bg-transparent w-full text-sm font-mono text-hud-strong outline-none placeholder:text-hud-faint"
                             />
                         </div>
                         <div className="flex-1 border-b border-hud-line pb-2 group focus-within:border-hud-line-strong transition-colors">
                             <label className="text-[10px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
-                                Correspondence / 联系方式
+                                {t('contact.label')}
                             </label>
                             <input
                                 type="text"
                                 value={contact}
                                 onChange={(e) => setContact(e.target.value)}
-                                placeholder="Optional"
+                                placeholder={t('contact.placeholder')}
                                 className="bg-transparent w-full text-sm font-mono text-hud-strong outline-none placeholder:text-hud-faint"
                             />
                         </div>
@@ -161,7 +163,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
 
                     <div className="border-b border-hud-line pb-2 group focus-within:border-hud-line-strong transition-colors">
                         <label className="text-[10px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
-                            Observation / 内容
+                            {t('observation')}
                         </label>
                         <textarea
                             value={content}

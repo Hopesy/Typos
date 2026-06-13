@@ -30,6 +30,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LangToggle } from "@/components/lang-toggle";
+import { useTranslations } from "next-intl";
 
 type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment';
 
@@ -84,7 +86,8 @@ type DashboardData = {
 
 type ChartRange = '7d' | '30d';
 
-const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] uppercase leading-none tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white";
+const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] uppercase leading-[14px] tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white";
+const adminActionButtonTextClass = "inline-flex translate-y-px leading-none";
 
 const visitorSeries: Record<ChartRange, number[]> = {
     '7d': [18, 24, 21, 32, 27, 15, 17],
@@ -129,14 +132,15 @@ function TrendChart({
     range,
     onRangeChange,
     values,
-    unit,
+    latestKey,
 }: {
     title: string;
     range: ChartRange;
     onRangeChange: (range: ChartRange) => void;
     values: number[];
-    unit: string;
+    latestKey: 'latestPeople' | 'latestTimes';
 }) {
+    const t = useTranslations('admin.chart');
     const { line, area, points, max } = buildChartPath(values);
     const latest = values[values.length - 1] || 0;
     const previous = values[values.length - 2] || latest;
@@ -149,7 +153,10 @@ function TrendChart({
                 <div>
                     <h2 className="text-sm font-bold text-neutral-200">{title}</h2>
                     <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-600">
-                        最新: <span className="text-neutral-400">{formatMetric(latest)} {unit}</span>
+                        {t.rich(latestKey, {
+                            value: formatMetric(latest),
+                            strong: (chunks) => <span className="text-neutral-400">{chunks}</span>,
+                        })}
                         <span className={delta >= 0 ? 'ml-2 text-green-400/70' : 'ml-2 text-red-400/70'}>
                             {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}
                         </span>
@@ -166,7 +173,7 @@ function TrendChart({
                                 : 'text-neutral-500 hover:text-neutral-300'
                                 }`}
                         >
-                            {option === '7d' ? '近一周' : '近30天'}
+                            {option === '7d' ? t('range7d') : t('range30d')}
                         </button>
                     ))}
                 </div>
@@ -190,8 +197,8 @@ function TrendChart({
                 {points.map(([x, y], index) => (
                     <circle key={`${x}-${y}`} cx={x} cy={y} r={index === points.length - 1 ? 4 : 2.5} fill="#75a7ff" stroke="var(--admin-bg)" strokeWidth="2" />
                 ))}
-                <text x="30" y="205" className="fill-neutral-600 font-mono text-[10px]">{range === '7d' ? '前6天' : '前29天'}</text>
-                <text x="566" y="205" className="fill-neutral-600 font-mono text-[10px]">今天</text>
+                <text x="30" y="205" className="fill-neutral-600 font-mono text-[10px]">{range === '7d' ? t('axis7dStart') : t('axis30dStart')}</text>
+                <text x="566" y="205" className="fill-neutral-600 font-mono text-[10px]">{t('axisToday')}</text>
             </svg>
         </section>
     );
@@ -204,6 +211,7 @@ function DashboardView({
     data: DashboardData;
     loading: boolean;
 }) {
+    const tr = useTranslations('admin');
     const [visitorRange, setVisitorRange] = useState<ChartRange>('7d');
     const [viewRange, setViewRange] = useState<ChartRange>('7d');
     const postCount = data.posts.length;
@@ -211,10 +219,10 @@ function DashboardView({
     const totalWords = [...data.posts, ...data.daily, ...data.moments].reduce((sum, item) => sum + getItemTextLength(item), 0);
 
     const cards = [
-        { label: '文章数', value: postCount, meta: '文章档案', icon: <FiEdit3 className="h-4 w-4" /> },
-        { label: '总字数', value: totalWords, meta: 'Markdown 字符', icon: <FiTerminal className="h-4 w-4" /> },
-        { label: '总内容数', value: totalContent, meta: '文章 + 日常 + 瞬间', icon: <FiList className="h-4 w-4" /> },
-        { label: '总访问量', value: totalVisits, meta: '今日新增 167 次', icon: <FiTrendingUp className="h-4 w-4" /> },
+        { label: tr('dash.posts.label'), value: postCount, meta: tr('dash.posts.meta'), icon: <FiEdit3 className="h-4 w-4" /> },
+        { label: tr('dash.words.label'), value: totalWords, meta: tr('dash.words.meta'), icon: <FiTerminal className="h-4 w-4" /> },
+        { label: tr('dash.total.label'), value: totalContent, meta: tr('dash.total.meta'), icon: <FiList className="h-4 w-4" /> },
+        { label: tr('dash.visits.label'), value: totalVisits, meta: tr('dash.visits.meta'), icon: <FiTrendingUp className="h-4 w-4" /> },
     ];
 
     return (
@@ -237,18 +245,18 @@ function DashboardView({
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
                 <TrendChart
-                    title="访客趋势图"
+                    title={tr('chart.visitors')}
                     range={visitorRange}
                     onRangeChange={setVisitorRange}
                     values={visitorSeries[visitorRange]}
-                    unit="人"
+                    latestKey="latestPeople"
                 />
                 <TrendChart
-                    title="访问量趋势图"
+                    title={tr('chart.views')}
                     range={viewRange}
                     onRangeChange={setViewRange}
                     values={viewSeries[viewRange]}
-                    unit="次"
+                    latestKey="latestTimes"
                 />
             </div>
         </div>
@@ -273,22 +281,77 @@ const renderInlineMarkdown = (value: string) => {
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 };
 
+type MarkdownPreviewBlock =
+    | { type: 'markdown'; content: string }
+    | { type: 'code'; content: string; language: string };
+
+const fencePattern = /^\s*```([^\s`]*)?.*$/;
+
+const splitMarkdownPreviewBlocks = (markdown: string): MarkdownPreviewBlock[] => {
+    const blocks: MarkdownPreviewBlock[] = [];
+    const paragraph: string[] = [];
+    const code: string[] = [];
+    let inCodeBlock = false;
+    let codeLanguage = '';
+
+    const flushParagraph = () => {
+        const content = paragraph.join('\n').trim();
+        paragraph.length = 0;
+        if (content) blocks.push({ type: 'markdown', content });
+    };
+
+    const flushCode = () => {
+        blocks.push({ type: 'code', content: code.join('\n'), language: codeLanguage });
+        code.length = 0;
+        codeLanguage = '';
+    };
+
+    for (const line of markdown.replace(/\r\n/g, '\n').split('\n')) {
+        const fence = line.match(fencePattern);
+
+        if (fence) {
+            if (inCodeBlock) {
+                flushCode();
+                inCodeBlock = false;
+            } else {
+                flushParagraph();
+                inCodeBlock = true;
+                codeLanguage = fence[1] || '';
+            }
+            continue;
+        }
+
+        if (inCodeBlock) {
+            code.push(line);
+            continue;
+        }
+
+        if (!line.trim()) {
+            flushParagraph();
+            continue;
+        }
+
+        paragraph.push(line);
+    }
+
+    if (inCodeBlock) flushCode();
+    flushParagraph();
+
+    return blocks;
+};
+
 const renderMarkdownPreview = (markdown: string) => {
     if (!markdown.trim()) {
         return '<p class="text-neutral-600 font-mono text-xs uppercase tracking-[0.18em]">Preview_Waiting_For_Input</p>';
     }
 
-    const blocks = markdown.split(/\n{2,}/);
-
-    return blocks.map((block) => {
-        const trimmed = block.trim();
-        if (!trimmed) return '';
-
-        if (trimmed.startsWith('```')) {
-            const code = trimmed.replace(/^```[a-zA-Z0-9_-]*\n?/, '').replace(/```$/, '');
-            return `<pre><code>${escapeHtml(code)}</code></pre>`;
+    return splitMarkdownPreviewBlocks(markdown).map((block) => {
+        if (block.type === 'code') {
+            const languageLabel = block.language ? ` data-language="${escapeHtml(block.language)}"` : '';
+            return `<pre${languageLabel}><code>${escapeHtml(block.content)}</code></pre>`;
         }
 
+        const trimmed = block.content.trim();
         if (trimmed.startsWith('# ')) return `<h1>${renderInlineMarkdown(trimmed.slice(2))}</h1>`;
         if (trimmed.startsWith('## ')) return `<h2>${renderInlineMarkdown(trimmed.slice(3))}</h2>`;
         if (trimmed.startsWith('### ')) return `<h3>${renderInlineMarkdown(trimmed.slice(4))}</h3>`;
@@ -355,8 +418,21 @@ const safeSlug = (value: string, fallback: string) => {
 };
 
 const titleFromMarkdown = (content: string) => {
-    const heading = content.match(/^#\s+(.+)$/m);
-    return heading?.[1]?.trim() || '';
+    let inCodeBlock = false;
+
+    for (const line of content.replace(/\r\n/g, '\n').split('\n')) {
+        if (fencePattern.test(line)) {
+            inCodeBlock = !inCodeBlock;
+            continue;
+        }
+
+        if (inCodeBlock) continue;
+
+        const heading = line.match(/^#\s+(.+)$/);
+        if (heading?.[1]) return heading[1].trim();
+    }
+
+    return '';
 };
 
 const titleFromFilename = (filename: string) => {
@@ -387,6 +463,7 @@ const buildPostDataFromMarkdown = (raw: string, filename: string, fallbackDate: 
 export default function AdminPage() {
     const postContentRef = useRef<HTMLTextAreaElement | null>(null);
     const postUploadInputRef = useRef<HTMLInputElement | null>(null);
+    const tr = useTranslations('admin');
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [password, setPassword] = useState('');
     const [authError, setAuthError] = useState(false);
@@ -540,6 +617,19 @@ export default function AdminPage() {
             return () => window.clearTimeout(timer);
         }
     }, [viewMode, isAuthorized, fetchPosts]);
+
+    const autoResizePostContent = useCallback(() => {
+        const textarea = postContentRef.current;
+        if (!textarea) return;
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }, []);
+
+    useEffect(() => {
+        if (viewMode === 'edit' && type === 'post') {
+            autoResizePostContent();
+        }
+    }, [viewMode, type, postData.content, autoResizePostContent]);
 
     const handleEditPost = (item: AdminItem) => {
         if (type === 'comment' || type === 'dashboard') return;
@@ -797,10 +887,11 @@ export default function AdminPage() {
     if (checkingAuth) {
         return (
             <div className="admin-shell min-h-screen bg-neutral-950 text-white flex items-center justify-center font-mono">
-                <div className="fixed right-4 top-4">
+                <div className="fixed right-4 top-4 flex items-center gap-2">
+                    <LangToggle compact />
                     <ThemeToggle compact />
                 </div>
-                Checking access...
+                {tr('checking')}
             </div>
         );
     }
@@ -808,7 +899,8 @@ export default function AdminPage() {
     if (!isAuthorized) {
         return (
             <div className="admin-shell min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-white selection:text-black font-sans">
-                <div className="fixed right-4 top-4">
+                <div className="fixed right-4 top-4 flex items-center gap-2">
+                    <LangToggle compact />
                     <ThemeToggle compact />
                 </div>
                 <Card className="w-full max-w-[320px] border-neutral-800 bg-neutral-900/50 shadow-2xl">
@@ -818,13 +910,13 @@ export default function AdminPage() {
                                 <FiLock className="text-neutral-500 w-3 h-3" />
                             </div>
                         </div>
-                        <CardTitle className="text-sm font-semibold tracking-tight text-white uppercase">Console Access</CardTitle>
+                        <CardTitle className="text-sm font-semibold tracking-tight text-white uppercase">{tr('login.title')}</CardTitle>
                     </CardHeader>
                     <CardContent className="px-6 pb-6 space-y-4">
                         <form onSubmit={handleLogin} className="space-y-3">
                             <div className="space-y-1.5">
-                                <Label htmlFor="password" title="Security_Key" className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 font-mono">
-                                    Security_Key
+                                <Label htmlFor="password" title={tr('login.key')} className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 font-mono">
+                                    {tr('login.key')}
                                 </Label>
                                 <Input
                                     id="password"
@@ -838,7 +930,7 @@ export default function AdminPage() {
                                 {authError && (
                                     <p className="text-[10px] text-red-500 font-mono flex items-center justify-center gap-1 mt-1.5 uppercase tracking-normal">
                                         <FiAlertTriangle className="w-2.5 h-2.5" />
-                                        Access Denied
+                                        {tr('login.denied')}
                                     </p>
                                 )}
                             </div>
@@ -847,13 +939,13 @@ export default function AdminPage() {
                                 type="submit"
                                 className="w-full bg-white text-black hover:bg-neutral-200 transition-colors font-mono text-[10px] tracking-[0.18em] h-9"
                             >
-                                {loading ? '...' : 'ENTER'}
+                                {loading ? '...' : tr('login.enter')}
                             </Button>
                         </form>
                     </CardContent>
                     <CardFooter className="flex justify-center border-t border-neutral-800/50 py-3">
                         <p className="text-[10px] text-neutral-600 font-mono uppercase tracking-[0.2em]">
-                            Admin_V.2.1
+                            {tr('login.version')}
                         </p>
                     </CardFooter>
                 </Card>
@@ -870,7 +962,7 @@ export default function AdminPage() {
                 <div className="p-4" onClick={(e) => e.stopPropagation()}>
                     <nav className="space-y-1">
                         {!isSidebarCollapsed && (
-                            <Label className="text-[10px] text-neutral-600 uppercase tracking-[0.18em] px-2 font-mono mb-2 block animate-in fade-in duration-300">Content Type</Label>
+                            <Label className="text-[10px] text-neutral-600 uppercase tracking-[0.18em] px-2 font-mono mb-2 block animate-in fade-in duration-300">{tr('nav.contentType')}</Label>
                         )}
                         {(['dashboard', 'post', 'daily', 'moment', 'comment'] as const).map((t) => (
 
@@ -897,7 +989,7 @@ export default function AdminPage() {
                                 </span>
 
                                 {!isSidebarCollapsed && (
-                                    <span className="font-medium capitalize tracking-normal truncate animate-in fade-in duration-300">{t}</span>
+                                    <span className="font-medium tracking-normal truncate animate-in fade-in duration-300">{tr(`nav.${t}`)}</span>
                                 )}
                                 {!isSidebarCollapsed && type === t && <FiCheck className="ml-auto w-3 h-3 text-neutral-500 shrink-0" />}
                             </button>
@@ -909,14 +1001,14 @@ export default function AdminPage() {
                     <nav className="space-y-1">
                         <Link href="/" className={`flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} text-neutral-500 hover:text-white transition-colors group rounded-md hover:bg-neutral-900/50 cursor-pointer`}>
                             <FiHome className={isSidebarCollapsed ? "w-3.5 h-3.5 group-hover:scale-105 transition-transform shrink-0" : "w-4 h-4 group-hover:scale-105 transition-transform shrink-0"} />
-                            {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">View Site</span>}
+                            {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">{tr('nav.viewSite')}</span>}
                         </Link>
                         <button
                             onClick={handleLogout}
                             className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} text-red-500/60 hover:text-red-500 transition-colors group rounded-md hover:bg-red-950/20 cursor-pointer`}
                         >
                             <FiLogOut className={isSidebarCollapsed ? "w-3.5 h-3.5 shrink-0" : "w-4 h-4 shrink-0"} />
-                            {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">Logout</span>}
+                            {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">{tr('nav.logout')}</span>}
                         </button>
                     </nav>
                 </div>
@@ -928,21 +1020,22 @@ export default function AdminPage() {
                         <div>
                             <h1 className="text-lg font-bold tracking-tight text-white mb-1 capitalize flex items-center gap-2">
                                 {type === 'dashboard'
-                                    ? 'Dashboard'
+                                    ? tr('title.dashboard')
                                     : viewMode === 'list'
-                                    ? `${type} Library`
-                                    : (isEditing && type === 'post' ? 'Edit Post' : (type === 'comment' ? 'Comment Management' : `New ${type}`))}
+                                    ? tr('title.libraryTyped', { name: tr(`type.${type}`) })
+                                    : (isEditing && type === 'post' ? tr('title.editPost') : (type === 'comment' ? tr('title.commentMgmt') : tr('title.newTyped', { name: tr(`type.${type}`) })))}
 
                                 <span className="text-neutral-600 font-normal text-sm">/</span>
                                 <span className="text-neutral-500 font-mono text-xs uppercase normal-case tracking-wider font-normal">
                                     {type === 'dashboard'
-                                        ? 'Overview'
-                                        : (type === 'post' || type === 'daily' || type === 'moment') && viewMode === 'list' ? 'Library' : (type === 'comment' ? 'Library' : 'Editor')}
+                                        ? tr('sub.overview')
+                                        : (type === 'post' || type === 'daily' || type === 'moment') && viewMode === 'list' ? tr('sub.library') : (type === 'comment' ? tr('sub.library') : tr('sub.editor'))}
                                 </span>
 
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
+                            <LangToggle compact />
                             <ThemeToggle compact />
                             {type !== 'comment' && type !== 'dashboard' && (
                                 <>
@@ -963,7 +1056,7 @@ export default function AdminPage() {
                                             className={adminActionButtonClass}
                                         >
                                             <FiUpload className="h-3 w-3" />
-                                            Upload_MD
+                                            <span className={adminActionButtonTextClass}>{tr('action.uploadMd')}</span>
                                         </Button>
                                     )}
                                     <Button
@@ -973,7 +1066,9 @@ export default function AdminPage() {
                                         className={adminActionButtonClass}
                                     >
                                         {viewMode === 'edit' ? <FiList className="h-3 w-3" /> : <FiPlus className="h-3 w-3" />}
-                                        {viewMode === 'edit' ? 'Library' : `New_${type}`}
+                                        <span className={adminActionButtonTextClass}>
+                                            {viewMode === 'edit' ? tr('action.library') : tr('title.newTyped', { name: tr(`type.${type}`) })}
+                                        </span>
                                     </Button>
                                 </>
                             )}
@@ -1003,7 +1098,7 @@ export default function AdminPage() {
                                         </div>
                                     ) : existingPosts.length === 0 ? (
                                         <div className="py-12 text-center border border-dashed border-neutral-900 rounded-lg bg-neutral-900/20">
-                                            <p className="text-neutral-600 font-mono text-xs uppercase tracking-[0.18em]">Empty_Registry</p>
+                                            <p className="text-neutral-600 font-mono text-xs uppercase tracking-[0.18em]">{tr('list.empty')}</p>
                                         </div>
                                     ) : (
 
@@ -1028,7 +1123,7 @@ export default function AdminPage() {
                                                         )}
                                                         {type === 'comment' && post.articleTitle && (
                                                             <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-normal shrink-0 truncate max-w-[250px]">
-                                                                FROM: {post.articleTitle}
+                                                                {tr('list.from', { title: post.articleTitle })}
                                                             </span>
                                                         )}
 
@@ -1044,7 +1139,7 @@ export default function AdminPage() {
                                                         <button
                                                             onClick={(e) => handleReply(e, post)}
                                                             className="p-2 text-neutral-600 hover:text-blue-400 hover:bg-blue-950/30 rounded-md transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-                                                            title="Reply"
+                                                            title={tr('list.reply')}
                                                         >
                                                             <FiCornerUpLeft className="w-4 h-4" />
                                                         </button>
@@ -1053,7 +1148,7 @@ export default function AdminPage() {
                                                         <button
                                                             onClick={(e) => handleDelete(e, post.filename)}
                                                             className={`p-2 rounded-md transition-all cursor-pointer ${deleteTargetId === post.filename ? 'text-red-500 bg-red-500/10' : 'text-neutral-600 hover:text-red-400 hover:bg-red-950/30 opacity-0 group-hover:opacity-100'}`}
-                                                            title="Delete"
+                                                            title={tr('list.delete')}
                                                         >
                                                             <FiTrash2 className="w-4 h-4" />
                                                         </button>
@@ -1064,19 +1159,19 @@ export default function AdminPage() {
                                                                 className="absolute right-0 bottom-full mb-2 z-10 p-2 bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl animate-in fade-in slide-in-from-bottom-1 duration-200 min-w-[140px]"
                                                                 onClick={(e) => e.stopPropagation()}
                                                             >
-                                                                <p className="text-[10px] font-mono uppercase tracking-normal text-neutral-400 mb-2 px-1">Confirm_Purge?</p>
+                                                                <p className="text-[10px] font-mono uppercase tracking-normal text-neutral-400 mb-2 px-1">{tr('confirm.purge')}</p>
                                                                 <div className="flex gap-1">
                                                                     <button
                                                                         onClick={() => setDeleteTargetId(null)}
                                                                         className="flex-1 py-1 text-[10px] font-mono uppercase bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded transition-colors"
                                                                     >
-                                                                        No
+                                                                        {tr('confirm.no')}
                                                                     </button>
                                                                     <button
                                                                         onClick={() => confirmDelete(type, post.filename)}
                                                                         className="flex-1 py-1 text-[10px] font-mono uppercase bg-red-900/40 hover:bg-red-900/60 text-red-200 rounded transition-colors border border-red-900/50"
                                                                     >
-                                                                        Yes
+                                                                        {tr('confirm.yes')}
                                                                     </button>
                                                                 </div>
                                                                 <div className="absolute top-full right-3 w-2 h-2 bg-neutral-900 border-r border-b border-neutral-800 rotate-45 -translate-y-1" />
@@ -1104,39 +1199,39 @@ export default function AdminPage() {
                                             <div className="bg-blue-900/10 border border-blue-900/20 rounded-md px-3 py-2 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <FiEdit3 className="text-blue-500 w-3 h-3" />
-                                                    <p className="text-[10px] uppercase tracking-wider text-blue-400 font-mono">Editing: <span className="text-white">{currentFilename}</span></p>
+                                                    <p className="text-[10px] uppercase tracking-wider text-blue-400 font-mono">{tr('editing')} <span className="text-white">{currentFilename}</span></p>
                                                 </div>
                                                 <Button type="button" onClick={handleNewPost} variant="ghost" size="sm" className="h-6 text-[10px] uppercase font-mono tracking-wider text-blue-400/60 hover:text-blue-300 p-0 hover:bg-transparent">
-                                                    Close
+                                                    {tr('close')}
                                                 </Button>
                                             </div>
                                         )}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div className="space-y-1">
-                                                <Label htmlFor="post-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Title</Label>
+                                                <Label htmlFor="post-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.title')}</Label>
                                                 <Input id="post-title" placeholder="New Entry..." value={postData.title} onChange={(e) => setPostData({ ...postData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white placeholder:text-neutral-700" />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label htmlFor="post-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Date</Label>
+                                                <Label htmlFor="post-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.date')}</Label>
                                                 <Input id="post-date" type="date" value={postData.date} onChange={(e) => { const val = e.target.value; setPostData(prev => ({ ...prev, date: val, slug: isSlugModified ? prev.slug : dateToSlug(val) })); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white [&::-webkit-calendar-picker-indicator]:invert" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="post-desc" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Description</Label>
+                                            <Label htmlFor="post-desc" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.description')}</Label>
                                             <Input id="post-desc" value={postData.description} onChange={(e) => setPostData({ ...postData, description: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300" />
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div className="space-y-1">
-                                                <Label htmlFor="post-slug" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Slug</Label>
+                                                <Label htmlFor="post-slug" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.slug')}</Label>
                                                 <Input id="post-slug" value={postData.slug} onChange={(e) => { setPostData({ ...postData, slug: e.target.value }); setIsSlugModified(true); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm font-mono text-neutral-400 focus:bg-neutral-900" />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label htmlFor="post-category" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Category</Label>
+                                                <Label htmlFor="post-category" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.category')}</Label>
                                                 <Input id="post-category" value={postData.category} onChange={(e) => setPostData({ ...postData, category: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="post-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Content</Label>
+                                            <Label htmlFor="post-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.content')}</Label>
                                             <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950">
                                                 <div className="flex flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 p-2">
                                                     <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
@@ -1144,28 +1239,31 @@ export default function AdminPage() {
                                                     <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('### ', '', 'Subheading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H3</button>
                                                     <span className="mx-1 h-5 w-px bg-neutral-800" />
-                                                    <button type="button" onClick={() => insertPostMarkdown('> ', '', '引用 / 摘录')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('> ', '', tr('md.quote'))} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('[', '](https://)', 'link text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LINK</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('![', '](https://)', 'image alt')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">IMG</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
-                                                    <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-600 md:inline">Source / Preview</span>
+                                                    <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-600 md:inline">{tr('md.sourcePreview')}</span>
                                                 </div>
                                                 <div className="grid grid-cols-1 lg:grid-cols-2">
                                                     <div className="border-b border-neutral-900 lg:border-b-0 lg:border-r">
-                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">Markdown_Source</div>
+                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.source')}</div>
                                                         <textarea
                                                             ref={postContentRef}
                                                             id="post-content"
                                                             rows={25}
                                                             value={postData.content}
-                                                            onChange={(e) => updatePostContent(e.target.value)}
-                                                            className="flex min-h-[560px] w-full resize-y border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
+                                                            onChange={(e) => {
+                                                                updatePostContent(e.target.value);
+                                                                autoResizePostContent();
+                                                            }}
+                                                            className="block min-h-[560px] w-full resize-none overflow-hidden border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                                                         />
                                                     </div>
                                                     <div className="min-h-[560px] bg-[#111]">
-                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">Rendered_Preview</div>
+                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.preview')}</div>
                                                         <div
                                                             className="prose max-w-none p-5 text-[15px]"
                                                             dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(postData.content) }}
@@ -1180,15 +1278,15 @@ export default function AdminPage() {
                                 {type === 'daily' && (
                                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="daily-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Date</Label>
+                                            <Label htmlFor="daily-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.date')}</Label>
                                             <Input id="daily-date" type="date" className="max-w-[150px] bg-neutral-900/50 border-neutral-800 h-9 text-xs text-white [&::-webkit-calendar-picker-indicator]:invert" value={dailyData.date} onChange={(e) => setDailyData({ ...dailyData, date: e.target.value })} />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="daily-url" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Image URL (Optional)</Label>
+                                            <Label htmlFor="daily-url" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.imageUrlOptional')}</Label>
                                             <Input id="daily-url" value={dailyData.imageUrl} onChange={(e) => setDailyData({ ...dailyData, imageUrl: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 font-mono text-[10px] text-neutral-400 focus:bg-neutral-900" placeholder="https://..." />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="daily-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Log</Label>
+                                            <Label htmlFor="daily-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.log')}</Label>
                                             <Textarea id="daily-content" rows={10} value={dailyData.content} onChange={(e) => setDailyData({ ...dailyData, content: e.target.value })} className="bg-neutral-900/50 border-neutral-800 min-h-[200px] resize-none leading-relaxed p-4 text-sm font-mono text-neutral-300 focus:bg-neutral-900" />
                                         </div>
                                     </div>
@@ -1198,20 +1296,20 @@ export default function AdminPage() {
                                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div className="space-y-1">
-                                                <Label htmlFor="moment-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Title</Label>
+                                                <Label htmlFor="moment-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.title')}</Label>
                                                 <Input id="moment-title" value={momentData.title} onChange={(e) => setMomentData({ ...momentData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white" />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label htmlFor="moment-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Date</Label>
+                                                <Label htmlFor="moment-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.date')}</Label>
                                                 <Input id="moment-date" type="date" value={momentData.date} onChange={(e) => setMomentData({ ...momentData, date: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white [&::-webkit-calendar-picker-indicator]:invert" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="moment-url" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Image URL</Label>
+                                            <Label htmlFor="moment-url" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.imageUrl')}</Label>
                                             <Input id="moment-url" value={momentData.imageUrl} onChange={(e) => setMomentData({ ...momentData, imageUrl: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 font-mono text-[10px] text-neutral-400 focus:bg-neutral-900" />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="moment-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">Caption</Label>
+                                            <Label htmlFor="moment-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.caption')}</Label>
                                             <Textarea id="moment-content" rows={4} value={momentData.content} onChange={(e) => setMomentData({ ...momentData, content: e.target.value })} className="bg-neutral-900/50 border-neutral-800 min-h-[100px] resize-none leading-relaxed p-3 text-sm focus:bg-neutral-900 text-neutral-300" />
                                         </div>
                                     </div>
@@ -1231,12 +1329,12 @@ export default function AdminPage() {
                                         {loading ? (
                                             <div className="flex items-center gap-2 italic">
                                                 <div className="animate-spin h-2.5 w-2.5 border-2 border-current border-t-transparent rounded-full" />
-                                                SAVING...
+                                                {tr('btn.saving')}
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2">
                                                 <FiSave className="w-3.5 h-3.5" />
-                                                {isEditing ? 'UPDATE' : 'PUBLISH'}
+                                                {isEditing ? tr('btn.update') : tr('btn.publish')}
                                             </div>
                                         )}
                                     </Button>
@@ -1251,21 +1349,21 @@ export default function AdminPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="w-full max-w-lg bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
                         <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
-                            <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-neutral-400">Reply_Channel: [Admin]</h3>
+                            <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-neutral-400">{tr('reply.channel')}</h3>
                             <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                         </div>
                         <div className="p-6 space-y-4">
                             <div className="bg-neutral-950 p-3 rounded border border-neutral-800/50">
-                                <p className="text-[10px] text-neutral-600 font-mono uppercase mb-1">Target_Signal:</p>
+                                <p className="text-[10px] text-neutral-600 font-mono uppercase mb-1">{tr('reply.target')}</p>
                                 <p className="text-xs text-neutral-400 italic">@{replyTarget?.nickname}: {replyTarget?.content}</p>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="reply-content" className="text-[10px] text-neutral-500 font-mono uppercase tracking-[0.18em]">Input_Message</Label>
+                                <Label htmlFor="reply-content" className="text-[10px] text-neutral-500 font-mono uppercase tracking-[0.18em]">{tr('reply.input')}</Label>
                                 <Textarea
                                     id="reply-content"
                                     autoFocus
                                     className="min-h-[120px] bg-neutral-950 border-neutral-800 text-sm font-mono text-neutral-300 focus:border-blue-500/50 resize-none"
-                                    placeholder="Enter response signals..."
+                                    placeholder={tr('reply.placeholder')}
                                     value={replyContent}
                                     onChange={(e) => setReplyContent(e.target.value)}
                                 />
@@ -1278,7 +1376,7 @@ export default function AdminPage() {
                                 onClick={() => setReplyModalOpen(false)}
                                 className="text-[10px] font-mono text-neutral-500 uppercase tracking-[0.18em] hover:text-white"
                             >
-                                Cancel
+                                {tr('reply.cancel')}
                             </Button>
                             <Button
                                 disabled={loading || !replyContent.trim()}
@@ -1286,7 +1384,7 @@ export default function AdminPage() {
                                 onClick={submitAdminReply}
                                 className="bg-white text-black hover:bg-neutral-200 text-[10px] font-mono uppercase tracking-[0.18em] px-6"
                             >
-                                {loading ? 'Sending...' : 'Transmit_Signal'}
+                                {loading ? tr('reply.sending') : tr('reply.send')}
                             </Button>
                         </div>
                     </div>

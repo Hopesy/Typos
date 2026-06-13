@@ -1,0 +1,190 @@
+{
+  "nav": {
+    "home": "Home",
+    "posts": "Posts",
+    "category": "Category",
+    "daily": "Daily",
+    "about": "About"
+  },
+  "home": {
+    "section": {
+      "footprint": "Footprint",
+      "tools": "Tools",
+      "books": "Bookshelf"
+    },
+    "signalDesc": "A place for things I've tinkered with, everyday notes, and moments I like. Kept light, updated slowly.",
+    "toolSample": "Sample project"
+  },
+  "about": {
+    "label": "About page",
+    "intel": {
+      "title": "Site Meaning",
+      "body": [
+        "In this wasteland of information, this site is meant to be a minimal anchor.",
+        "Its name comes from an obsession with efficiency and whitespace — or perhaps just a randomly generated ID.",
+        "Here we record fragments, searching for faint logical connections in the dark."
+      ]
+    },
+    "core": {
+      "title": "Tech Stack",
+      "body": [
+        "The core engine is built on Next.js 15+, using the latest React Server Components architecture.",
+        "The visual layer is powered by Tailwind CSS v4, blending tactical HUD with 8-bit pixel aesthetics.",
+        "Deployed on Cloudflare edge nodes for fast, stable data streaming."
+      ]
+    },
+    "build": {
+      "title": "Build Process",
+      "body": [
+        "This project was built from scratch, using designs from the ReactBits component library.",
+        "The whole process was done in Warp, with Manus generating the initial UI prototype.",
+        "Manual work and logic refactoring were layered on top of the AI output to keep the visuals distinct."
+      ]
+    },
+    "comm": {
+      "title": "Comm Protocol"
+    }
+  },
+  "posts": {
+    "all": "All",
+    "notFound": "Post not found"
+  },
+  "comments": {
+    "title": "Terminal Comments",
+    "identity": "Identity",
+    "contact": {
+      "label": "Correspondence",
+      "placeholder": "Optional"
+    },
+    "observation": "Observation",
+    "nicknamePlaceholder": "Nickname",
+    "replyingTo": "Replying to @",
+    "cancelReply": "[ CANCEL_REPLY ]"
+  },
+  "dock": {
+    "home": "Home",
+    "posts": "Posts",
+    "moments": "Moments",
+    "daily": "Daily",
+    "about": "About",
+    "categoryAlt": "Category"
+  },
+  "aria": {
+    "themeToLight": "Switch to light theme",
+    "themeToDark": "Switch to dark theme",
+    "toc": "Table of contents",
+    "langSwitch": "切换到中文"
+  },
+  "markdown": {
+    "copyCode": "Copy code",
+    "expandAll": "Expand all",
+    "collapseCode": "Collapse code"
+  },
+  "carousel": {
+    "view": "View →"
+  },
+  "admin": {
+    "checking": "Checking access...",
+    "login": {
+      "title": "Console Access",
+      "key": "Security_Key",
+      "denied": "Access Denied",
+      "enter": "ENTER",
+      "version": "Admin_V.2.1"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "post": "Posts",
+      "daily": "Daily",
+      "moment": "Moments",
+      "comment": "Comments",
+      "contentType": "Content Type",
+      "viewSite": "View Site",
+      "logout": "Logout"
+    },
+    "type": {
+      "post": "Post",
+      "daily": "Daily",
+      "moment": "Moment",
+      "comment": "Comment"
+    },
+    "dash": {
+      "posts": { "label": "Posts", "meta": "Post archive" },
+      "words": { "label": "Total words", "meta": "Markdown chars" },
+      "total": { "label": "Total content", "meta": "Posts + Daily + Moments" },
+      "visits": { "label": "Total visits", "meta": "+167 today" }
+    },
+    "chart": {
+      "visitors": "Visitor Trend",
+      "views": "Page View Trend",
+      "latestPeople": "Latest: <strong>{value}</strong>",
+      "latestTimes": "Latest: <strong>{value}</strong>",
+      "range7d": "7D",
+      "range30d": "30D",
+      "axis7dStart": "6d ago",
+      "axis30dStart": "29d ago",
+      "axisToday": "Today"
+    },
+    "title": {
+      "dashboard": "Dashboard",
+      "editPost": "Edit Post",
+      "commentMgmt": "Comment Management",
+      "libraryTyped": "{name} Library",
+      "newTyped": "New {name}"
+    },
+    "sub": {
+      "overview": "Overview",
+      "library": "Library",
+      "editor": "Editor"
+    },
+    "action": {
+      "uploadMd": "Upload_MD",
+      "library": "Library"
+    },
+    "form": {
+      "title": "Title",
+      "date": "Date",
+      "description": "Description",
+      "slug": "Slug",
+      "category": "Category",
+      "content": "Content",
+      "log": "Log",
+      "caption": "Caption",
+      "imageUrl": "Image URL",
+      "imageUrlOptional": "Image URL (Optional)"
+    },
+    "editing": "Editing:",
+    "close": "Close",
+    "md": {
+      "quote": "quote / excerpt",
+      "source": "Markdown_Source",
+      "preview": "Rendered_Preview",
+      "sourcePreview": "Source / Preview"
+    },
+    "list": {
+      "empty": "Empty_Registry",
+      "reply": "Reply",
+      "delete": "Delete",
+      "from": "FROM: {title}"
+    },
+    "confirm": {
+      "purge": "Confirm_Purge?",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "btn": {
+      "saving": "SAVING...",
+      "publish": "PUBLISH",
+      "update": "UPDATE"
+    },
+    "reply": {
+      "channel": "Reply_Channel: [Admin]",
+      "target": "Target_Signal:",
+      "input": "Input_Message",
+      "placeholder": "Enter response signals...",
+      "cancel": "Cancel",
+      "send": "Transmit_Signal",
+      "sending": "Sending..."
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { getPostBySlug } from "@/lib/content";
 import MarkdownContent from "@/components/markdown-content";
 import Comments from "@/components/comments";
 import TocRail from "@/components/toc-rail";
+import { PostNotFound } from "@/components/post-not-found";
 
 export const dynamicParams = true;
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ export default async function PostPage({
   if (!post) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold">文章未找到</h1>
+        <PostNotFound />
       </div>
     );
   }

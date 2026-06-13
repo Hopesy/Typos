@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -88,13 +90,15 @@ const themeScript = `
 })();
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang={locale === 'en' ? 'en' : 'zh-CN'} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col relative bg-background`}
       >
@@ -104,11 +108,13 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: themeScript }}
         />
 
-        <Suspense fallback={null}>
-          <Header />
-        </Suspense>
-        <main className="flex-1 relative z-10">{children}</main>
-        <Footer />
+        <NextIntlClientProvider>
+          <Suspense fallback={null}>
+            <Header />
+          </Suspense>
+          <main className="flex-1 relative z-10">{children}</main>
+          <Footer />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

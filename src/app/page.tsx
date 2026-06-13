@@ -1,30 +1,29 @@
+'use client';
+
 import { HeroTitle, HeroSubtitle } from "@/components/hero-title";
 import { FiFileText, FiLayers, FiRefreshCw, FiMapPin, FiMusic, FiCommand, FiBookOpen, FiVideo } from "react-icons/fi";
 import Dither from "@/components/dither/Dither";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 const tools = [
   {
     name: "Project Alpha",
-    description: "示例项目",
     link: "https://github.com/your-username/project-alpha",
     icon: <FiFileText className="w-6 h-6" />
   },
   {
     name: "Project Beta",
-    description: "示例项目",
     link: "https://github.com/your-username/project-beta",
     icon: <FiLayers className="w-6 h-6" />
   },
   {
     name: "Project Gamma",
-    description: "示例项目",
     link: "https://github.com/your-username/project-gamma",
     icon: <FiRefreshCw className="w-6 h-6" />
   },
   {
     name: "Project Delta",
-    description: "示例项目",
     link: "https://github.com/your-username/project-delta",
     icon: <FiVideo className="w-6 h-6" />
   },
@@ -57,6 +56,7 @@ const hexTag = (seed: number) => {
 };
 
 export default function Home() {
+  const t = useTranslations();
   return (
     <div className="container mx-auto max-w-5xl px-4">
       <div className="dither-background-wrapper">
@@ -138,7 +138,7 @@ export default function Home() {
                   LOAD
                 </h2>
                 <p className="mt-8 max-w-xl text-[15px] leading-loose text-hud-muted sm:text-base">
-                  把折腾过的东西、偶尔的日常、喜欢的瞬间都放在这里。保持轻量，慢慢更新。
+                  {t('home.signalDesc')}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   {signalTags.map((tag) => (
@@ -158,7 +158,7 @@ export default function Home() {
         {/* 方案4: GitHub Contribution 模拟贡献墙 - HUD 风格 - 去边框去背景 */}
         <section className="relative group">
           <div className="flex items-center gap-3 mb-6 border-b border-hud-line-soft pb-2">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-hud font-mono">足迹</h2>
+            <h2 className="text-xs uppercase tracking-[0.2em] text-hud font-mono">{t('home.section.footprint')}</h2>
           </div>
 
           <div className="overflow-hidden p-1">
@@ -180,7 +180,7 @@ export default function Home() {
         {/* 工具集 Section - HUD 风格 - 去边框去背景 */}
         <section className="relative">
           <div className="flex items-center gap-3 mb-6 border-b border-hud-line-soft pb-2">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-hud font-mono">工具</h2>
+            <h2 className="text-xs uppercase tracking-[0.2em] text-hud font-mono">{t('home.section.tools')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -198,13 +198,13 @@ export default function Home() {
                       {tool.icon}
                     </div>
                     <span className="text-[10px] font-mono text-hud-muted">
-                      0x{hexTag(tool.name.length + tool.description.length)}
+                      0x{hexTag(tool.name.length)}
                     </span>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-bold text-hud group-hover/item:text-hud-strong mb-1 tracking-tight transition-colors">{tool.name}</h3>
-                    <p className="text-[11px] text-hud-muted leading-relaxed font-mono uppercase">{tool.description}</p>
+                    <p className="text-[11px] text-hud-muted leading-relaxed font-mono uppercase">{t('home.toolSample')}</p>
                   </div>
 
                   <a
@@ -225,7 +225,7 @@ export default function Home() {
         {/* 书架模块 */}
         <section className="relative">
           <div className="flex items-center gap-3 mb-6 border-b border-hud-line-soft pb-2">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-hud font-mono">书架</h2>
+            <h2 className="text-xs uppercase tracking-[0.2em] text-hud font-mono">{t('home.section.books')}</h2>
           </div>
 
           <div className="flex justify-start">

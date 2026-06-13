@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { FiMoon, FiSun } from 'react-icons/fi';
+import { useTranslations } from 'next-intl';
 
 type Theme = 'dark' | 'light';
 
@@ -37,6 +38,7 @@ function subscribe(onStoreChange: () => void) {
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const theme = useSyncExternalStore(subscribe, readTheme, () => 'dark');
+  const t = useTranslations('aria');
 
   const toggleTheme = () => {
     const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark';
@@ -51,7 +53,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
     <button
       type="button"
       onClick={toggleTheme}
-      aria-label={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
+      aria-label={theme === 'dark' ? t('themeToLight') : t('themeToDark')}
       title={theme === 'dark' ? 'Light' : 'Dark'}
       className={`inline-flex items-center justify-center rounded-md border border-hud-line bg-hud-panel text-hud-muted transition-colors hover:border-hud-line-strong hover:text-hud-strong ${compact ? 'h-7 w-7' : 'h-8 w-8'
         }`}

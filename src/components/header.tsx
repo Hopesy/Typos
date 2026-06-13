@@ -6,24 +6,22 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LangToggle } from "@/components/lang-toggle";
+import { useTranslations } from "next-intl";
 
 const navItems = [
-  { name: "首页", href: "/" },
-  { name: "合集", href: "/posts" },
-  {
-    name: "分类",
-    href: "/moments",
-    target: "_blank",
-    icon: <Image src="/icon3.svg" alt="分类" width={42} height={42} className="opacity-90 dark:invert" />,
-  },
-  { name: "日常", href: "/daily" },
-  { name: "关于", href: "/about" },
+  { key: "nav.home", href: "/" },
+  { key: "nav.posts", href: "/posts" },
+  { key: "nav.category", href: "/moments", target: "_blank", isIcon: true },
+  { key: "nav.daily", href: "/daily" },
+  { key: "nav.about", href: "/about" },
 ];
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations();
   const isMomentsPage = pathname === "/moments";
   const isAdminPage = pathname?.startsWith("/admin");
   const [viewCount, setViewCount] = useState(0);
@@ -105,6 +103,7 @@ export function Header() {
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
                 <span className="font-mono text-[10px] text-hud-dim uppercase tracking-[0.18em] leading-none">Live_Proto</span>
               </div>
+              <LangToggle compact />
               <ThemeToggle compact />
             </div>
           </div>
@@ -114,24 +113,28 @@ export function Header() {
             <nav className="flex items-center gap-2">
               {navItems.map((item) => {
                 const active = isActive(item.href);
+                const label = t(item.key);
                 return (
                   <Link
-                    key={item.name}
+                    key={item.key}
                     href={item.href ?? "#"}
                     target={item.target}
                     rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
                     className={`px-3 py-1.5 text-sm transition-colors ${active ? 'text-hud-strong font-medium' : 'text-hud-muted hover:text-hud-strong'}`}
-                    aria-label={item.name}
-                    title={item.name}
+                    aria-label={label}
+                    title={label}
                     onClick={(event) => {
                       if (!item.href) event.preventDefault();
                     }}
                   >
-                    {item.icon ? item.icon : item.name}
+                    {item.isIcon ? (
+                      <Image src="/icon3.svg" alt={label} width={42} height={42} className="opacity-90 dark:invert" />
+                    ) : label}
                   </Link>
                 );
               })}
             </nav>
+            <LangToggle compact />
             <ThemeToggle compact />
           </div>
         )}

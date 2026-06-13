@@ -5,6 +5,7 @@ import type { ComponentType, ReactElement } from 'react';
 import { FiCommand, FiActivity, FiGlobe, FiCpu, FiMessageCircle } from "react-icons/fi";
 import { SiReact, SiNextdotjs, SiTypescript, SiTailwindcss, SiThreedotjs, SiFramer, SiVercel } from 'react-icons/si';
 import _LogoLoop from '@/components/logo-loop/LogoLoop';
+import { useTranslations } from 'next-intl';
 
 type AboutItem = { label: string; value: string };
 type AboutSectionData = {
@@ -27,40 +28,30 @@ type LogoLoopProps = {
 };
 
 export default function AboutPage() {
+  const t = useTranslations('about');
+
   const sections: AboutSectionData[] = [
     {
       id: "INTEL_SOURCE",
-      title: "站点含义",
+      title: t('intel.title'),
       icon: <FiGlobe className="w-4 h-4" />,
-      content: [
-        "在这个信息的荒原中，此站点旨在作为一个极简的锚点。",
-        "名字源于对效率与留白的某种执念，或者仅仅是一个随机生成的 ID。",
-        "我们在此记录碎片，在黑暗中寻找微弱的逻辑连线。"
-      ]
+      content: t.raw('intel.body') as string[],
     },
     {
       id: "SYSTEM_CORE",
-      title: "搭建环境",
+      title: t('core.title'),
       icon: <FiCpu className="w-4 h-4" />,
-      content: [
-        "核心引擎基于 Next.js 15+ 构建，采用最新的 React Server Components 架构。",
-        "视觉层由 Tailwind CSS v4 驱动，融合了战术 HUD 与 8-bit 像素美学。",
-        "部署于 Cloudflare 边缘节点，确保数据流的高速传输与稳定。"
-      ]
+      content: t.raw('core.body') as string[],
     },
     {
       id: "BUILD_PROCESS",
-      title: "搭建过程",
+      title: t('build.title'),
       icon: <FiActivity className="w-4 h-4" />,
-      content: [
-        "本项目从 0 开始搭建，使用 ReactBits 组件库的设计。",
-        "全过程在 Warp 环境下完成，期间借助 Manus 生成初始 UI 原型。",
-        "在 AI 生成的基础上进行手工操作与逻辑重构，以确保视觉的独特性。"
-      ]
+      content: t.raw('build.body') as string[],
     },
     {
       id: "COMM_PORT",
-      title: "通信协议",
+      title: t('comm.title'),
       icon: <FiMessageCircle className="w-4 h-4" />,
       items: [
         { label: "EMAIL", value: "your-email@example.com" },
@@ -78,7 +69,7 @@ export default function AboutPage() {
       <section className="mb-13 space-y-4">
         <div className="flex items-center gap-4 text-hud-faint font-mono text-[11px] tracking-[0.18em] uppercase">
           <span className="h-px flex-1 bg-hud-line"></span>
-          <span>About page</span>
+          <span>{t('label')}</span>
           <span className="h-px flex-1 bg-hud-line"></span>
         </div>
 

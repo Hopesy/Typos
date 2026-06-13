@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 type MarkdownContentProps = {
   html: string;
@@ -43,10 +44,28 @@ function getCodeLanguage(pre: HTMLPreElement, code: HTMLElement) {
 
 export default function MarkdownContent({ html, className = '' }: MarkdownContentProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const t = useTranslations('markdown');
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    const copyLabel = t('copyCode');
+    const expandLabel = t('expandAll');
+    const collapseLabel = t('collapseCode');
+
+    const syncExpandBtn = (btn: HTMLButtonElement) => {
+      btn.dataset.expandLabel = expandLabel;
+      btn.dataset.collapseLabel = collapseLabel;
+      const collapsed = btn.closest('.code-block-wrapper')?.getAttribute('data-collapsed') !== 'false';
+      btn.textContent = collapsed ? expandLabel : collapseLabel;
+    };
+
+    // Refresh labels on wrappers built during a previous run (e.g. locale change).
+    container.querySelectorAll<HTMLButtonElement>('.code-copy-btn').forEach((btn) => {
+      btn.title = copyLabel;
+    });
+    container.querySelectorAll<HTMLButtonElement>('.code-expand-btn').forEach(syncExpandBtn);
 
     const pres = Array.from(container.querySelectorAll<HTMLPreElement>('pre'));
 
@@ -85,7 +104,7 @@ export default function MarkdownContent({ html, className = '' }: MarkdownConten
       copyBtn.type = 'button';
       copyBtn.className = 'code-copy-btn';
       copyBtn.textContent = 'Playground';
-      copyBtn.title = '复制代码';
+      copyBtn.title = copyLabel;
       copyBtn.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(code.textContent ?? '');
@@ -117,17 +136,19 @@ export default function MarkdownContent({ html, className = '' }: MarkdownConten
           const expandBtn = document.createElement('button');
           expandBtn.type = 'button';
           expandBtn.className = 'code-expand-btn';
-          expandBtn.textContent = '展开全部';
+          expandBtn.dataset.expandLabel = expandLabel;
+          expandBtn.dataset.collapseLabel = collapseLabel;
+          expandBtn.textContent = expandLabel;
 
           expandBtn.addEventListener('click', () => {
             const isCollapsed = wrapper.getAttribute('data-collapsed') === 'true';
             if (isCollapsed) {
               wrapper.setAttribute('data-collapsed', 'false');
-              expandBtn.textContent = '收起代码';
+              expandBtn.textContent = expandBtn.dataset.collapseLabel ?? '';
               expandBtn.classList.add('is-expanded');
             } else {
               wrapper.setAttribute('data-collapsed', 'true');
-              expandBtn.textContent = '展开全部';
+              expandBtn.textContent = expandBtn.dataset.expandLabel ?? '';
               expandBtn.classList.remove('is-expanded');
               wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
@@ -153,7 +174,7 @@ export default function MarkdownContent({ html, className = '' }: MarkdownConten
       themeObserver.disconnect();
       window.removeEventListener('typos-theme-change', updateCodeThemeLabels);
     };
-  }, [html]);
+  }, [html, t]);
 
   return (
     <div

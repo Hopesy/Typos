@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type TocItem = {
   depth: number;
@@ -50,6 +51,7 @@ function buildVisibleSet(items: TocItem[], activeId: string | null) {
 }
 
 export default function TocRail({ toc }: TocRailProps) {
+  const t = useTranslations('aria');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
@@ -128,7 +130,7 @@ export default function TocRail({ toc }: TocRailProps) {
   if (toc.length === 0) return null;
 
   return (
-    <nav className={`toc-rail hidden md:flex ${isRevealed ? 'is-revealed' : ''}`} aria-label="文章目录">
+    <nav className={`toc-rail hidden md:flex ${isRevealed ? 'is-revealed' : ''}`} aria-label={t('toc')}>
       {canScrollUp ? (
         <div className="toc-scroll-hint toc-scroll-hint-top" aria-hidden>
           <ChevronUp className="h-3.5 w-3.5 text-hud-faint" />

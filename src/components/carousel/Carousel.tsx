@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import type { MotionValue, PanInfo, Transition } from 'motion/react';
+import { useTranslations } from 'next-intl';
 // replace icons with your own if needed
 import { FiCircle, FiCode, FiFileText, FiLayers, FiLayout } from 'react-icons/fi';
 
@@ -66,6 +67,7 @@ interface CarouselItemProps {
 }
 
 function CarouselItem({ item, index, itemWidth, round, trackItemOffset, x, transition }: CarouselItemProps) {
+    const t = useTranslations('carousel');
     const range = [-(index + 1) * trackItemOffset, -index * trackItemOffset, -(index - 1) * trackItemOffset];
     const outputRange = [90, 0, -90];
     const rotateY = useTransform(x, range, outputRange, { clamp: false });
@@ -96,7 +98,7 @@ function CarouselItem({ item, index, itemWidth, round, trackItemOffset, x, trans
                         className="carousel-item-link"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        查看 →
+                        {t('view')}
                     </a>
                 )}
             </div>

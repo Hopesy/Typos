@@ -3,6 +3,9 @@
 import { useState, useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
+
+const ALL_CATEGORY = "__all__";
 
 interface Post {
     slug: string;
@@ -17,15 +20,16 @@ interface PostsContentProps {
 }
 
 export function PostsContent({ initialPosts }: PostsContentProps) {
-    const [selectedCategory, setSelectedCategory] = useState<string>("全部");
+    const t = useTranslations('posts');
+    const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORY);
 
     const categories = useMemo(() => {
         const cats = new Set(initialPosts.map(p => p.category).filter(Boolean));
-        return ["全部", ...Array.from(cats)];
+        return [ALL_CATEGORY, ...Array.from(cats)];
     }, [initialPosts]);
 
     const filteredPosts = useMemo(() => {
-        if (selectedCategory === "全部") return initialPosts;
+        if (selectedCategory === ALL_CATEGORY) return initialPosts;
         return initialPosts.filter(p => p.category === selectedCategory);
     }, [initialPosts, selectedCategory]);
 
@@ -42,7 +46,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                             className={`relative transition-all duration-300 hover:text-hud-strong cursor-pointer font-mono text-[11px] uppercase tracking-[0.18em] ${selectedCategory === category ? "text-hud-strong" : "text-hud-muted"
                                 }`}
                         >
-                            <span className="relative z-10">{category}</span>
+                            <span className="relative z-10">{category === ALL_CATEGORY ? t('all') : category}</span>
                         </button>
                     ))}
                 </div>
