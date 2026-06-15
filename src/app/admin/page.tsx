@@ -22,7 +22,8 @@ import {
     FiTrendingUp,
     FiUpload,
     FiMaximize2,
-    FiX
+    FiKey,
+    FiCopy
 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import { useTranslations } from "next-intl";
 
-type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment';
+type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment' | 'tokens';
 
 
 type PostData = {
@@ -80,6 +81,16 @@ type AdminItem = {
 };
 
 type StatusMessage = { text: string; isError: boolean };
+
+type ApiToken = {
+    id: string;
+    name: string;
+    tokenPrefix: string;
+    createdAt: string;
+    lastUsedAt: string | null;
+    expiresAt: string | null;
+    isActive: boolean;
+};
 
 type DashboardData = {
     posts: AdminItem[];
@@ -265,6 +276,149 @@ function DashboardView({
         </div>
     );
 }
+
+function TokensView({
+    tokens,
+    loading,
+    dbUnavailable,
+    deleteTokenId,
+    onRequestDelete,
+    onConfirmDelete,
+}: {
+    tokens: ApiToken[];
+    loading: boolean;
+    dbUnavailable: boolean;
+    deleteTokenId: string | null;
+    onRequestDelete: (id: string) => void;
+    onConfirmDelete: (id: string) => void;
+}) {
+    const tr = useTranslations('admin');
+    const [nowMs] = useState(() => Date.now());
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://your-site.com';
+    const endpoint = `${origin}/api/v1/posts`;
+
+    const isExpired = (expiresAt: string | null) => {
+        if (!expiresAt) return false;
+        const ts = Date.parse(expiresAt.replace(' ', 'T') + 'Z');
+        return !Number.isNaN(ts) && ts <= nowMs;
+    };
+
+    const curlExample = `curl -X POST ${endpoint} \\
+  -H "Authorization: Bearer typos_xxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "My Post",
+    "date": "2026-06-15",
+    "category": ["随笔"],
+    "content": "# Hello\\n\\nMarkdown body here."
+  }'`;
+
+    const markdownExample = `curl -X POST ${endpoint} \\
+  -H "Authorization: Bearer typos_xxx" \\
+  -H "Content-Type: text/markdown" \\
+  --data-binary @post.md`;
+
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {dbUnavailable ? (
+                <div className="py-12 text-center border border-dashed border-neutral-900 rounded-lg bg-neutral-900/20">
+                    <p className="text-neutral-600 font-mono text-xs tracking-wide">{tr('tokens.needDb')}</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-3">
+                    {loading ? (
+                        <div className="py-12 flex flex-col items-center gap-3 animate-pulse">
+                            <div className="h-4 w-48 bg-neutral-900 rounded" />
+                            <div className="h-3 w-32 bg-neutral-900 rounded" />
+                        </div>
+                    ) : tokens.length === 0 ? (
+                        <div className="py-12 text-center border border-dashed border-neutral-900 rounded-lg bg-neutral-900/20">
+                            <p className="text-neutral-600 font-mono text-xs uppercase tracking-[0.18em]">{tr('tokens.empty')}</p>
+                        </div>
+                    ) : (
+                        tokens.map((token) => {
+                            const expired = isExpired(token.expiresAt);
+                            return (
+                                <div
+                                    key={token.id}
+                                    className="group flex items-center justify-between p-5 rounded-xl border border-neutral-900 bg-neutral-950 hover:border-neutral-800 transition-all shadow-sm"
+                                >
+                                    <div className="flex-1 min-w-0 pr-6">
+                                        <div className="flex items-center gap-3 mb-1.5">
+                                            <h3 className="text-sm font-bold text-neutral-200 truncate">{token.name}</h3>
+                                            <span className="text-[10px] font-mono text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800 tracking-normal shrink-0">{token.tokenPrefix}…</span>
+                                            {expired ? (
+                                                <span className="text-[10px] font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 uppercase tracking-normal shrink-0">{tr('tokens.expired')}</span>
+                                            ) : (
+                                                <span className="text-[10px] font-mono text-green-500/70 bg-green-500/5 px-2 py-0.5 rounded border border-green-500/10 uppercase tracking-normal shrink-0">{tr('tokens.active')}</span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-neutral-500 font-mono space-x-3">
+                                            <span>{tr('tokens.created')}: {token.createdAt}</span>
+                                            <span>{tr('tokens.lastUsed')}: {token.lastUsedAt || tr('tokens.neverUsed')}</span>
+                                            <span>{tr('tokens.expires')}: {token.expiresAt || tr('tokens.neverExpires')}</span>
+                                        </p>
+                                    </div>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => onRequestDelete(token.id)}
+                                            className={`p-2 rounded-md transition-all cursor-pointer ${deleteTokenId === token.id ? 'text-red-500 bg-red-500/10' : 'text-neutral-600 hover:text-red-400 hover:bg-red-950/30 opacity-0 group-hover:opacity-100'}`}
+                                            title={tr('tokens.delete')}
+                                        >
+                                            <FiTrash2 className="w-4 h-4" />
+                                        </button>
+                                        {deleteTokenId === token.id && (
+                                            <div className="absolute right-0 bottom-full mb-2 z-10 p-2 bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl animate-in fade-in slide-in-from-bottom-1 duration-200 min-w-[160px]">
+                                                <p className="text-[10px] font-mono tracking-normal text-neutral-400 mb-2 px-1">{tr('tokens.confirmDelete')}</p>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={() => onRequestDelete(token.id)}
+                                                        className="flex-1 py-1 text-[10px] font-mono uppercase bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded transition-colors"
+                                                    >
+                                                        {tr('confirm.no')}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => onConfirmDelete(token.id)}
+                                                        className="flex-1 py-1 text-[10px] font-mono uppercase bg-red-900/40 hover:bg-red-900/60 text-red-200 rounded transition-colors border border-red-900/50"
+                                                    >
+                                                        {tr('confirm.yes')}
+                                                    </button>
+                                                </div>
+                                                <div className="absolute top-full right-3 w-2 h-2 bg-neutral-900 border-r border-b border-neutral-800 rotate-45 -translate-y-1" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            )}
+
+            {/* API Documentation */}
+            <section className="rounded-xl border border-neutral-900 bg-neutral-950 p-5 space-y-4">
+                <h2 className="text-sm font-bold text-neutral-200 flex items-center gap-2">
+                    <FiKey className="w-3.5 h-3.5 text-neutral-500" />
+                    {tr('tokens.docs.title')}
+                </h2>
+                <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-mono">{tr('tokens.docs.endpoint')}</p>
+                    <code className="block bg-neutral-900 rounded px-3 py-2 text-xs font-mono text-blue-400 break-all">POST {endpoint}</code>
+                </div>
+                <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-mono">{tr('tokens.docs.jsonExample')}</p>
+                    <pre className="bg-neutral-900 rounded px-3 py-2 text-xs font-mono text-neutral-300 overflow-x-auto whitespace-pre">{curlExample}</pre>
+                </div>
+                <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-mono">{tr('tokens.docs.markdownExample')}</p>
+                    <pre className="bg-neutral-900 rounded px-3 py-2 text-xs font-mono text-neutral-300 overflow-x-auto whitespace-pre">{markdownExample}</pre>
+                </div>
+                <p className="text-[10px] text-amber-500/70 font-mono leading-relaxed">⚠ {tr('tokens.docs.note')}</p>
+            </section>
+        </div>
+    );
+}
+
 
 const escapeHtml = (value: string) => {
     return value
@@ -512,6 +666,17 @@ export default function AdminPage() {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isImmersiveMode, setIsImmersiveMode] = useState(false);
 
+    // API Token state
+    const [apiTokens, setApiTokens] = useState<ApiToken[]>([]);
+    const [tokensLoading, setTokensLoading] = useState(false);
+    const [tokensDbUnavailable, setTokensDbUnavailable] = useState(false);
+    const [createTokenModalOpen, setCreateTokenModalOpen] = useState(false);
+    const [newTokenName, setNewTokenName] = useState('');
+    const [newTokenExpiry, setNewTokenExpiry] = useState<'never' | '30d' | '90d' | '1y'>('never');
+    const [createdToken, setCreatedToken] = useState<string | null>(null);
+    const [tokenCopied, setTokenCopied] = useState(false);
+    const [deleteTokenId, setDeleteTokenId] = useState<string | null>(null);
+
     // Delete Confirmation State
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -609,6 +774,97 @@ export default function AdminPage() {
 
     }, [fetchDashboardData, type]);
 
+    const fetchTokens = useCallback(async () => {
+        try {
+            setTokensLoading(true);
+            setTokensDbUnavailable(false);
+            const res = await fetch('/api/admin/tokens', { credentials: 'same-origin' });
+            if (res.ok) {
+                const data = await res.json() as { tokens: ApiToken[] };
+                setApiTokens(data.tokens || []);
+            } else if (res.status === 401) {
+                setIsAuthorized(false);
+            } else if (res.status === 503) {
+                setTokensDbUnavailable(true);
+                setApiTokens([]);
+            }
+        } catch (error) {
+            console.error('Failed to fetch tokens', error);
+        } finally {
+            setTokensLoading(false);
+        }
+    }, []);
+
+    const handleCreateToken = async () => {
+        if (!newTokenName.trim()) return;
+        const expiryMap: Record<typeof newTokenExpiry, number | null> = {
+            never: null,
+            '30d': 30,
+            '90d': 90,
+            '1y': 365,
+        };
+
+        setLoading(true);
+        try {
+            const res = await fetch('/api/admin/tokens', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ name: newTokenName.trim(), expiresInDays: expiryMap[newTokenExpiry] }),
+            });
+            if (res.ok) {
+                const data = await res.json() as { token: string };
+                setCreatedToken(data.token);
+                setCreateTokenModalOpen(false);
+                setNewTokenName('');
+                setNewTokenExpiry('never');
+                await fetchTokens();
+            } else if (res.status === 401) {
+                setIsAuthorized(false);
+            } else {
+                const err = await res.json() as { error?: string };
+                setMessage({ text: `ERROR: ${err.error || 'Failed to create token'}`, isError: true });
+            }
+        } catch (error) {
+            console.error('Create token error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteToken = async (id: string) => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/admin/tokens', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ id }),
+            });
+            if (res.ok) {
+                setApiTokens(prev => prev.filter(t => t.id !== id));
+                setDeleteTokenId(null);
+            } else if (res.status === 401) {
+                setIsAuthorized(false);
+            }
+        } catch (error) {
+            console.error('Delete token error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const copyToken = async (token: string) => {
+        try {
+            await navigator.clipboard.writeText(token);
+            setTokenCopied(true);
+            setTimeout(() => setTokenCopied(false), 2000);
+        } catch {
+            // Clipboard API may be unavailable; ignore silently
+        }
+    };
+
+
     useEffect(() => {
         let alive = true;
 
@@ -639,6 +895,15 @@ export default function AdminPage() {
             return () => window.clearTimeout(timer);
         }
     }, [viewMode, isAuthorized, fetchPosts]);
+
+    useEffect(() => {
+        if (type === 'tokens' && isAuthorized) {
+            const timer = window.setTimeout(() => {
+                fetchTokens();
+            }, 0);
+            return () => window.clearTimeout(timer);
+        }
+    }, [type, isAuthorized, fetchTokens]);
 
     const autoResizePostContent = useCallback(() => {
         const textarea = postContentRef.current;
@@ -1096,7 +1361,7 @@ export default function AdminPage() {
 
                 <div className="p-4" onClick={(e) => e.stopPropagation()}>
                     <nav className="space-y-1">
-                        {(['dashboard', 'post', 'daily', 'moment', 'comment'] as const).map((t) => (
+                        {(['dashboard', 'post', 'daily', 'moment', 'comment', 'tokens'] as const).map((t) => (
 
                             <button
                                 key={t}
@@ -1118,6 +1383,7 @@ export default function AdminPage() {
                                     {t === 'daily' && <FiTerminal className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
                                     {t === 'moment' && <FiImage className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
                                     {t === 'comment' && <FiMessageSquare className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
+                                    {t === 'tokens' && <FiKey className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
                                 </span>
 
                                 {!isSidebarCollapsed && (
@@ -1153,6 +1419,8 @@ export default function AdminPage() {
                             <h1 className="text-lg font-bold tracking-tight text-white mb-1 capitalize flex items-center gap-2">
                                 {type === 'dashboard'
                                     ? tr('title.dashboard')
+                                    : type === 'tokens'
+                                    ? tr('title.tokens')
                                     : viewMode === 'list'
                                     ? tr('title.libraryTyped', { name: tr(`type.${type}`) })
                                     : (isEditing && type === 'post' ? tr('title.editPost') : (type === 'comment' ? tr('title.commentMgmt') : tr('title.newTyped', { name: tr(`type.${type}`) })))}
@@ -1161,6 +1429,8 @@ export default function AdminPage() {
                                 <span className="text-neutral-500 font-mono text-xs uppercase normal-case tracking-wider font-normal">
                                     {type === 'dashboard'
                                         ? tr('sub.overview')
+                                        : type === 'tokens'
+                                        ? tr('sub.tokens')
                                         : (type === 'post' || type === 'daily' || type === 'moment') && viewMode === 'list' ? tr('sub.library') : (type === 'comment' ? tr('sub.library') : tr('sub.editor'))}
                                 </span>
 
@@ -1169,7 +1439,19 @@ export default function AdminPage() {
                         <div className="flex items-center gap-3">
                             <LangToggle compact />
                             <ThemeToggle compact />
-                            {type !== 'comment' && type !== 'dashboard' && (
+                            {type === 'tokens' && (
+                                <Button
+                                    onClick={() => { setCreateTokenModalOpen(true); setNewTokenName(''); setNewTokenExpiry('never'); }}
+                                    variant="outline"
+                                    size="sm"
+                                    className={adminActionButtonClass}
+                                    disabled={tokensDbUnavailable}
+                                >
+                                    <FiPlus className="h-3 w-3" />
+                                    <span className={adminActionButtonTextClass}>{tr('tokens.newToken')}</span>
+                                </Button>
+                            )}
+                            {type !== 'comment' && type !== 'dashboard' && type !== 'tokens' && (
                                 <>
                                     {type === 'post' && (
                                         <input
@@ -1220,6 +1502,15 @@ export default function AdminPage() {
                         )}
                         {type === 'dashboard' ? (
                             <DashboardView data={dashboardData} loading={dashboardLoading} />
+                        ) : type === 'tokens' ? (
+                            <TokensView
+                                tokens={apiTokens}
+                                loading={tokensLoading}
+                                dbUnavailable={tokensDbUnavailable}
+                                deleteTokenId={deleteTokenId}
+                                onRequestDelete={(id) => setDeleteTokenId(deleteTokenId === id ? null : id)}
+                                onConfirmDelete={handleDeleteToken}
+                            />
                         ) : viewMode === 'list' ? (
                             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <div className="grid grid-cols-1 gap-3">
@@ -1604,6 +1895,98 @@ export default function AdminPage() {
             )}
 
             {/* Delete Confirmation Dialog 已经移除，改为气泡式 */}
+
+            {/* Create Token Modal */}
+            {createTokenModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
+                            <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-neutral-400">{tr('tokens.create.title')}</h3>
+                            <FiKey className="w-4 h-4 text-neutral-600" />
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="token-name" className="text-[10px] text-neutral-500 font-mono uppercase tracking-[0.18em]">{tr('tokens.name')}</Label>
+                                <Input
+                                    id="token-name"
+                                    autoFocus
+                                    value={newTokenName}
+                                    onChange={(e) => setNewTokenName(e.target.value)}
+                                    placeholder={tr('tokens.namePlaceholder')}
+                                    className="bg-neutral-950 border-neutral-800 text-sm text-neutral-300 focus:border-neutral-600"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] text-neutral-500 font-mono uppercase tracking-[0.18em]">{tr('tokens.expiry.label')}</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {(['never', '30d', '90d', '1y'] as const).map((opt) => (
+                                        <button
+                                            key={opt}
+                                            type="button"
+                                            onClick={() => setNewTokenExpiry(opt)}
+                                            className={`h-8 rounded-md border font-mono text-[10px] uppercase tracking-wider transition-colors ${newTokenExpiry === opt ? 'border-neutral-500 bg-neutral-800 text-white' : 'border-neutral-800 text-neutral-500 hover:border-neutral-700 hover:text-neutral-300'}`}
+                                        >
+                                            {tr(`tokens.expiry.${opt}`)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-neutral-800 bg-neutral-900/50 flex justify-end gap-3">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setCreateTokenModalOpen(false)}
+                                className="text-[10px] font-mono text-neutral-500 uppercase tracking-[0.18em] hover:text-white"
+                            >
+                                {tr('tokens.create.cancel')}
+                            </Button>
+                            <Button
+                                disabled={loading || !newTokenName.trim()}
+                                size="sm"
+                                onClick={handleCreateToken}
+                                className="bg-white text-black hover:bg-neutral-200 text-[10px] font-mono uppercase tracking-[0.18em] px-6"
+                            >
+                                {loading ? tr('tokens.create.creating') : tr('tokens.create.submit')}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Created Token Result Modal */}
+            {createdToken && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="w-full max-w-lg bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
+                            <h3 className="text-xs font-mono uppercase tracking-[0.18em] text-green-400">{tr('tokens.result.title')}</h3>
+                            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-stretch gap-2">
+                                <code className="flex-1 bg-neutral-950 border border-neutral-800 rounded px-3 py-2.5 text-xs font-mono text-green-400 break-all">{createdToken}</code>
+                                <button
+                                    onClick={() => copyToken(createdToken)}
+                                    className="shrink-0 flex items-center gap-1.5 px-3 rounded border border-neutral-700 text-neutral-300 font-mono text-[10px] uppercase tracking-wider hover:border-neutral-500 hover:text-white transition-colors"
+                                >
+                                    <FiCopy className="w-3 h-3" />
+                                    {tokenCopied ? tr('tokens.result.copied') : tr('tokens.result.copy')}
+                                </button>
+                            </div>
+                            <p className="text-[11px] text-amber-500/80 font-mono leading-relaxed">⚠ {tr('tokens.result.warning')}</p>
+                        </div>
+                        <div className="p-4 border-t border-neutral-800 bg-neutral-900/50 flex justify-end">
+                            <Button
+                                size="sm"
+                                onClick={() => { setCreatedToken(null); setTokenCopied(false); }}
+                                className="bg-white text-black hover:bg-neutral-200 text-[10px] font-mono uppercase tracking-[0.18em] px-6"
+                            >
+                                {tr('tokens.result.done')}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

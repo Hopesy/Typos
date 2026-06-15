@@ -118,6 +118,7 @@
       "daily": "日常",
       "moment": "瞬间",
       "comment": "评论",
+      "tokens": "密钥",
       "contentType": "内容类型",
       "viewSite": "查看站点",
       "logout": "退出登录"
@@ -150,12 +151,14 @@
       "editPost": "编辑文章",
       "commentMgmt": "评论管理",
       "libraryTyped": "{name}库",
-      "newTyped": "新建{name}"
+      "newTyped": "新建{name}",
+      "tokens": "API 密钥"
     },
     "sub": {
       "overview": "概览",
       "library": "库",
-      "editor": "编辑器"
+      "editor": "编辑器",
+      "tokens": "访问凭证"
     },
     "action": {
       "uploadMd": "上传_MD",
@@ -210,6 +213,52 @@
       "cancel": "取消",
       "send": "发送信号",
       "sending": "发送中..."
+    },
+    "tokens": {
+      "newToken": "新建密钥",
+      "empty": "暂无 API 密钥",
+      "needDb": "API 密钥需要 D1 数据库支持，本地开发环境不可用。",
+      "name": "名称",
+      "namePlaceholder": "例如：CLI 工具",
+      "prefix": "前缀",
+      "created": "创建于",
+      "lastUsed": "最后使用",
+      "neverUsed": "从未使用",
+      "expires": "过期",
+      "neverExpires": "永不过期",
+      "expired": "已过期",
+      "active": "启用",
+      "status": "状态",
+      "delete": "删除",
+      "confirmDelete": "确认删除此密钥？",
+      "expiry": {
+        "label": "过期时间",
+        "never": "永不过期",
+        "30d": "30 天",
+        "90d": "90 天",
+        "1y": "1 年"
+      },
+      "create": {
+        "title": "创建 API 密钥",
+        "submit": "生成",
+        "creating": "生成中...",
+        "cancel": "取消"
+      },
+      "result": {
+        "title": "密钥已生成",
+        "warning": "请立即复制并妥善保管。此密钥只显示一次，关闭后将无法再次查看。",
+        "copy": "复制",
+        "copied": "已复制",
+        "done": "完成"
+      },
+      "docs": {
+        "title": "API 使用文档",
+        "endpoint": "端点",
+        "auth": "在请求头中携带密钥：",
+        "jsonExample": "JSON 格式上传",
+        "markdownExample": "Markdown 格式上传",
+        "note": "密钥等同于密码，请勿泄露或提交到代码仓库。"
+      }
     }
   }
 }

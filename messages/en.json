@@ -118,6 +118,7 @@
       "daily": "Daily",
       "moment": "Moments",
       "comment": "Comments",
+      "tokens": "Tokens",
       "contentType": "Content Type",
       "viewSite": "View Site",
       "logout": "Logout"
@@ -150,12 +151,14 @@
       "editPost": "Edit Post",
       "commentMgmt": "Comment Management",
       "libraryTyped": "{name} Library",
-      "newTyped": "New {name}"
+      "newTyped": "New {name}",
+      "tokens": "API Tokens"
     },
     "sub": {
       "overview": "Overview",
       "library": "Library",
-      "editor": "Editor"
+      "editor": "Editor",
+      "tokens": "Access Credentials"
     },
     "action": {
       "uploadMd": "Upload_MD",
@@ -210,6 +213,52 @@
       "cancel": "Cancel",
       "send": "Transmit_Signal",
       "sending": "Sending..."
+    },
+    "tokens": {
+      "newToken": "New Token",
+      "empty": "No API tokens yet",
+      "needDb": "API tokens require a D1 database and are unavailable in local dev.",
+      "name": "Name",
+      "namePlaceholder": "e.g. CLI Tool",
+      "prefix": "Prefix",
+      "created": "Created",
+      "lastUsed": "Last used",
+      "neverUsed": "Never used",
+      "expires": "Expires",
+      "neverExpires": "Never expires",
+      "expired": "Expired",
+      "active": "Active",
+      "status": "Status",
+      "delete": "Delete",
+      "confirmDelete": "Delete this token?",
+      "expiry": {
+        "label": "Expiry",
+        "never": "Never expires",
+        "30d": "30 days",
+        "90d": "90 days",
+        "1y": "1 year"
+      },
+      "create": {
+        "title": "Create API Token",
+        "submit": "Generate",
+        "creating": "Generating...",
+        "cancel": "Cancel"
+      },
+      "result": {
+        "title": "Token Generated",
+        "warning": "Copy and store it now. This token is shown only once and cannot be retrieved later.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "done": "Done"
+      },
+      "docs": {
+        "title": "API Documentation",
+        "endpoint": "Endpoint",
+        "auth": "Include the token in the request header:",
+        "jsonExample": "Upload as JSON",
+        "markdownExample": "Upload as Markdown",
+        "note": "Treat the token like a password. Never expose it or commit it to a repository."
+      }
     }
   }
 }
