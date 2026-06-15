@@ -3,6 +3,7 @@ title: "Hello Typos"
 date: 2026-01-01
 description: "Welcome to Typos - a minimal, HUD-styled personal publishing system built with Next.js and Cloudflare Workers"
 category: "Getting Started"
+cover: "https://imagehub-9na.pages.dev/file/1781184147751_image.png"
 ---
 
 # Hello Typos

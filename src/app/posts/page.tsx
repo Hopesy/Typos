@@ -14,7 +14,7 @@ export default async function PostsPage() {
   const posts = await getAllPosts() as Post[];
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-16">
+    <div className="container mx-auto max-w-5xl px-4 py-8">
       <PostsContent initialPosts={posts} />
     </div>
   );

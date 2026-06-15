@@ -57,7 +57,10 @@
   },
   "posts": {
     "all": "All",
-    "notFound": "Post not found"
+    "notFound": "Post not found",
+    "searchPlaceholder": "Search by title or content...",
+    "clear": "CLEAR",
+    "noResults": "No matching articles found"
   },
   "comments": {
     "title": "Terminal Comments",
@@ -69,7 +72,14 @@
     "observation": "Observation",
     "nicknamePlaceholder": "Nickname",
     "replyingTo": "Replying to @",
-    "cancelReply": "[ CANCEL_REPLY ]"
+    "cancelReply": "[ CANCEL_REPLY ]",
+    "submitButton": "[ CONFIRM_SIGNAL ]",
+    "submitting": "TRANSMITTING...",
+    "signalsReceived": "Signals_Received",
+    "connecting": "CONNECTING_D1_INSTANCE...",
+    "noSignals": "No_Input_Signals_Detected",
+    "reply": "[ REPLY ]",
+    "admin": "[ADMIN]"
   },
   "dock": {
     "home": "Home",
@@ -161,7 +171,8 @@
       "log": "Log",
       "caption": "Caption",
       "imageUrl": "Image URL",
-      "imageUrlOptional": "Image URL (Optional)"
+      "imageUrlOptional": "Image URL (Optional)",
+      "cover": "Cover"
     },
     "editing": "Editing:",
     "close": "Close",
@@ -180,12 +191,16 @@
     "confirm": {
       "purge": "Confirm_Purge?",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "clearContent": "Clear_Content?"
     },
     "btn": {
       "saving": "SAVING...",
       "publish": "PUBLISH",
-      "update": "UPDATE"
+      "publishing": "PUBLISHING...",
+      "update": "UPDATE",
+      "clear": "CLEAR",
+      "immersiveMode": "IMMERSIVE"
     },
     "reply": {
       "channel": "Reply_Channel: [Admin]",

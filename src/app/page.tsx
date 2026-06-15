@@ -124,7 +124,7 @@ export default function Home() {
           </div>
 
           {/* 独立背景层，无边框无padding，背景边缘即色块边缘 */}
-          <div className="relative bg-hud-panel/80 backdrop-blur-sm">
+          <div className="relative bg-hud-panel/[0.15] backdrop-blur-sm">
             <ActivityHeatmap activities={activities} showPreviewInTitle={true} />
           </div>
         </section>

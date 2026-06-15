@@ -193,7 +193,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                             disabled={isSubmitting}
                             className="text-[11px] uppercase font-mono border border-hud-line px-8 py-2.5 text-hud-muted hover:text-hud-strong hover:border-hud-line-strong transition-all active:scale-95 disabled:opacity-20"
                         >
-                            {isSubmitting ? 'TRANSMITTING...' : '[ CONFIRM_SIGNAL ]'}
+                            {isSubmitting ? t('submitting') : t('submitButton')}
                         </button>
                     </div>
                 </form>
@@ -203,14 +203,14 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
             <div className="space-y-10 pt-4">
                 <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-hud-line-soft" />
-                    <span className="text-[10px] font-mono text-hud-faint uppercase tracking-[0.24em]">Signals_Received</span>
+                    <span className="text-[10px] font-mono text-hud-faint uppercase tracking-[0.24em]">{t('signalsReceived')}</span>
                     <div className="h-px flex-1 bg-hud-line-soft" />
                 </div>
 
                 {isLoading ? (
                     <div className="py-10 text-center">
                         <span className="text-[10px] font-mono text-hud-faint animate-pulse italic">
-                            CONNECTING_D1_INSTANCE...
+                            {t('connecting')}
                         </span>
                     </div>
                 ) : comments.length > 0 ? (
@@ -228,7 +228,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                                         <div className="flex-1">
                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2">
                                                 <span className={`text-xs font-bold uppercase tracking-[0.16em] ${comment.is_admin ? 'text-green-500/65' : 'text-hud-muted'}`}>
-                                                    {comment.nickname} {comment.is_admin ? '[ADMIN]' : ''}
+                                                    {comment.nickname} {comment.is_admin ? t('admin') : ''}
                                                 </span>
                                                 <span className="text-[10px] text-hud-faint font-mono italic">
                                                     {new Date(comment.created_at).toLocaleDateString()} {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -241,7 +241,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
 
                                                     className="text-[10px] font-mono text-hud-faint hover:text-hud-strong transition-colors opacity-0 group-hover:opacity-100"
                                                 >
-                                                    [ REPLY ]
+                                                    {t('reply')}
                                                 </button>
                                             </div>
                                             <p className="text-sm text-hud font-mono leading-relaxed transition-colors">
@@ -259,7 +259,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                                                     <div className="flex-1">
                                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-1">
                                                             <span className={`text-[11px] font-bold uppercase tracking-[0.16em] ${reply.is_admin ? 'text-green-500/60' : 'text-hud-muted'}`}>
-                                                                {reply.nickname} {reply.is_admin ? '[ADMIN]' : ''}
+                                                                {reply.nickname} {reply.is_admin ? t('admin') : ''}
                                                             </span>
                                                             <span className="text-[10px] text-hud-faint font-mono italic">
                                                                 {new Date(reply.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -281,7 +281,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
 
                     <div className="py-16 text-center">
                         <span className="text-[10px] font-mono text-hud-faint uppercase tracking-[0.24em] italic">
-                            No_Input_Signals_Detected
+                            {t('noSignals')}
                         </span>
                     </div>
                 )}

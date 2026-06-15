@@ -57,7 +57,10 @@
   },
   "posts": {
     "all": "全部",
-    "notFound": "文章未找到"
+    "notFound": "文章未找到",
+    "searchPlaceholder": "搜索文章标题或内容...",
+    "clear": "清除",
+    "noResults": "未找到匹配的文章"
   },
   "comments": {
     "title": "Terminal_Comments / 终端评论系统",
@@ -69,7 +72,14 @@
     "observation": "Observation / 内容",
     "nicknamePlaceholder": "昵称",
     "replyingTo": "回复 @",
-    "cancelReply": "[ 取消回复 ]"
+    "cancelReply": "[ 取消回复 ]",
+    "submitButton": "[ 确认信号 ]",
+    "submitting": "传输中...",
+    "signalsReceived": "Signals_Received",
+    "connecting": "正在连接 D1 实例...",
+    "noSignals": "未检测到输入信号",
+    "reply": "[ 回复 ]",
+    "admin": "[管理员]"
   },
   "dock": {
     "home": "首页",
@@ -161,7 +171,8 @@
       "log": "日志",
       "caption": "说明",
       "imageUrl": "图片地址",
-      "imageUrlOptional": "图片地址（选填）"
+      "imageUrlOptional": "图片地址（选填）",
+      "cover": "封面"
     },
     "editing": "正在编辑:",
     "close": "关闭",
@@ -180,12 +191,16 @@
     "confirm": {
       "purge": "确认删除？",
       "yes": "是",
-      "no": "否"
+      "no": "否",
+      "clearContent": "确认清空内容？"
     },
     "btn": {
       "saving": "保存中...",
       "publish": "发布",
-      "update": "更新"
+      "publishing": "发布中...",
+      "update": "更新",
+      "clear": "清空",
+      "immersiveMode": "沉浸模式"
     },
     "reply": {
       "channel": "回复通道: [管理员]",

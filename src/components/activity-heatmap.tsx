@@ -46,12 +46,12 @@ function getWeeksData(activities: ActivityStats[]) {
 }
 
 function getIntensityClass(total: number): string {
-  // 使用与原版伪随机相同的透明度方案
-  if (total === 0) return 'bg-hud/[0.03]';  // 无活动 - 3% 不透明度（几乎透明）
-  if (total === 1) return 'bg-hud/10';      // 1条活动 - 10% 不透明度
-  if (total === 2) return 'bg-hud/20';      // 2条活动 - 20% 不透明度
-  if (total >= 3) return 'bg-hud/40';       // 3+条活动 - 40% 不透明度
-  return 'bg-hud/[0.03]';
+  // 亮色模式使用深色块，暗色模式使用浅色块
+  if (total === 0) return 'bg-black/[0.03] dark:bg-white/[0.03]';  // 无活动 - 几乎透明
+  if (total === 1) return 'bg-black/[0.15] dark:bg-white/10';      // 1条活动
+  if (total === 2) return 'bg-black/[0.25] dark:bg-white/20';      // 2条活动
+  if (total >= 3) return 'bg-black/[0.40] dark:bg-white/40';       // 3+条活动
+  return 'bg-black/[0.03] dark:bg-white/[0.03]';
 }
 
 export function ActivityHeatmap({ activities, showPreviewInTitle = false }: HeatmapProps) {

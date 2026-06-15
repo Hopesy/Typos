@@ -20,7 +20,9 @@ import {
     FiCornerUpLeft,
     FiBarChart2,
     FiTrendingUp,
-    FiUpload
+    FiUpload,
+    FiMaximize2,
+    FiX
 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
@@ -42,7 +44,8 @@ type PostData = {
     description: string;
     content: string;
     slug: string;
-    category: string;
+    category: string[];  // 改为数组支持多分类
+    cover: string;
 };
 
 type DailyData = {
@@ -450,13 +453,30 @@ const buildPostDataFromMarkdown = (raw: string, filename: string, fallbackDate: 
     const fallbackSlug = fallbackDate.replace(/-/g, '').slice(2);
     const fileSlug = safeSlug(filename, fallbackSlug);
 
+    // 解析分类，支持字符串或数组
+    let categories: string[] = [];
+    if (data.category) {
+        if (typeof data.category === 'string') {
+            categories = data.category.split(',').map(c => c.trim()).filter(Boolean);
+        } else if (Array.isArray(data.category)) {
+            categories = data.category;
+        }
+    } else if (data.categories) {
+        if (typeof data.categories === 'string') {
+            categories = data.categories.split(',').map(c => c.trim()).filter(Boolean);
+        } else if (Array.isArray(data.categories)) {
+            categories = data.categories;
+        }
+    }
+
     return {
         title: data.title || titleFromMarkdown(content) || titleFromFilename(filename),
         date: (data.date || fallbackDate).split('T')[0],
         description: data.description || '',
         content: content.trimStart(),
         slug: safeSlug(data.slug || fileSlug, fallbackSlug),
-        category: data.category || data.categories || '',
+        category: categories,
+        cover: data.cover || '',
     };
 };
 
@@ -478,8 +498,9 @@ export default function AdminPage() {
     const today = new Date().toISOString().split('T')[0];
     const defaultSlug = today.replace(/-/g, '').slice(2); // YYMMDD
 
-    const [postData, setPostData] = useState<PostData>({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: '' });
+    const [postData, setPostData] = useState<PostData>({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: ['随笔'], cover: '' });
     const [isSlugModified, setIsSlugModified] = useState(false);
+    const [categoryInput, setCategoryInput] = useState('');
     const [dailyData, setDailyData] = useState<DailyData>({ date: today, imageUrl: '', content: '' });
     const [momentData, setMomentData] = useState<MomentData>({ title: '', date: today, imageUrl: '', content: '' });
     const [existingPosts, setExistingPosts] = useState<AdminItem[]>([]);
@@ -489,6 +510,7 @@ export default function AdminPage() {
     const [currentFilename, setCurrentFilename] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'edit' | 'list'>('list');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isImmersiveMode, setIsImmersiveMode] = useState(false);
 
     // Delete Confirmation State
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -631,17 +653,42 @@ export default function AdminPage() {
         }
     }, [viewMode, type, postData.content, autoResizePostContent]);
 
+    // ESC key handler for immersive mode
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isImmersiveMode) {
+                setIsImmersiveMode(false);
+            }
+        };
+
+        if (isImmersiveMode) {
+            window.addEventListener('keydown', handleEscape);
+            return () => window.removeEventListener('keydown', handleEscape);
+        }
+    }, [isImmersiveMode]);
+
     const handleEditPost = (item: AdminItem) => {
         if (type === 'comment' || type === 'dashboard') return;
 
         if (type === 'post') {
+            // Parse category: handle both string and array formats
+            let categories: string[] = ['随笔'];
+            if (item.category) {
+                if (typeof item.category === 'string') {
+                    categories = item.category.split(',').map(c => c.trim()).filter(Boolean);
+                } else if (Array.isArray(item.category)) {
+                    categories = item.category;
+                }
+            }
+
             setPostData({
                 title: item.title || '',
                 date: item.date,
                 description: item.description || '',
                 content: item.content || '',
                 slug: item.slug || defaultSlug,
-                category: item.category || ''
+                category: categories.length > 0 ? categories : ['随笔'],
+                cover: ''
             });
         } else if (type === 'daily') {
             setDailyData({
@@ -664,7 +711,7 @@ export default function AdminPage() {
     };
 
     const resetPostEditorState = () => {
-        setPostData({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: '' });
+        setPostData({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: ['随笔'], cover: '' });
         setIsSlugModified(false);
         setIsEditing(false);
         setCurrentFilename(null);
@@ -958,17 +1005,106 @@ export default function AdminPage() {
         );
     }
 
+
+    // Immersive mode full-screen editor
+    if (isImmersiveMode && type === 'post' && viewMode === 'edit') {
+        return (
+            <div className="fixed inset-0 z-50 bg-black text-neutral-200 font-sans animate-in fade-in duration-300">
+                {/* Close button */}
+                <button
+                    onClick={() => setIsImmersiveMode(false)}
+                    className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-md bg-neutral-900/80 px-3 py-2 text-xs text-neutral-400 backdrop-blur-sm transition-colors hover:bg-neutral-800 hover:text-white"
+                >
+                    <FiX className="h-4 w-4" />
+                    <span className="font-mono uppercase tracking-wider">ESC</span>
+                </button>
+
+                {/* Editor container */}
+                <div className="flex h-full flex-col">
+                    {/* Toolbar */}
+                    <div className="flex flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 p-2">
+                        <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
+                        <button type="button" onClick={() => insertPostMarkdown('*', '*', 'italic text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] italic text-neutral-300 hover:border-neutral-600 hover:text-white">I</button>
+                        <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
+                        <button type="button" onClick={() => insertPostMarkdown('### ', '', 'Subheading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H3</button>
+                        <span className="mx-1 h-5 w-px bg-neutral-800" />
+                        <button type="button" onClick={() => insertPostMarkdown('> ', '', tr('md.quote'))} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
+                        <button type="button" onClick={() => insertPostMarkdown('[', '](https://)', 'link text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LINK</button>
+                        <button type="button" onClick={() => insertPostMarkdown('![', '](https://)', 'image alt')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">IMG</button>
+                        <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
+                        <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
+                        <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
+
+                        {/* Clear Button */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (confirm(tr('confirm.clearContent'))) {
+                                    setPostData({ ...postData, content: '' });
+                                }
+                            }}
+                            className="ml-auto h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
+                        >
+                            {tr('btn.clear')}
+                        </button>
+
+                        {/* Publish Button */}
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="h-7 px-4 rounded-md bg-white text-black font-mono text-[10px] uppercase tracking-[0.18em] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                        >
+                            {loading ? tr('btn.publishing') : tr('btn.publish')}
+                        </button>
+                    </div>
+
+                    {/* Editor and preview split */}
+                    <div className="grid flex-1 grid-cols-1 lg:grid-cols-2 overflow-hidden">
+                        {/* Source editor */}
+                        <div className="flex flex-col border-b border-neutral-900 lg:border-b-0 lg:border-r">
+                            <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.source')}</div>
+                            <textarea
+                                ref={postContentRef}
+                                rows={25}
+                                value={postData.content}
+                                onChange={(e) => {
+                                    updatePostContent(e.target.value);
+                                    autoResizePostContent();
+                                }}
+                                className="block h-full w-full resize-none overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
+                            />
+                        </div>
+
+                        {/* Preview */}
+                        <div className="flex flex-col overflow-hidden bg-[#111]">
+                            <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.preview')}</div>
+                            <div
+                                className="prose max-w-none overflow-auto p-5 text-[15px]"
+                                dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(postData.content) }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="admin-shell flex h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-white selection:text-black overflow-hidden">
             <aside
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 className={`${isSidebarCollapsed ? 'w-16' : 'w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full transition-all duration-300 relative group cursor-pointer`}
             >
+                {/* Brand Area */}
+                <div className="p-4 border-b border-neutral-900" onClick={(e) => e.stopPropagation()}>
+                    {!isSidebarCollapsed && (
+                        <span className="font-bold text-lg text-neutral-200 tracking-tight animate-in fade-in duration-300">Typos</span>
+                    )}
+                </div>
+
                 <div className="p-4" onClick={(e) => e.stopPropagation()}>
                     <nav className="space-y-1">
-                        {!isSidebarCollapsed && (
-                            <Label className="text-[10px] text-neutral-600 uppercase tracking-[0.18em] px-2 font-mono mb-2 block animate-in fade-in duration-300">{tr('nav.contentType')}</Label>
-                        )}
                         {(['dashboard', 'post', 'daily', 'moment', 'comment'] as const).map((t) => (
 
                             <button
@@ -1211,7 +1347,8 @@ export default function AdminPage() {
                                                 </Button>
                                             </div>
                                         )}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {/* 第一行：标题、日期、别名 */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                                             <div className="space-y-1">
                                                 <Label htmlFor="post-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.title')}</Label>
                                                 <Input id="post-title" placeholder="New Entry..." value={postData.title} onChange={(e) => setPostData({ ...postData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white placeholder:text-neutral-700" />
@@ -1220,19 +1357,66 @@ export default function AdminPage() {
                                                 <Label htmlFor="post-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.date')}</Label>
                                                 <Input id="post-date" type="date" value={postData.date} onChange={(e) => { const val = e.target.value; setPostData(prev => ({ ...prev, date: val, slug: isSlugModified ? prev.slug : dateToSlug(val) })); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white [&::-webkit-calendar-picker-indicator]:invert" />
                                             </div>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <Label htmlFor="post-desc" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.description')}</Label>
-                                            <Input id="post-desc" value={postData.description} onChange={(e) => setPostData({ ...postData, description: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300" />
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div className="space-y-1">
                                                 <Label htmlFor="post-slug" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.slug')}</Label>
                                                 <Input id="post-slug" value={postData.slug} onChange={(e) => { setPostData({ ...postData, slug: e.target.value }); setIsSlugModified(true); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm font-mono text-neutral-400 focus:bg-neutral-900" />
                                             </div>
+                                        </div>
+
+                                        {/* 第二行：分类、描述、封面 */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                                             <div className="space-y-1">
                                                 <Label htmlFor="post-category" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.category')}</Label>
-                                                <Input id="post-category" value={postData.category} onChange={(e) => setPostData({ ...postData, category: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300" />
+                                                {/* 标签输入框 */}
+                                                <div className="bg-neutral-900/50 border border-neutral-800 rounded focus-within:border-neutral-700 min-h-[36px] flex flex-wrap items-center gap-1 p-1">
+                                                    {/* 已选分类标签 */}
+                                                    {postData.category.map((cat, idx) => (
+                                                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 bg-neutral-800 text-[11px] text-neutral-300 rounded font-mono">
+                                                            {cat}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newCats = postData.category.filter((_, i) => i !== idx);
+                                                                    setPostData({ ...postData, category: newCats });
+                                                                }}
+                                                                className="text-neutral-500 hover:text-white text-sm"
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                    {/* 输入框 */}
+                                                    <input
+                                                        type="text"
+                                                        value={categoryInput}
+                                                        onChange={(e) => setCategoryInput(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' && categoryInput.trim()) {
+                                                                e.preventDefault();
+                                                                const newCat = categoryInput.trim();
+                                                                if (!postData.category.includes(newCat)) {
+                                                                    setPostData({ ...postData, category: [...postData.category, newCat] });
+                                                                }
+                                                                setCategoryInput('');
+                                                            } else if (e.key === 'Backspace' && !categoryInput && postData.category.length > 0) {
+                                                                // 按删除键删除最后一个标签
+                                                                const newCats = [...postData.category];
+                                                                newCats.pop();
+                                                                setPostData({ ...postData, category: newCats });
+                                                            }
+                                                        }}
+                                                        placeholder={postData.category.length === 0 ? "输入后按Enter（默认：随笔）" : ""}
+                                                        className="flex-1 min-w-[100px] bg-transparent border-0 outline-none text-sm text-neutral-300 placeholder:text-neutral-700 h-7"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="post-desc" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.description')}</Label>
+                                                <Input id="post-desc" value={postData.description} onChange={(e) => setPostData({ ...postData, description: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="post-cover" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.cover')}</Label>
+                                                <Input id="post-cover" placeholder="https://..." value={postData.cover} onChange={(e) => setPostData({ ...postData, cover: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300 placeholder:text-neutral-700" />
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
@@ -1250,7 +1434,39 @@ export default function AdminPage() {
                                                     <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
                                                     <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
-                                                    <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-600 md:inline">{tr('md.sourcePreview')}</span>
+
+                                                    {/* Clear Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (confirm(tr('confirm.clearContent'))) {
+                                                                setPostData({ ...postData, content: '' });
+                                                            }
+                                                        }}
+                                                        className="ml-auto h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
+                                                    >
+                                                        {tr('btn.clear')}
+                                                    </button>
+
+                                                    {/* Immersive Mode Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsImmersiveMode(true)}
+                                                        className="h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
+                                                        title={tr('btn.immersiveMode')}
+                                                    >
+                                                        <FiMaximize2 className="w-3.5 h-3.5" />
+                                                    </button>
+
+                                                    {/* Publish Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSubmit}
+                                                        disabled={loading}
+                                                        className="h-7 px-4 rounded-md bg-white text-black font-mono text-[10px] uppercase tracking-[0.18em] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                                                    >
+                                                        {loading ? tr('btn.publishing') : tr('btn.publish')}
+                                                    </button>
                                                 </div>
                                                 <div className="grid grid-cols-1 lg:grid-cols-2">
                                                     <div className="border-b border-neutral-900 lg:border-b-0 lg:border-r">

@@ -19,6 +19,7 @@ export type PostListItem = {
   date: string;
   description: string;
   category: string;
+  cover?: string;
 };
 
 export type PostDetail = PostListItem & {
@@ -171,10 +172,15 @@ export async function getPostSlugs() {
 export async function getAllPosts(): Promise<PostListItem[]> {
   const db = await getDatabase();
   if (db) {
-    const { results } = await db
-      .prepare("SELECT slug, title, date, description, category FROM posts ORDER BY date DESC")
-      .all<PostListItem>();
-    return results;
+    try {
+      const { results } = await db
+        .prepare("SELECT slug, title, date, description, category, cover FROM posts ORDER BY date DESC")
+        .all<PostListItem>();
+      return results;
+    } catch (error) {
+      // 数据库查询失败，降级到文件系统
+      console.warn('Database query failed, falling back to filesystem:', error);
+    }
   }
 
   const files = await readMarkdownDir("posts");
@@ -192,6 +198,7 @@ export async function getAllPosts(): Promise<PostListItem[]> {
           ? data.description
           : content.replace(/\s+/g, " ").trim().slice(0, 120),
       category: typeof data.category === "string" ? data.category : "",
+      cover: typeof data.cover === "string" ? data.cover : undefined,
       _ts: safeDate(date),
     };
   });
@@ -204,21 +211,27 @@ export async function getAllPosts(): Promise<PostListItem[]> {
       date: post.date,
       description: post.description,
       category: post.category,
+      cover: post.cover,
     }));
 }
 
 export async function getPostBySlug(slug: string): Promise<PostDetail> {
   const db = await getDatabase();
   if (db) {
-    const post = await db
-      .prepare("SELECT slug, title, date, description, category, content FROM posts WHERE slug = ?")
-      .bind(slug)
-      .first<PostListItem & { content: string }>();
+    try {
+      const post = await db
+        .prepare("SELECT slug, title, date, description, category, content FROM posts WHERE slug = ?")
+        .bind(slug)
+        .first<PostListItem & { content: string }>();
 
-    if (!post) throw new Error("Post not found");
-
-    const { html, toc } = await renderMarkdown(post.content);
-    return { ...post, html, toc };
+      if (post) {
+        const { html, toc } = await renderMarkdown(post.content);
+        return { ...post, html, toc };
+      }
+    } catch (error) {
+      // 数据库查询失败，降级到文件系统
+      console.warn('Database query failed, falling back to filesystem:', error);
+    }
   }
 
   const files = await readMarkdownDir("posts");
