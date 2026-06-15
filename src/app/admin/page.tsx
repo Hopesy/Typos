@@ -1010,15 +1010,6 @@ export default function AdminPage() {
     if (isImmersiveMode && type === 'post' && viewMode === 'edit') {
         return (
             <div className="fixed inset-0 z-50 bg-black text-neutral-200 font-sans animate-in fade-in duration-300">
-                {/* Close button */}
-                <button
-                    onClick={() => setIsImmersiveMode(false)}
-                    className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-md bg-neutral-900/80 px-3 py-2 text-xs text-neutral-400 backdrop-blur-sm transition-colors hover:bg-neutral-800 hover:text-white"
-                >
-                    <FiX className="h-4 w-4" />
-                    <span className="font-mono uppercase tracking-wider">ESC</span>
-                </button>
-
                 {/* Editor container */}
                 <div className="flex h-full flex-col">
                     {/* Toolbar */}
