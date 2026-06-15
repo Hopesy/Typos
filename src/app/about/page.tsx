@@ -137,9 +137,9 @@ function AboutSection({ section }: { section: AboutSectionData }) {
   return (
     <section
       key={section.id}
-      className="group relative p-8 bg-card transition-all duration-400 border border-hud-line-soft"
+      className="group relative p-6 bg-card transition-all duration-400 border border-hud-line-soft"
     >
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="text-hud-muted group-hover:text-hud-strong transition-colors">
             {section.icon}
@@ -153,7 +153,7 @@ function AboutSection({ section }: { section: AboutSectionData }) {
         </span>
       </div>
 
-      <div className="space-y-4 text-[15px] leading-7 text-hud font-sans sm:text-base sm:leading-8">
+      <div className="space-y-3 text-[14px] leading-6 text-hud font-sans sm:text-[15px] sm:leading-7">
         {section.content?.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
@@ -169,7 +169,7 @@ function AboutSection({ section }: { section: AboutSectionData }) {
         )}
       </div>
 
-      <div className="mt-8 flex justify-end">
+      <div className="mt-5 flex justify-end">
         <span className="text-[10px] font-mono text-hud-faint uppercase tracking-[0.22em] group-hover:text-hud-dim transition-colors">
           ACC_PROTO // {section.id}
         </span>

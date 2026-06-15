@@ -148,22 +148,29 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                         {filteredPosts.map((post) => (
                             <a key={post.slug} href={`/posts/${encodeURIComponent(post.slug.trim())}`} className="block group">
                                 <div className="border border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 overflow-hidden p-1">
-                                    {/* Cover Image with Hover Overlay */}
-                                    {post.cover && (
-                                        <div className="relative w-full aspect-[2/1] overflow-hidden bg-hud-panel/10">
+                                    {/* Cover Image (or placeholder) with Hover Overlay */}
+                                    <div className="relative w-full aspect-[2/1] overflow-hidden bg-hud-panel/10">
+                                        {post.cover ? (
                                             <img
                                                 src={post.cover}
                                                 alt={post.title}
                                                 className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-all duration-500"
                                             />
-                                            {/* Hover Overlay with Description - Bottom Aligned */}
-                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3 pt-8">
-                                                <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">
-                                                    {post.description}
-                                                </p>
+                                        ) : (
+                                            /* Placeholder when no cover */
+                                            <div className="flex h-full w-full items-center justify-center bg-[repeating-linear-gradient(45deg,transparent,transparent_6px,var(--hud-line-soft)_6px,var(--hud-line-soft)_7px)] opacity-40 group-hover:opacity-60 transition-opacity duration-500">
+                                                <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-hud-faint">
+                                                    NO_SIGNAL
+                                                </span>
                                             </div>
+                                        )}
+                                        {/* Hover Overlay with Description - Bottom Aligned */}
+                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3 pt-8">
+                                            <p className="text-neutral-300 text-[11px] leading-relaxed line-clamp-3">
+                                                {post.description}
+                                            </p>
                                         </div>
-                                    )}
+                                    </div>
 
                                     <div className="px-2 py-1.5 flex flex-row items-center gap-2 border-t border-hud-line-soft">
                                         {/* Meta Info - Single Line, Minimal Height */}
