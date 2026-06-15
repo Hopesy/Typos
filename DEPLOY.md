@@ -70,6 +70,31 @@ D1 database: typos-db
 D1 binding: DB
 ```
 
+### 数据库迁移
+
+数据库表结构由 `migrations/` 下的 SQL 文件定义，按文件名顺序执行：
+
+```txt
+migrations/0001_init.sql          基础表（posts / daily / moments / comments / rate_limits）
+migrations/0002_seed_content.sql  初始内容
+migrations/0003_api_tokens.sql    API 密钥表
+```
+
+迁移是**自动执行**的。`npm run deploy` 在部署前会先运行 `wrangler d1 migrations apply DB --remote`，把所有未执行的迁移按顺序应用到远端 D1。Cloudflare Git Integration 的 Deploy command 就是 `npm run deploy`，所以每次 git push 触发构建时都会自动迁移。
+
+因此：
+
+- **首次部署**：新建空 D1 后首次部署，会从 `0001` 依次执行到最新，数据库结构自动完整。
+- **后续更新**：新增 migration 文件并 push 后，Cloudflare 构建时自动应用，无需手动操作。
+
+如需手动应用迁移（例如在 Cloudflare 之外操作）：
+
+```bash
+npm run db:migrations:apply         # 远端生产 D1
+npm run db:migrations:apply:local   # 本地开发 D1
+```
+
+
 ## 后续更新项目
 
 本地改完代码后运行：
