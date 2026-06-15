@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS posts (
   description TEXT NOT NULL DEFAULT '',
   category TEXT NOT NULL DEFAULT '',
   content TEXT NOT NULL,
+  cover TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
