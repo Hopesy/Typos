@@ -663,11 +663,15 @@ export default function AdminPage() {
         setViewMode('edit');
     };
 
-    const handleNewPost = () => {
+    const resetPostEditorState = () => {
         setPostData({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: '' });
         setIsSlugModified(false);
         setIsEditing(false);
         setCurrentFilename(null);
+    };
+
+    const handleNewPost = () => {
+        resetPostEditorState();
         setViewMode('edit');
     };
 
@@ -742,8 +746,9 @@ export default function AdminPage() {
             if (result.success) {
                 setMessage({ text: `SUCCESS: ${type.toUpperCase()} SAVED`, isError: false });
                 if (type === 'post') {
-                    handleNewPost();
-                    fetchPosts();
+                    resetPostEditorState();
+                    await fetchPosts();
+                    setViewMode('list');
                 }
                 else if (type === 'daily') setDailyData({ date: today, imageUrl: '', content: '' });
                 else if (type === 'moment') setMomentData({ title: '', date: today, imageUrl: '', content: '' });

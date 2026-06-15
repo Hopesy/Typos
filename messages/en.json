@@ -13,7 +13,17 @@
       "books": "Bookshelf"
     },
     "signalDesc": "A place for things I've tinkered with, everyday notes, and moments I like. Kept light, updated slowly.",
-    "toolSample": "Sample project"
+    "toolSample": "Sample project",
+    "launchModule": "LAUNCH_MODULE",
+    "footprint": {
+      "totalActivities": "Total Activities",
+      "past52Weeks": "Past 52 Weeks",
+      "posts": "Posts",
+      "daily": "Daily",
+      "moments": "Moments",
+      "total": "Total",
+      "noActivity": "No activity"
+    }
   },
   "about": {
     "label": "About page",

@@ -61,7 +61,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Typos",
-  description: "The darkness is boundless",
+  description: "A minimal HUD-styled personal publishing system",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml", sizes: "any" },

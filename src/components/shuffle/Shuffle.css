@@ -22,7 +22,6 @@
   font-size: clamp(0.75rem, 3.2vw, 1.125rem);
   font-family: var(--font-press-start), 'Press Start 2P', system-ui;
   line-height: 1.6;
-  opacity: 0.8;
   text-transform: uppercase;
 }
 

@@ -1,30 +1,37 @@
 'use client';
 
 import { HeroTitle, HeroSubtitle } from "@/components/hero-title";
-import { FiFileText, FiLayers, FiRefreshCw, FiMapPin, FiMusic, FiCommand, FiBookOpen, FiVideo } from "react-icons/fi";
+import { FiFileText, FiLayers, FiRefreshCw, FiMapPin, FiMusic, FiBookOpen, FiVideo } from "react-icons/fi";
 import Dither from "@/components/dither/Dither";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { ActivityHeatmap, ActivityHeatmapPreview } from "@/components/activity-heatmap";
+import { useEffect, useState } from "react";
+import type { ActivityStats } from "@/lib/content";
 
 const tools = [
   {
-    name: "Project Alpha",
-    link: "https://github.com/your-username/project-alpha",
+    name: "Eidos",
+    description: "生图工作台",
+    link: "https://github.com/Hopesy/Eidos",
     icon: <FiFileText className="w-6 h-6" />
   },
   {
-    name: "Project Beta",
-    link: "https://github.com/your-username/project-beta",
+    name: "RevitClaw",
+    description: "Revit Agent插件",
+    link: "https://github.com/Hopesy/RevitClaw",
     icon: <FiLayers className="w-6 h-6" />
   },
   {
-    name: "Project Gamma",
-    link: "https://github.com/your-username/project-gamma",
+    name: "MarkdView",
+    description: "MD渲染器",
+    link: "https://github.com/Hopesy/MarkdView",
     icon: <FiRefreshCw className="w-6 h-6" />
   },
   {
-    name: "Project Delta",
-    link: "https://github.com/your-username/project-delta",
+    name: "MinoLink",
+    description: "飞书远控终端",
+    link: "https://github.com/Hopesy/MinoLink",
     icon: <FiVideo className="w-6 h-6" />
   },
 ];
@@ -57,6 +64,15 @@ const hexTag = (seed: number) => {
 
 export default function Home() {
   const t = useTranslations();
+  const [activities, setActivities] = useState<ActivityStats[]>([]);
+
+  useEffect(() => {
+    fetch('/api/activities')
+      .then(res => res.json())
+      .then(data => setActivities(data))
+      .catch(err => console.error('Failed to load activities:', err));
+  }, []);
+
   return (
     <div className="container mx-auto max-w-5xl px-4">
       <div className="dither-background-wrapper">
@@ -72,15 +88,15 @@ export default function Home() {
         />
       </div>
       {/* Hero Section */}
-      <section className="mb-16 flex min-h-[40vh] flex-col items-center justify-center px-2 text-center sm:px-0">
+      <section className="mb-8 flex min-h-[40vh] flex-col items-center justify-center px-2 text-center sm:px-0">
         <HeroTitle />
-        <div className="mt-6 text-muted-foreground">
+        <div className="mt-6 text-hud-strong">
           <HeroSubtitle />
         </div>
       </section>
 
       {/* 方案1: Status/Now 极简状态栏 */}
-      <section className="mb-12 flex justify-center">
+      <section className="mb-16 flex justify-center">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 py-2 rounded-full border border-hud-line bg-hud-panel backdrop-blur-md text-[11px] uppercase tracking-[0.16em] text-hud font-mono">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
@@ -91,89 +107,25 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2 text-hud">
             <FiMapPin className="w-3 h-3 text-hud-muted" />
-            YOUR_LOCATION
+            GUANG ZHOU
           </div>
           <div className="flex items-center gap-2 text-hud">
             <FiMusic className="w-3 h-3 text-hud-muted" />
-            LO-FI BEATS
+            月亮之矢
           </div>
-        </div>
-      </section>
-
-      {/* 方案3: Daily Quote 像素风一言 */}
-      <section className="flex flex-col items-center" style={{ marginBottom: 'calc(var(--spacing) * 50)' }}>
-        <div className="max-w-xl w-full p-8 rounded-2xl border border-hud-line bg-gradient-to-br from-hud-soft to-transparent relative group">
-          <FiCommand className="absolute top-4 left-4 w-4 h-4 text-hud-muted" />
-          <p className="font-press-start text-[11px] leading-relaxed text-center text-hud-strong p-4">
-            &ldquo;DARKNESS IS BOUNDLESS, YET HUMANITY FOOLISHLY YEARNS FOR LIGHT.&rdquo;
-          </p>
-          <div className="text-[11px] text-right text-hud-muted font-mono mt-4">— OVERRIDE</div>
         </div>
       </section>
 
       <div className="space-y-24">
-        {/* Featured Signal 模块 */}
-        <section className="relative">
-          <div className="relative overflow-hidden border border-hud-line bg-hud-panel">
-            <span className="absolute right-0 top-0 h-5 w-5 border-r border-t border-hud-line-strong" />
-            <div className="grid grid-cols-1 md:grid-cols-[0.95fr_1.05fr]">
-              <div className="relative min-h-[260px] border-b border-hud-line bg-hud-soft p-6 font-mono text-xs uppercase leading-loose text-hud md:border-b-0 md:border-r">
-                <div className="absolute inset-0 hud-grid-overlay opacity-80" />
-                <div className="relative">
-                  <div>&gt; init module:minimal-load</div>
-                  <div>&gt; source: github_pages + cloudflare</div>
-                  <div>&gt; ui_stack: next.js / tailwind / motion</div>
-                  <div>&gt; visual_core: dither_background + hud_panels</div>
-                  <div>&gt; archive: posts + daily + moments</div>
-                  <div className="mt-8 text-hud-strong">LAUNCH_MODULE: signal_room</div>
-                  <div className="text-green-300">STATUS: RUNNING</div>
-                </div>
-              </div>
-
-              <div className="relative flex min-h-[300px] flex-col justify-center p-6 sm:p-9">
-                <div className="mb-5 font-mono text-[11px] uppercase tracking-[0.22em] text-hud-muted">0XML</div>
-                <h2 className="font-press-start text-[clamp(1.55rem,5vw,3.6rem)] leading-[1.25] text-hud-strong">
-                  MINIMAL
-                  <br />
-                  LOAD
-                </h2>
-                <p className="mt-8 max-w-xl text-[15px] leading-loose text-hud-muted sm:text-base">
-                  {t('home.signalDesc')}
-                </p>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  {signalTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="border border-hud-line bg-hud-panel px-3 py-2 font-mono text-[11px] uppercase text-hud"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 方案4: GitHub Contribution 模拟贡献墙 - HUD 风格 - 去边框去背景 */}
+        {/* 方案4: GitHub Contribution 模拟贡献墙 - HUD 风格 - 独立背景，隔离鼠标交互 */}
         <section className="relative group">
-          <div className="flex items-center gap-3 mb-6 border-b border-hud-line-soft pb-2">
+          <div className="flex items-center justify-between gap-3 mb-3 border-b border-hud-line-soft pb-2">
             <h2 className="text-xs uppercase tracking-[0.2em] text-hud font-mono">{t('home.section.footprint')}</h2>
           </div>
 
-          <div className="overflow-hidden p-1">
-            <div className="grid grid-cols-[repeat(52,1fr)] gap-[2px]">
-              {Array.from({ length: 52 * 7 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`aspect-square rounded-[1px] transition-colors duration-500 ${cellShade(i + 1)}`}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="mt-4 flex justify-between items-center text-[10px] font-mono text-hud-muted uppercase tracking-normal">
-            <span>Data_Stream_Initialized</span>
-            <span>Check_sum: OK</span>
+          {/* 独立背景层，无边框无padding，背景边缘即色块边缘 */}
+          <div className="relative bg-hud-panel/80 backdrop-blur-sm">
+            <ActivityHeatmap activities={activities} showPreviewInTitle={true} />
           </div>
         </section>
 
@@ -204,7 +156,7 @@ export default function Home() {
 
                   <div>
                     <h3 className="text-sm font-bold text-hud group-hover/item:text-hud-strong mb-1 tracking-tight transition-colors">{tool.name}</h3>
-                    <p className="text-[11px] text-hud-muted leading-relaxed font-mono uppercase">{t('home.toolSample')}</p>
+                    <p className="text-[11px] text-hud-muted leading-relaxed font-mono">{tool.description}</p>
                   </div>
 
                   <a
@@ -213,7 +165,7 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="flex items-center justify-between text-[11px] font-mono text-hud hover:text-hud-strong pt-4 mt-2 group/btn"
                   >
-                    <span>LAUNCH_MODULE</span>
+                    <span>{t('home.launchModule')}</span>
                     <span className="group-hover/btn:translate-x-1 transition-transform">→</span>
                   </a>
                 </div>

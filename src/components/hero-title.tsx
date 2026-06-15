@@ -1,6 +1,29 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import Shuffle from './shuffle/Shuffle';
+
+function readTheme(): 'dark' | 'light' {
+  if (typeof document === 'undefined') return 'dark';
+  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+}
+
+function subscribe(onStoreChange: () => void) {
+  if (typeof window === 'undefined') return () => {};
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== 'typos-theme') return;
+    onStoreChange();
+  };
+
+  window.addEventListener('storage', onStorage);
+  window.addEventListener('typos-theme-change', onStoreChange);
+
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener('typos-theme-change', onStoreChange);
+  };
+}
 
 export function HeroTitle() {
   return (
@@ -25,9 +48,12 @@ export function HeroTitle() {
 }
 
 export function HeroSubtitle() {
+  const theme = useSyncExternalStore(subscribe, readTheme, () => 'dark');
+  const text = theme === 'dark' ? 'The darkness is boundless' : 'The light is infinite';
+
   return (
     <Shuffle
-      text="The darkness is boundless"
+      text={text}
       className="hero-subtitle-style"
       shuffleDirection="right"
       duration={0.35}

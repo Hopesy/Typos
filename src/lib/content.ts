@@ -333,3 +333,87 @@ export async function getMomentsEntries(): Promise<TimelineEntry[]> {
       html: entry.html,
     }));
 }
+
+export type ActivityStats = {
+  date: string;
+  posts: number;
+  daily: number;
+  moments: number;
+  total: number;
+};
+
+export async function getActivityStats(): Promise<ActivityStats[]> {
+  // 在开发环境优先使用文件系统，避免数据库缓存问题
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  if (!isDevelopment) {
+    const db = await getDatabase();
+    if (db) {
+      // 从数据库获取活动统计
+      const postsQuery = await db.prepare("SELECT date, COUNT(*) as count FROM posts GROUP BY date").all<{ date: string; count: number }>();
+      const dailyQuery = await db.prepare("SELECT date, COUNT(*) as count FROM daily GROUP BY date").all<{ date: string; count: number }>();
+      const momentsQuery = await db.prepare("SELECT date, COUNT(*) as count FROM moments GROUP BY date").all<{ date: string; count: number }>();
+
+      const statsMap = new Map<string, ActivityStats>();
+
+      postsQuery.results.forEach(({ date, count }) => {
+        if (!statsMap.has(date)) {
+          statsMap.set(date, { date, posts: 0, daily: 0, moments: 0, total: 0 });
+        }
+        const stats = statsMap.get(date)!;
+        stats.posts = count;
+        stats.total += count;
+      });
+
+      dailyQuery.results.forEach(({ date, count }) => {
+        if (!statsMap.has(date)) {
+          statsMap.set(date, { date, posts: 0, daily: 0, moments: 0, total: 0 });
+        }
+        const stats = statsMap.get(date)!;
+        stats.daily = count;
+        stats.total += count;
+      });
+
+      momentsQuery.results.forEach(({ date, count }) => {
+        if (!statsMap.has(date)) {
+          statsMap.set(date, { date, posts: 0, daily: 0, moments: 0, total: 0 });
+        }
+        const stats = statsMap.get(date)!;
+        stats.moments = count;
+        stats.total += count;
+      });
+
+      return Array.from(statsMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+    }
+  }
+
+  // 从文件系统获取活动统计
+  const [posts, daily, moments] = await Promise.all([
+    readMarkdownDir("posts"),
+    readMarkdownDir("daily"),
+    readMarkdownDir("moments"),
+  ]);
+
+  const statsMap = new Map<string, ActivityStats>();
+
+  const processFiles = (files: { file: string; raw: string }[], type: 'posts' | 'daily' | 'moments') => {
+    files.forEach(({ raw }) => {
+      const { data } = matter(raw);
+      const date = normalizeDate(data.date);
+      if (!date) return;
+
+      if (!statsMap.has(date)) {
+        statsMap.set(date, { date, posts: 0, daily: 0, moments: 0, total: 0 });
+      }
+      const stats = statsMap.get(date)!;
+      stats[type] += 1;
+      stats.total += 1;
+    });
+  };
+
+  processFiles(posts, 'posts');
+  processFiles(daily, 'daily');
+  processFiles(moments, 'moments');
+
+  return Array.from(statsMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+}

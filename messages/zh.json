@@ -13,7 +13,17 @@
       "books": "书架"
     },
     "signalDesc": "把折腾过的东西、偶尔的日常、喜欢的瞬间都放在这里。保持轻量，慢慢更新。",
-    "toolSample": "示例项目"
+    "toolSample": "示例项目",
+    "launchModule": "启动模块",
+    "footprint": {
+      "totalActivities": "总活动数",
+      "past52Weeks": "过去52周",
+      "posts": "文章",
+      "daily": "日常",
+      "moments": "瞬间",
+      "total": "合计",
+      "noActivity": "无活动"
+    }
   },
   "about": {
     "label": "关于本站",
