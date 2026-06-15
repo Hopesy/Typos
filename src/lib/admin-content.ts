@@ -14,6 +14,7 @@ export type AdminItem = {
   slug?: string;
   imageUrl?: string;
   category?: string;
+  cover?: string;
   nickname?: string;
   contact?: string;
   articleTitle?: string;
@@ -35,6 +36,7 @@ type PostRow = {
   description: string;
   category: string;
   content: string;
+  cover?: string;
 };
 
 type DailyRow = {
@@ -221,11 +223,12 @@ async function listLocalItems(type: AdminContentType): Promise<AdminItem[]> {
 async function listD1Items(db: D1DatabaseLike, type: AdminContentType): Promise<AdminItem[]> {
   if (type === "post") {
     const { results } = await db
-      .prepare("SELECT slug, title, date, description, category, content FROM posts ORDER BY date DESC")
+      .prepare("SELECT slug, title, date, description, category, content, cover FROM posts ORDER BY date DESC")
       .all<PostRow>();
 
     return results.map((row) => ({
       ...row,
+      cover: row.cover || "",
       filename: `${row.slug}.md`,
     }));
   }
@@ -314,6 +317,7 @@ async function saveLocalItem(type: AdminEditableType, data: unknown) {
       date,
       description: stringValue(payload.description),
       category: stringValue(payload.category),
+      cover: stringValue(payload.cover),
     });
 
     await local.fs.writeFile(filePath, fileContent, "utf8");
@@ -362,14 +366,15 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
 
     await db
       .prepare(
-        `INSERT INTO posts (slug, title, date, description, category, content)
-         VALUES (?, ?, ?, ?, ?, ?)
+        `INSERT INTO posts (slug, title, date, description, category, content, cover)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(slug) DO UPDATE SET
            title = excluded.title,
            date = excluded.date,
            description = excluded.description,
            category = excluded.category,
            content = excluded.content,
+           cover = excluded.cover,
            updated_at = datetime('now')`,
       )
       .bind(
@@ -379,6 +384,7 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
         stringValue(payload.description),
         stringValue(payload.category),
         stringValue(payload.content),
+        stringValue(payload.cover),
       )
       .run();
     return;

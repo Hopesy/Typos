@@ -220,7 +220,7 @@ export async function getPostBySlug(slug: string): Promise<PostDetail> {
   if (db) {
     try {
       const post = await db
-        .prepare("SELECT slug, title, date, description, category, content FROM posts WHERE slug = ?")
+        .prepare("SELECT slug, title, date, description, category, cover, content FROM posts WHERE slug = ?")
         .bind(slug)
         .first<PostListItem & { content: string }>();
 
