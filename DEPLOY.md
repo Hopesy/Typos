@@ -75,17 +75,15 @@ D1 binding: DB
 数据库表结构由 `migrations/` 下的 SQL 文件定义，按文件名顺序执行：
 
 ```txt
-migrations/0001_init.sql          基础表（posts / daily / moments / comments / rate_limits）
-migrations/0002_seed_content.sql  初始内容
-migrations/0003_api_tokens.sql    API 密钥表
+migrations/0001_init.sql    全部表结构（posts / daily / moments / comments / rate_limits / api_tokens）+ 初始内容
 ```
 
 迁移是**自动执行**的。`npm run deploy` 在部署前会先运行 `wrangler d1 migrations apply DB --remote`，把所有未执行的迁移按顺序应用到远端 D1。Cloudflare Git Integration 的 Deploy command 就是 `npm run deploy`，所以每次 git push 触发构建时都会自动迁移。
 
 因此：
 
-- **首次部署**：新建空 D1 后首次部署，会从 `0001` 依次执行到最新，数据库结构自动完整。
-- **后续更新**：新增 migration 文件并 push 后，Cloudflare 构建时自动应用，无需手动操作。
+- **首次部署**：新建空 D1 后首次部署，`0001_init.sql` 一次性建好全部表并写入初始内容，数据库结构自动完整。
+- **后续更新**：新增 migration 文件（如 `0002_xxx.sql`）并 push 后，Cloudflare 构建时自动应用，无需手动操作。已部署过的库会跳过已记录的迁移，只执行新增的。
 
 如需手动应用迁移（例如在 Cloudflare 之外操作）：
 
