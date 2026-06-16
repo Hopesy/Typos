@@ -20,8 +20,7 @@ function getWeeksData(activities: ActivityStats[]) {
   });
 
   const today = new Date();
-  const endDate = new Date(today);
-  endDate.setDate(endDate.getDate() - endDate.getDay()); // 本周日
+  const endDate = new Date(today); // 结束日期设为今天
 
   const weeks: Array<Array<{ date: string; activity: ActivityStats | null }>> = [];
 
