@@ -65,12 +65,25 @@ const hexTag = (seed: number) => {
 export default function Home() {
   const t = useTranslations();
   const [activities, setActivities] = useState<ActivityStats[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetch('/api/activities')
-      .then(res => res.json())
-      .then(data => setActivities(data))
-      .catch(err => console.error('Failed to load activities:', err));
+    const fetchActivities = () => {
+      fetch('/api/activities')
+        .then(res => res.json())
+        .then(data => setActivities(data))
+        .catch(err => console.error('Failed to load activities:', err));
+    };
+
+    fetchActivities();
+
+    // 每小时刷新一次，确保日期范围跟随时间更新
+    const interval = setInterval(() => {
+      fetchActivities();
+      setRefreshKey(prev => prev + 1);
+    }, 3600000); // 1小时 = 3600000ms
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -125,7 +138,7 @@ export default function Home() {
 
           {/* 独立背景层，无边框无padding，背景边缘即色块边缘 */}
           <div className="relative bg-hud-panel/[0.15] backdrop-blur-sm">
-            <ActivityHeatmap activities={activities} showPreviewInTitle={true} />
+            <ActivityHeatmap key={refreshKey} activities={activities} showPreviewInTitle={true} />
           </div>
         </section>
 
