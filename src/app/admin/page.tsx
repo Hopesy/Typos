@@ -23,7 +23,8 @@ import {
     FiUpload,
     FiMaximize2,
     FiKey,
-    FiCopy
+    FiCopy,
+    FiDownload
 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
@@ -1200,6 +1201,51 @@ export default function AdminPage() {
         }
     };
 
+    const downloadMarkdown = async (item: AdminItem) => {
+        try {
+            const res = await fetch(`/api/admin/download?type=${type}&filename=${encodeURIComponent(item.filename)}`, {
+                credentials: 'same-origin'
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = item.filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else if (res.status === 401) {
+                setIsAuthorized(false);
+            } else {
+                setMessage({ text: 'ERROR: DOWNLOAD_FAILED', isError: true });
+            }
+        } catch (error) {
+            console.error('Download error:', error);
+            setMessage({ text: 'ERROR: DOWNLOAD_FAILED', isError: true });
+        }
+    };
+
+    const downloadAllMarkdown = async () => {
+        if (existingPosts.length === 0) return;
+
+        setLoading(true);
+        try {
+            for (const post of existingPosts) {
+                await downloadMarkdown(post);
+                // 添加小延迟避免浏览器阻止多个下载
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            setMessage({ text: `SUCCESS: ${existingPosts.length} FILES DOWNLOADED`, isError: false });
+            setTimeout(() => setMessage(null), 3000);
+        } catch (error) {
+            console.error('Bulk download error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     if (checkingAuth) {
         return (
@@ -1462,6 +1508,18 @@ export default function AdminPage() {
                                             onChange={handlePostMarkdownUpload}
                                         />
                                     )}
+                                    {viewMode === 'list' && existingPosts.length > 0 && (
+                                        <Button
+                                            onClick={downloadAllMarkdown}
+                                            variant="outline"
+                                            size="sm"
+                                            className={adminActionButtonClass}
+                                            disabled={loading}
+                                        >
+                                            <FiDownload className="h-3 w-3" />
+                                            <span className={adminActionButtonTextClass}>{tr('action.downloadAll')}</span>
+                                        </Button>
+                                    )}
                                     {type === 'post' && (
                                         <Button
                                             onClick={() => postUploadInputRef.current?.click()}
@@ -1565,6 +1623,18 @@ export default function AdminPage() {
                                                             title={tr('list.reply')}
                                                         >
                                                             <FiCornerUpLeft className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    {(type === 'post' || type === 'daily' || type === 'moment') && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                downloadMarkdown(post);
+                                                            }}
+                                                            className="p-2 text-neutral-600 hover:text-green-400 hover:bg-green-950/30 rounded-md transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                                                            title={tr('list.download')}
+                                                        >
+                                                            <FiDownload className="w-4 h-4" />
                                                         </button>
                                                     )}
                                                     <div className="relative">

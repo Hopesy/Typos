@@ -162,7 +162,8 @@
     },
     "action": {
       "uploadMd": "上传_MD",
-      "library": "库"
+      "library": "库",
+      "downloadAll": "全部下载"
     },
     "form": {
       "title": "标题",
@@ -189,6 +190,7 @@
       "empty": "空记录",
       "reply": "回复",
       "delete": "删除",
+      "download": "下载",
       "from": "来自: {title}"
     },
     "confirm": {

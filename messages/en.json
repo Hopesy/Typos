@@ -162,7 +162,8 @@
     },
     "action": {
       "uploadMd": "Upload_MD",
-      "library": "Library"
+      "library": "Library",
+      "downloadAll": "Download_All"
     },
     "form": {
       "title": "Title",
@@ -189,6 +190,7 @@
       "empty": "Empty_Registry",
       "reply": "Reply",
       "delete": "Delete",
+      "download": "Download",
       "from": "FROM: {title}"
     },
     "confirm": {
