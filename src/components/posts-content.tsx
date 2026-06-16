@@ -31,6 +31,17 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
         return [ALL_CATEGORY, ...Array.from(cats)];
     }, [initialPosts]);
 
+    const categoryCounts = useMemo(() => {
+        const counts = new Map<string, number>();
+        counts.set(ALL_CATEGORY, initialPosts.length);
+        initialPosts.forEach(post => {
+            if (post.category) {
+                counts.set(post.category, (counts.get(post.category) || 0) + 1);
+            }
+        });
+        return counts;
+    }, [initialPosts]);
+
     const filteredPosts = useMemo(() => {
         let posts = initialPosts;
 
@@ -62,7 +73,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t('searchPlaceholder')}
-                        className="w-full bg-transparent border border-hud-line px-12 py-3 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
+                        className="w-full rounded-sm bg-transparent border border-hud-line px-12 py-3 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
                     />
                     {searchQuery && (
                         <button
@@ -81,13 +92,13 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                     {/* View Toggle Button */}
                     <button
                         onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
-                        className="flex-shrink-0 h-8 w-8 flex items-center justify-center border border-hud-line bg-transparent hover:border-hud-line-strong hover:bg-hud-panel/20 transition-colors"
+                        className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-sm border border-hud-line bg-transparent hover:border-hud-line-strong hover:bg-hud-panel/30 transition-all"
                         title={viewMode === 'list' ? '切换到卡片视图' : '切换到列表视图'}
                     >
                         {viewMode === 'list' ? (
-                            <LayoutGrid className="h-3.5 w-3.5 text-hud-muted" />
+                            <LayoutGrid className="h-4 w-4 text-hud-muted" />
                         ) : (
-                            <List className="h-3.5 w-3.5 text-hud-muted" />
+                            <List className="h-4 w-4 text-hud-muted" />
                         )}
                     </button>
 
@@ -100,7 +111,12 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                                 className={`relative transition-all duration-300 hover:text-hud-strong cursor-pointer font-mono text-[13px] uppercase tracking-[0.18em] ${selectedCategory === category ? "text-hud-strong" : "text-hud-muted"
                                     }`}
                             >
-                                <span className="relative z-10">{category === ALL_CATEGORY ? t('all') : category}</span>
+                                <span className="relative z-10">
+                                    {category === ALL_CATEGORY ? t('all') : category}
+                                    <span className="ml-1.5 text-[10px] text-hud-faint">
+                                        ({categoryCounts.get(category!) || 0})
+                                    </span>
+                                </span>
                             </button>
                         ))}
                     </div>
@@ -114,7 +130,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                     <div className="space-y-4">
                         {filteredPosts.map((post) => (
                             <a key={post.slug} href={`/posts/${encodeURIComponent(post.slug.trim())}`} className="block group">
-                                <Card className="rounded-none border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 relative overflow-hidden p-1">
+                                <Card className="rounded-sm border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 relative overflow-hidden p-1">
                                     <CardHeader className="gap-2 px-6 py-4 pr-12">
                                         <div className="flex items-start justify-between">
                                             <div className="flex flex-col gap-3 flex-1">
@@ -147,7 +163,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {filteredPosts.map((post) => (
                             <a key={post.slug} href={`/posts/${encodeURIComponent(post.slug.trim())}`} className="block group">
-                                <div className="border border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 overflow-hidden p-1">
+                                <div className="rounded-sm border border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 overflow-hidden p-1">
                                     {/* Cover Image (or placeholder) with Hover Overlay */}
                                     <div className="relative w-full aspect-[2/1] overflow-hidden bg-hud-panel/10">
                                         {post.cover ? (
