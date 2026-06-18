@@ -85,7 +85,7 @@ function payloadFromMarkdown(raw: string): PostPayload {
 export async function POST(request: Request) {
   const db = await getDatabase();
   if (!db) {
-    return noStore(NextResponse.json({ error: "API uploads require a D1 database." }, { status: 503 }));
+    return noStore(NextResponse.json({ error: "API uploads require a configured database." }, { status: 503 }));
   }
 
   const token = extractBearerToken(request);

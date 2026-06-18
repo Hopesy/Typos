@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
   const db = await getDatabase();
   if (!db) {
-    return noStore(NextResponse.json({ error: "API tokens require a D1 database." }, { status: 503 }));
+    return noStore(NextResponse.json({ error: "API tokens require a configured database." }, { status: 503 }));
   }
 
   try {
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
   const db = await getDatabase();
   if (!db) {
-    return noStore(NextResponse.json({ error: "API tokens require a D1 database." }, { status: 503 }));
+    return noStore(NextResponse.json({ error: "API tokens require a configured database." }, { status: 503 }));
   }
 
   try {
@@ -65,7 +65,7 @@ export async function DELETE(request: Request) {
 
   const db = await getDatabase();
   if (!db) {
-    return noStore(NextResponse.json({ error: "API tokens require a D1 database." }, { status: 503 }));
+    return noStore(NextResponse.json({ error: "API tokens require a configured database." }, { status: 503 }));
   }
 
   try {
