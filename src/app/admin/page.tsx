@@ -1283,17 +1283,17 @@ export default function AdminPage() {
                             <span>{tr('btn.exitImmersive')}</span>
                         </button>
                         <span className="mx-1 h-5 w-px bg-neutral-800" />
-                        <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
-                        <button type="button" onClick={() => insertPostMarkdown('*', '*', 'italic text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] italic text-neutral-300 hover:border-neutral-600 hover:text-white">I</button>
-                        <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
-                        <button type="button" onClick={() => insertPostMarkdown('### ', '', 'Subheading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H3</button>
+                        <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
+                        <button type="button" onClick={() => insertPostMarkdown('*', '*', 'italic text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] italic text-neutral-300 hover:border-neutral-600 hover:text-white">I</button>
+                        <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
+                        <button type="button" onClick={() => insertPostMarkdown('### ', '', 'Subheading')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H3</button>
                         <span className="mx-1 h-5 w-px bg-neutral-800" />
-                        <button type="button" onClick={() => insertPostMarkdown('> ', '', tr('md.quote'))} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
-                        <button type="button" onClick={() => insertPostMarkdown('[', '](https://)', 'link text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LINK</button>
-                        <button type="button" onClick={() => insertPostMarkdown('![', '](https://)', 'image alt')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">IMG</button>
-                        <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
-                        <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
-                        <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
+                        <button type="button" onClick={() => insertPostMarkdown('> ', '', tr('md.quote'))} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
+                        <button type="button" onClick={() => insertPostMarkdown('[', '](https://)', 'link text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LINK</button>
+                        <button type="button" onClick={() => insertPostMarkdown('![', '](https://)', 'image alt')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">IMG</button>
+                        <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
+                        <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
+                        <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
 
                         {/* Clear Button */}
                         <button
@@ -1303,7 +1303,7 @@ export default function AdminPage() {
                                     setPostData({ ...postData, content: '' });
                                 }
                             }}
-                            className="ml-auto h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
+                            className="ml-auto inline-flex items-center justify-center h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
                         >
                             {tr('btn.clear')}
                         </button>
@@ -1313,7 +1313,7 @@ export default function AdminPage() {
                             type="button"
                             onClick={handleSubmit}
                             disabled={loading}
-                            className="h-7 px-4 rounded-md bg-white text-black font-mono text-[10px] uppercase tracking-[0.18em] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                            className="inline-flex items-center justify-center h-7 px-4 rounded-md bg-white text-black font-mono text-[10px] uppercase tracking-[0.18em] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
                         >
                             {loading ? tr('btn.publishing') : tr('btn.publish')}
                         </button>
@@ -1742,17 +1742,17 @@ export default function AdminPage() {
                                             <Label htmlFor="post-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.content')}</Label>
                                             <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950">
                                                 <div className="flex flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 p-2">
-                                                    <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('*', '*', 'italic text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] italic text-neutral-300 hover:border-neutral-600 hover:text-white">I</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('### ', '', 'Subheading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H3</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('*', '*', 'italic text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] italic text-neutral-300 hover:border-neutral-600 hover:text-white">I</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('### ', '', 'Subheading')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H3</button>
                                                     <span className="mx-1 h-5 w-px bg-neutral-800" />
-                                                    <button type="button" onClick={() => insertPostMarkdown('> ', '', tr('md.quote'))} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('[', '](https://)', 'link text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LINK</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('![', '](https://)', 'image alt')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">IMG</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('> ', '', tr('md.quote'))} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('[', '](https://)', 'link text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LINK</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('![', '](https://)', 'image alt')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">IMG</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
+                                                    <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
 
                                                     {/* Clear Button */}
                                                     <button
@@ -1762,7 +1762,7 @@ export default function AdminPage() {
                                                                 setPostData({ ...postData, content: '' });
                                                             }
                                                         }}
-                                                        className="ml-auto h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
+                                                        className="ml-auto inline-flex items-center justify-center h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
                                                     >
                                                         {tr('btn.clear')}
                                                     </button>
@@ -1771,7 +1771,7 @@ export default function AdminPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setIsImmersiveMode(true)}
-                                                        className="h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
+                                                        className="inline-flex items-center justify-center h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
                                                         title={tr('btn.immersiveMode')}
                                                     >
                                                         <FiMaximize2 className="w-3.5 h-3.5" />
@@ -1782,7 +1782,7 @@ export default function AdminPage() {
                                                         type="button"
                                                         onClick={handleSubmit}
                                                         disabled={loading}
-                                                        className="h-7 px-4 rounded-md bg-white text-black font-mono text-[10px] uppercase tracking-[0.18em] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                                                        className="inline-flex items-center justify-center h-7 px-4 rounded-md bg-white text-black font-mono text-[10px] uppercase tracking-[0.18em] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
                                                     >
                                                         {loading ? tr('btn.publishing') : tr('btn.publish')}
                                                     </button>
