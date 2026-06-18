@@ -2,12 +2,16 @@
 
 import { HeroTitle, HeroSubtitle } from "@/components/hero-title";
 import { FiFileText, FiLayers, FiRefreshCw, FiMapPin, FiMusic, FiBookOpen, FiVideo } from "react-icons/fi";
-import Dither from "@/components/dither/Dither";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { ActivityHeatmap, ActivityHeatmapPreview } from "@/components/activity-heatmap";
 import { useEffect, useState } from "react";
 import type { ActivityStats } from "@/lib/content";
+
+// 纯 WebGL 背景，仅客户端渲染：用 dynamic(ssr:false) 把 three.js/postprocessing
+// 从服务端 bundle 中剔除，避免 Worker 体积超限。
+const Dither = dynamic(() => import("@/components/dither/Dither"), { ssr: false });
 
 const tools = [
   {

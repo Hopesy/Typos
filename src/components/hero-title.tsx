@@ -1,7 +1,10 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import Shuffle from './shuffle/Shuffle';
+import dynamic from 'next/dynamic';
+
+// gsap 文字动画，仅客户端渲染：dynamic(ssr:false) 让 gsap 不进服务端 bundle。
+const Shuffle = dynamic(() => import('./shuffle/Shuffle'), { ssr: false });
 
 function readTheme(): 'dark' | 'light' {
   if (typeof document === 'undefined') return 'dark';
