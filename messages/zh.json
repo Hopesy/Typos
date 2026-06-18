@@ -205,7 +205,8 @@
       "publishing": "发布中...",
       "update": "更新",
       "clear": "清空",
-      "immersiveMode": "沉浸模式"
+      "immersiveMode": "沉浸模式",
+      "exitImmersive": "退出沉浸"
     },
     "reply": {
       "channel": "回复通道: [管理员]",

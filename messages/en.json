@@ -205,7 +205,8 @@
       "publishing": "PUBLISHING...",
       "update": "UPDATE",
       "clear": "CLEAR",
-      "immersiveMode": "IMMERSIVE"
+      "immersiveMode": "IMMERSIVE",
+      "exitImmersive": "EXIT"
     },
     "reply": {
       "channel": "Reply_Channel: [Admin]",

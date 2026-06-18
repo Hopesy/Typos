@@ -22,6 +22,7 @@ import {
     FiTrendingUp,
     FiUpload,
     FiMaximize2,
+    FiMinimize2,
     FiKey,
     FiCopy,
     FiDownload
@@ -421,112 +422,7 @@ function TokensView({
 }
 
 
-const escapeHtml = (value: string) => {
-    return value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-};
-
-const renderInlineMarkdown = (value: string) => {
-    return escapeHtml(value)
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-};
-
-type MarkdownPreviewBlock =
-    | { type: 'markdown'; content: string }
-    | { type: 'code'; content: string; language: string };
-
 const fencePattern = /^\s*```([^\s`]*)?.*$/;
-
-const splitMarkdownPreviewBlocks = (markdown: string): MarkdownPreviewBlock[] => {
-    const blocks: MarkdownPreviewBlock[] = [];
-    const paragraph: string[] = [];
-    const code: string[] = [];
-    let inCodeBlock = false;
-    let codeLanguage = '';
-
-    const flushParagraph = () => {
-        const content = paragraph.join('\n').trim();
-        paragraph.length = 0;
-        if (content) blocks.push({ type: 'markdown', content });
-    };
-
-    const flushCode = () => {
-        blocks.push({ type: 'code', content: code.join('\n'), language: codeLanguage });
-        code.length = 0;
-        codeLanguage = '';
-    };
-
-    for (const line of markdown.replace(/\r\n/g, '\n').split('\n')) {
-        const fence = line.match(fencePattern);
-
-        if (fence) {
-            if (inCodeBlock) {
-                flushCode();
-                inCodeBlock = false;
-            } else {
-                flushParagraph();
-                inCodeBlock = true;
-                codeLanguage = fence[1] || '';
-            }
-            continue;
-        }
-
-        if (inCodeBlock) {
-            code.push(line);
-            continue;
-        }
-
-        if (!line.trim()) {
-            flushParagraph();
-            continue;
-        }
-
-        paragraph.push(line);
-    }
-
-    if (inCodeBlock) flushCode();
-    flushParagraph();
-
-    return blocks;
-};
-
-const renderMarkdownPreview = (markdown: string) => {
-    if (!markdown.trim()) {
-        return '<p class="text-neutral-600 font-mono text-xs uppercase tracking-[0.18em]">Preview_Waiting_For_Input</p>';
-    }
-
-    return splitMarkdownPreviewBlocks(markdown).map((block) => {
-        if (block.type === 'code') {
-            const languageLabel = block.language ? ` data-language="${escapeHtml(block.language)}"` : '';
-            return `<pre${languageLabel}><code>${escapeHtml(block.content)}</code></pre>`;
-        }
-
-        const trimmed = block.content.trim();
-        if (trimmed.startsWith('# ')) return `<h1>${renderInlineMarkdown(trimmed.slice(2))}</h1>`;
-        if (trimmed.startsWith('## ')) return `<h2>${renderInlineMarkdown(trimmed.slice(3))}</h2>`;
-        if (trimmed.startsWith('### ')) return `<h3>${renderInlineMarkdown(trimmed.slice(4))}</h3>`;
-
-        if (trimmed.startsWith('>')) {
-            const quote = trimmed.split('\n').map(line => line.replace(/^>\s?/, '')).join('<br />');
-            return `<blockquote><p>${renderInlineMarkdown(quote)}</p></blockquote>`;
-        }
-
-        if (/^- /.test(trimmed)) {
-            const items = trimmed.split('\n').map(line => `<li>${renderInlineMarkdown(line.replace(/^- /, ''))}</li>`).join('');
-            return `<ul>${items}</ul>`;
-        }
-
-        return `<p>${renderInlineMarkdown(trimmed).replace(/\n/g, '<br />')}</p>`;
-    }).join('');
-};
 
 const cleanFrontmatterValue = (value: string) => {
     const trimmed = value.trim();
@@ -603,6 +499,18 @@ const titleFromFilename = (filename: string) => {
         .trim() || 'Untitled';
 };
 
+// 下载用文件名：优先文章标题，清洗掉文件系统非法字符（保留中文），回退到原 filename。
+const downloadNameFromItem = (item: AdminItem) => {
+    const title = (item.title || '').trim();
+    if (!title) return item.filename;
+    const safe = title
+        .replace(/[\\/:*?"<>|]+/g, '-')
+        .replace(/\s+/g, ' ')
+        .replace(/^[-.\s]+|[-.\s]+$/g, '')
+        .trim();
+    return safe ? `${safe}.md` : item.filename;
+};
+
 const buildPostDataFromMarkdown = (raw: string, filename: string, fallbackDate: string): PostData => {
     const { data, content } = parseMarkdownUpload(raw);
     const fallbackSlug = fallbackDate.replace(/-/g, '').slice(2);
@@ -666,6 +574,10 @@ export default function AdminPage() {
     const [viewMode, setViewMode] = useState<'edit' | 'list'>('list');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isImmersiveMode, setIsImmersiveMode] = useState(false);
+
+    // 文章预览：复用文章页同一套渲染管线（/api/admin/preview），保证与发布后一致。
+    const [previewHtml, setPreviewHtml] = useState('');
+    const [previewLoading, setPreviewLoading] = useState(false);
 
     // API Token state
     const [apiTokens, setApiTokens] = useState<ApiToken[]>([]);
@@ -918,6 +830,47 @@ export default function AdminPage() {
             autoResizePostContent();
         }
     }, [viewMode, type, postData.content, autoResizePostContent]);
+
+    // 防抖请求服务端渲染预览（与文章页同一管线）。仅在编辑文章时启用。
+    useEffect(() => {
+        if (viewMode !== 'edit' || type !== 'post') return;
+
+        const source = postData.content;
+        const controller = new AbortController();
+        const timer = window.setTimeout(async () => {
+            if (!source.trim()) {
+                setPreviewHtml('');
+                setPreviewLoading(false);
+                return;
+            }
+
+            setPreviewLoading(true);
+            try {
+                const res = await fetch('/api/admin/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ content: source }),
+                    signal: controller.signal,
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setPreviewHtml(typeof data.html === 'string' ? data.html : '');
+                }
+            } catch (error) {
+                if (!(error instanceof DOMException && error.name === 'AbortError')) {
+                    console.error('Preview render error:', error);
+                }
+            } finally {
+                setPreviewLoading(false);
+            }
+        }, 400);
+
+        return () => {
+            controller.abort();
+            window.clearTimeout(timer);
+        };
+    }, [postData.content, viewMode, type]);
 
     // ESC key handler for immersive mode
     useEffect(() => {
@@ -1211,7 +1164,7 @@ export default function AdminPage() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = item.filename;
+                a.download = downloadNameFromItem(item);
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -1320,11 +1273,16 @@ export default function AdminPage() {
     // Immersive mode full-screen editor
     if (isImmersiveMode && type === 'post' && viewMode === 'edit') {
         return (
-            <div className="fixed inset-0 z-50 bg-black text-neutral-200 font-sans animate-in fade-in duration-300">
+            <div className="admin-shell fixed inset-0 z-50 bg-background text-neutral-200 font-sans animate-in fade-in duration-300">
                 {/* Editor container */}
                 <div className="flex h-full flex-col">
                     {/* Toolbar */}
                     <div className="flex flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 p-2">
+                        <button type="button" onClick={() => setIsImmersiveMode(false)} className="flex h-7 items-center gap-1.5 rounded-md border border-neutral-800 px-2.5 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-400 hover:border-neutral-600 hover:text-white" title={tr('btn.exitImmersive')}>
+                            <FiMinimize2 className="h-3 w-3" />
+                            <span>{tr('btn.exitImmersive')}</span>
+                        </button>
+                        <span className="mx-1 h-5 w-px bg-neutral-800" />
                         <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
                         <button type="button" onClick={() => insertPostMarkdown('*', '*', 'italic text')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] italic text-neutral-300 hover:border-neutral-600 hover:text-white">I</button>
                         <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
@@ -1379,12 +1337,21 @@ export default function AdminPage() {
                         </div>
 
                         {/* Preview */}
-                        <div className="flex flex-col overflow-hidden bg-[#111]">
-                            <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.preview')}</div>
-                            <div
-                                className="article max-w-none overflow-auto p-5 text-[15px]"
-                                dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(postData.content) }}
-                            />
+                        <div className="flex flex-col overflow-hidden bg-background">
+                            <div className="flex items-center gap-2 border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">
+                                <span>{tr('md.preview')}</span>
+                                {previewLoading && <span className="text-neutral-700 normal-case tracking-normal">…</span>}
+                            </div>
+                            {previewHtml ? (
+                                <div
+                                    className="article max-w-none overflow-auto p-5 text-[15px]"
+                                    dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                />
+                            ) : (
+                                <div className="p-5 font-mono text-xs uppercase tracking-[0.18em] text-neutral-600">
+                                    Preview_Waiting_For_Input
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -1835,12 +1802,21 @@ export default function AdminPage() {
                                                             className="block min-h-[560px] w-full resize-none overflow-hidden border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                                                         />
                                                     </div>
-                                                    <div className="min-h-[560px] bg-[#111]">
-                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.preview')}</div>
-                                                        <div
-                                                            className="article max-w-none p-5 text-[15px]"
-                                                            dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(postData.content) }}
-                                                        />
+                                                    <div className="min-h-[560px] bg-background">
+                                                        <div className="flex items-center gap-2 border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">
+                                                            <span>{tr('md.preview')}</span>
+                                                            {previewLoading && <span className="text-neutral-700 normal-case tracking-normal">…</span>}
+                                                        </div>
+                                                        {previewHtml ? (
+                                                            <div
+                                                                className="article max-w-none p-5 text-[15px]"
+                                                                dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                                            />
+                                                        ) : (
+                                                            <div className="p-5 font-mono text-xs uppercase tracking-[0.18em] text-neutral-600">
+                                                                Preview_Waiting_For_Input
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

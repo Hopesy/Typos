@@ -10,7 +10,20 @@ export const dynamic = 'force-dynamic';
 
 type AdminType = 'post' | 'daily' | 'moment';
 
+type DownloadResult = { markdown: string; title: string };
+
 const str = (value: unknown) => (typeof value === 'string' ? value : value == null ? '' : String(value));
+
+// 由标题构造下载文件名，清洗文件系统非法字符（保留中文），回退到原 filename。
+function downloadFilename(title: string, fallback: string): string {
+    const safe = title
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, '-')
+        .replace(/\s+/g, ' ')
+        .replace(/^[-.\s]+|[-.\s]+$/g, '')
+        .trim();
+    return safe ? `${safe}.md` : fallback;
+}
 
 // 由数据库行重建带 frontmatter 的 Markdown（字段与本地文件导出格式保持一致）。
 function buildMarkdown(type: AdminType, row: Record<string, unknown>): string {
@@ -39,7 +52,7 @@ function buildMarkdown(type: AdminType, row: Record<string, unknown>): string {
 }
 
 // 主路径：内容存储在数据库（本地 SQLite / Turso / D1）。
-async function fromDatabase(type: AdminType, filename: string): Promise<string | null> {
+async function fromDatabase(type: AdminType, filename: string): Promise<DownloadResult | null> {
   const db = await getDatabase();
   if (!db) return null;
 
@@ -49,7 +62,7 @@ async function fromDatabase(type: AdminType, filename: string): Promise<string |
       .prepare('SELECT slug, title, date, description, category, content, cover FROM posts WHERE slug = ?')
       .bind(slug)
       .first();
-    return row ? buildMarkdown('post', row) : null;
+    return row ? { markdown: buildMarkdown('post', row), title: str(row.title) } : null;
   }
 
   if (type === 'daily') {
@@ -57,18 +70,18 @@ async function fromDatabase(type: AdminType, filename: string): Promise<string |
       .prepare('SELECT filename, date, title, content, image_url FROM daily WHERE filename = ?')
       .bind(filename)
       .first();
-    return row ? buildMarkdown('daily', row) : null;
+    return row ? { markdown: buildMarkdown('daily', row), title: str(row.title) } : null;
   }
 
   const row = await db
     .prepare('SELECT filename, title, date, image_url, content FROM moments WHERE filename = ?')
     .bind(filename)
     .first();
-  return row ? buildMarkdown('moment', row) : null;
+  return row ? { markdown: buildMarkdown('moment', row), title: str(row.title) } : null;
 }
 
 // 回退路径：基于文件的本地内容目录（content/<dir>/<filename>）。
-async function fromFileSystem(type: AdminType, filename: string): Promise<string | null> {
+async function fromFileSystem(type: AdminType, filename: string): Promise<DownloadResult | null> {
   try {
     const [{ default: fs }, { default: path }] = await Promise.all([
       import('node:fs/promises'),
@@ -79,7 +92,8 @@ async function fromFileSystem(type: AdminType, filename: string): Promise<string
     const dirPath = path.normalize(path.join(contentRoot, typeMap[type]));
     const filePath = path.normalize(path.join(dirPath, filename));
     if (!filePath.startsWith(dirPath)) return null;
-    return await fs.readFile(filePath, 'utf-8');
+    const markdown = await fs.readFile(filePath, 'utf-8');
+    return { markdown, title: str(matter(markdown).data.title) };
   } catch {
     return null;
   }
@@ -107,16 +121,18 @@ export async function GET(request: Request) {
   }
 
   const adminType = type as AdminType;
-  const markdown = (await fromDatabase(adminType, filename)) ?? (await fromFileSystem(adminType, filename));
+  const result = (await fromDatabase(adminType, filename)) ?? (await fromFileSystem(adminType, filename));
 
-  if (markdown == null) {
+  if (result == null) {
     return NextResponse.json({ error: 'File not found' }, { status: 404 });
   }
 
-  return new NextResponse(markdown, {
+  const downloadName = downloadFilename(result.title, filename);
+
+  return new NextResponse(result.markdown, {
     headers: {
       'Content-Type': 'text/markdown; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(downloadName)}"`,
       'Cache-Control': 'no-store',
     },
   });
