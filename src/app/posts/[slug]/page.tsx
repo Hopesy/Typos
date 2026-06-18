@@ -1,7 +1,7 @@
 import { getPostBySlug } from "@/lib/content";
-import MarkdownContent from "@/components/markdown-content";
-import Comments from "@/components/comments";
+import { renderArticle } from "@/components/markdown-renderer";
 import TocRail from "@/components/toc-rail";
+import Comments from "@/components/comments";
 import { PostNotFound } from "@/components/post-not-found";
 
 export const dynamicParams = true;
@@ -31,8 +31,11 @@ export default async function PostPage({
     );
   }
 
+  const { html, toc } = await renderArticle(post.content);
+
   return (
     <div className="max-w-3xl mx-auto pt-12 pb-32 px-6">
+      <TocRail toc={toc} />
       <div className="bg-transparent">
         <header className="mb-10" data-post-title-block>
           <div className="flex items-center gap-3 text-[11px] font-mono text-hud-muted mb-4 uppercase tracking-[0.24em]">
@@ -50,15 +53,7 @@ export default async function PostPage({
         </header>
 
         <div className="mt-10 border-t border-hud-line pt-10">
-
-          <div className="relative">
-            <MarkdownContent
-              html={post.html}
-              className="prose max-w-none"
-            />
-
-            {post.toc.length > 0 ? <TocRail toc={post.toc} /> : null}
-          </div>
+          <div className="article" dangerouslySetInnerHTML={{ __html: html }} />
         </div>
         <Comments
           pageId={slug}

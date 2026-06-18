@@ -1,5 +1,5 @@
 import matter from "gray-matter";
-import type { D1DatabaseLike } from "@/lib/cloudflare";
+import type { D1DatabaseLike } from "@/lib/database";
 
 export type AdminContentType = "post" | "daily" | "moment" | "comment";
 export type AdminEditableType = Exclude<AdminContentType, "comment">;

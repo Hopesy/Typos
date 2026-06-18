@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDatabase } from "@/lib/cloudflare";
+import { getDatabase } from "@/lib/database";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createApiToken, deleteApiToken, listApiTokens } from "@/lib/api-tokens";
 

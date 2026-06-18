@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import matter from "gray-matter";
-import { getDatabase } from "@/lib/cloudflare";
+import { getDatabase } from "@/lib/database";
 import { extractBearerToken, verifyApiToken } from "@/lib/api-tokens";
 import { saveAdminItem } from "@/lib/admin-content";
 

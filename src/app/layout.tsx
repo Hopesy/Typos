@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
+import Script from "next/script";
 import "./globals.css";
+import "katex/dist/katex.min.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
@@ -102,16 +104,13 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col relative bg-background`}
       >
-        <script
+        <Script
           id="typos-theme-script"
-          suppressHydrationWarning
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeScript }}
         />
-
         <NextIntlClientProvider>
-          <Suspense fallback={null}>
-            <Header />
-          </Suspense>
+          <Header />
           <main className="flex-1 relative z-10">{children}</main>
           <Footer />
         </NextIntlClientProvider>

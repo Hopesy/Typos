@@ -101,7 +101,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
     };
 
     return (
-        <div className="mt-16 pt-8 border-t border-hud-line-soft space-y-12">
+        <div className="mt-12 pt-6 border-t border-hud-line-soft space-y-8">
             {/* Header */}
             <div className="flex items-center gap-2">
                 <div className="h-1 w-[1px] bg-hud-faint" />
@@ -115,27 +115,27 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                 {/* Vertical Axis Line */}
                 <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-hud-line via-hud-line-soft to-transparent" />
 
-                <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
+                <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
 
                     {replyTo && (
                         <div className="flex items-center gap-2 mb-[-1.5rem] animate-in slide-in-from-left duration-300">
-                            <span className="text-[10px] font-mono text-hud-muted italic flex items-center gap-1">
+                            <span className="text-[11px] font-mono text-hud-muted italic flex items-center gap-1">
                                 <span className="w-1 h-1 bg-hud-faint"></span>
                                 {t('replyingTo')}{replyTo.name}
                             </span>
                             <button
                                 type="button"
                                 onClick={() => setReplyTo(null)}
-                                className="text-[10px] font-mono text-hud-faint hover:text-hud-strong transition-colors"
+                                className="text-[11px] font-mono text-hud-faint hover:text-hud-strong transition-colors"
                             >
                                 {t('cancelReply')}
                             </button>
                         </div>
                     )}
-                    <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+                    <div className="flex flex-col md:flex-row gap-5 md:gap-8">
 
                         <div className="flex-1 border-b border-hud-line pb-2 group focus-within:border-hud-line-strong transition-colors">
-                            <label className="text-[10px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
+                            <label className="text-[12px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
                                 {t('identity')}
                             </label>
                             <input
@@ -144,11 +144,11 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                                 onChange={(e) => setNickname(e.target.value)}
                                 required
                                 placeholder={t('nicknamePlaceholder')}
-                                className="bg-transparent w-full text-sm font-mono text-hud-strong outline-none placeholder:text-hud-faint"
+                                className="bg-transparent w-full text-base font-mono text-hud-strong outline-none placeholder:text-hud-faint placeholder:text-[11px]"
                             />
                         </div>
                         <div className="flex-1 border-b border-hud-line pb-2 group focus-within:border-hud-line-strong transition-colors">
-                            <label className="text-[10px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
+                            <label className="text-[12px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
                                 {t('contact.label')}
                             </label>
                             <input
@@ -156,13 +156,13 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                                 value={contact}
                                 onChange={(e) => setContact(e.target.value)}
                                 placeholder={t('contact.placeholder')}
-                                className="bg-transparent w-full text-sm font-mono text-hud-strong outline-none placeholder:text-hud-faint"
+                                className="bg-transparent w-full text-base font-mono text-hud-strong outline-none placeholder:text-hud-faint placeholder:text-[11px]"
                             />
                         </div>
                     </div>
 
                     <div className="border-b border-hud-line pb-2 group focus-within:border-hud-line-strong transition-colors">
-                        <label className="text-[10px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
+                        <label className="text-[12px] font-mono text-hud-dim uppercase block mb-1 tracking-[0.18em]">
                             {t('observation')}
                         </label>
                         <textarea
@@ -171,7 +171,7 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                             required
                             rows={2}
                             placeholder="..."
-                            className="bg-transparent w-full text-sm font-mono text-hud-strong outline-none resize-none placeholder:text-hud-faint"
+                            className="bg-transparent w-full text-base font-mono text-hud-strong outline-none resize-none placeholder:text-hud-faint placeholder:text-[11px]"
                         />
                     </div>
 
@@ -200,37 +200,37 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
             </div>
 
             {/* Comment List - Ghost Style */}
-            <div className="space-y-10 pt-4">
+            <div className="space-y-6 pt-2">
                 <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-hud-line-soft" />
-                    <span className="text-[10px] font-mono text-hud-faint uppercase tracking-[0.24em]">{t('signalsReceived')}</span>
+                    <span className="text-[11px] font-mono text-hud-faint uppercase tracking-[0.24em]">{t('signalsReceived')}</span>
                     <div className="h-px flex-1 bg-hud-line-soft" />
                 </div>
 
                 {isLoading ? (
-                    <div className="py-10 text-center">
-                        <span className="text-[10px] font-mono text-hud-faint animate-pulse italic">
+                    <div className="py-6 text-center">
+                        <span className="text-[11px] font-mono text-hud-faint animate-pulse italic">
                             {t('connecting')}
                         </span>
                     </div>
                 ) : comments.length > 0 ? (
-                    <div className="space-y-12">
+                    <div className="space-y-8">
                         {/* 渲染根级评论及其回复 */}
                         {comments.filter(c => !c.parent_id).map((comment, i) => {
                             const replies = comments.filter(r => r.parent_id === comment.id);
 
                             return (
-                                <div key={comment.id || i} className="space-y-6">
+                                <div key={comment.id || i} className="space-y-4">
                                     {/* Root Comment */}
-                                    <div className="flex gap-6 group">
+                                    <div className="flex gap-4 group">
                                         <div className="mt-1.5 w-1 h-1 rounded-full bg-hud-faint group-hover:bg-hud-muted transition-colors" />
 
                                         <div className="flex-1">
                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2">
-                                                <span className={`text-xs font-bold uppercase tracking-[0.16em] ${comment.is_admin ? 'text-green-500/65' : 'text-hud-muted'}`}>
+                                                <span className={`text-sm font-bold uppercase tracking-[0.16em] ${comment.is_admin ? 'text-green-500/65' : 'text-hud-muted'}`}>
                                                     {comment.nickname} {comment.is_admin ? t('admin') : ''}
                                                 </span>
-                                                <span className="text-[10px] text-hud-faint font-mono italic">
+                                                <span className="text-[11px] text-hud-faint font-mono italic">
                                                     {new Date(comment.created_at).toLocaleDateString()} {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                                 <button
@@ -239,12 +239,12 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                                                         formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                                     }}
 
-                                                    className="text-[10px] font-mono text-hud-faint hover:text-hud-strong transition-colors opacity-0 group-hover:opacity-100"
+                                                    className="text-[11px] font-mono text-hud-faint hover:text-hud-strong transition-colors opacity-0 group-hover:opacity-100"
                                                 >
                                                     {t('reply')}
                                                 </button>
                                             </div>
-                                            <p className="text-sm text-hud font-mono leading-relaxed transition-colors">
+                                            <p className="text-base text-hud font-mono leading-relaxed transition-colors">
                                                 {comment.content}
                                             </p>
                                         </div>
@@ -252,20 +252,20 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
 
                                     {/* Sub-Replies */}
                                     {replies.length > 0 && (
-                                        <div className="ml-10 space-y-6 border-l border-hud-line-soft pl-6">
+                                        <div className="ml-8 space-y-4 border-l border-hud-line-soft pl-5">
                                             {replies.map((reply, ri) => (
                                                 <div key={reply.id || ri} className="flex gap-4 group/reply">
                                                     <div className="mt-1.5 w-[2px] h-[2px] bg-hud-faint group-hover/reply:bg-hud-muted" />
                                                     <div className="flex-1">
                                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-1">
-                                                            <span className={`text-[11px] font-bold uppercase tracking-[0.16em] ${reply.is_admin ? 'text-green-500/60' : 'text-hud-muted'}`}>
+                                                            <span className={`text-[13px] font-bold uppercase tracking-[0.16em] ${reply.is_admin ? 'text-green-500/60' : 'text-hud-muted'}`}>
                                                                 {reply.nickname} {reply.is_admin ? t('admin') : ''}
                                                             </span>
-                                                            <span className="text-[10px] text-hud-faint font-mono italic">
+                                                            <span className="text-[11px] text-hud-faint font-mono italic">
                                                                 {new Date(reply.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </span>
                                                         </div>
-                                                        <p className="text-[13px] text-hud-muted font-mono leading-relaxed">
+                                                        <p className="text-[15px] text-hud-muted font-mono leading-relaxed">
                                                             {reply.content}
                                                         </p>
                                                     </div>
@@ -279,8 +279,8 @@ export default function Comments({ pageId, pageTitle }: CommentsProps) {
                     </div>
                 ) : (
 
-                    <div className="py-16 text-center">
-                        <span className="text-[10px] font-mono text-hud-faint uppercase tracking-[0.24em] italic">
+                    <div className="py-10 text-center">
+                        <span className="text-[11px] font-mono text-hud-faint uppercase tracking-[0.24em] italic">
                             {t('noSignals')}
                         </span>
                     </div>

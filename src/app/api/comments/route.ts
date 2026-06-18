@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTyposEnv, readOptionalRuntimeEnv } from "@/lib/cloudflare";
+import { getDatabase, getTyposEnv, readOptionalRuntimeEnv } from "@/lib/database";
 import { isAdminRequest } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -49,8 +49,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Slug is required" }, { status: 400 });
   }
 
-  const env = await getTyposEnv();
-  const db = env.DB ?? null;
+  const db = await getDatabase();
 
   if (!db) {
     return NextResponse.json({ comments: [] });
@@ -74,10 +73,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const env = await getTyposEnv();
-    const db = env.DB ?? null;
+    const db = await getDatabase();
 
     if (!db) {
-      return NextResponse.json({ error: "D1 database is not configured." }, { status: 500 });
+      return NextResponse.json({ error: "Database is not configured." }, { status: 500 });
     }
 
     const body = asRecord(await req.json());

@@ -29,6 +29,10 @@ next-env.d.ts
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+_verify.log
+
+# local database
+data/*.db
 
 # turbo
 .turbo

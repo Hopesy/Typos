@@ -63,19 +63,19 @@
     "noResults": "未找到匹配的文章"
   },
   "comments": {
-    "title": "Terminal_Comments / 终端评论系统",
-    "identity": "Identity / 称呼",
+    "title": "终端评论系统",
+    "identity": "称呼",
     "contact": {
-      "label": "Correspondence / 联系方式",
+      "label": "联系方式",
       "placeholder": "选填"
     },
-    "observation": "Observation / 内容",
+    "observation": "内容",
     "nicknamePlaceholder": "昵称",
     "replyingTo": "回复 @",
     "cancelReply": "[ 取消回复 ]",
     "submitButton": "[ 确认信号 ]",
     "submitting": "传输中...",
-    "signalsReceived": "Signals_Received",
+    "signalsReceived": "收到的信号",
     "connecting": "正在连接 D1 实例...",
     "noSignals": "未检测到输入信号",
     "reply": "[ 回复 ]",

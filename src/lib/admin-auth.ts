@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getTyposEnv, readRuntimeEnv } from "@/lib/cloudflare";
+import { getTyposEnv, readRuntimeEnv } from "@/lib/database";
 
 const SESSION_COOKIE = "typos_admin";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;

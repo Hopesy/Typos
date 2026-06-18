@@ -113,7 +113,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                             >
                                 <span className="relative z-10">
                                     {category === ALL_CATEGORY ? t('all') : category}
-                                    <span className="ml-1.5 text-[10px] text-hud-faint">
+                                    <span className="ml-1 text-[10px] text-hud-faint">
                                         ({categoryCounts.get(category!) || 0})
                                     </span>
                                 </span>

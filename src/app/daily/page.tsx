@@ -1,4 +1,5 @@
 import { getDailyEntries } from "@/lib/content";
+import MarkdownRenderer from "@/components/markdown-renderer";
 export const dynamic = 'force-dynamic';
 
 export default async function DailyPage() {
@@ -49,9 +50,9 @@ export default async function DailyPage() {
                     {post.title}
                   </div>
                 )}
-                <div
-                  className="prose max-w-none text-[15px] leading-7 font-sans sm:text-base sm:leading-8"
-                  dangerouslySetInnerHTML={{ __html: post.html }}
+                <MarkdownRenderer
+                  content={post.content}
+                  className="text-[15px] leading-7 font-sans sm:text-base sm:leading-8"
                 />
               </div>
 

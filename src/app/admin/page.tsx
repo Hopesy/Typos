@@ -1382,7 +1382,7 @@ export default function AdminPage() {
                         <div className="flex flex-col overflow-hidden bg-[#111]">
                             <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.preview')}</div>
                             <div
-                                className="prose max-w-none overflow-auto p-5 text-[15px]"
+                                className="article max-w-none overflow-auto p-5 text-[15px]"
                                 dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(postData.content) }}
                             />
                         </div>
@@ -1838,7 +1838,7 @@ export default function AdminPage() {
                                                     <div className="min-h-[560px] bg-[#111]">
                                                         <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.preview')}</div>
                                                         <div
-                                                            className="prose max-w-none p-5 text-[15px]"
+                                                            className="article max-w-none p-5 text-[15px]"
                                                             dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(postData.content) }}
                                                         />
                                                     </div>

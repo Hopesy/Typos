@@ -1,4 +1,4 @@
-import type { D1DatabaseLike } from "@/lib/cloudflare";
+import type { D1DatabaseLike } from "@/lib/database";
 
 const TOKEN_PREFIX = "typos_";
 const RANDOM_BYTES = 32;
