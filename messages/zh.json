@@ -206,7 +206,8 @@
       "update": "更新",
       "clear": "清空",
       "immersiveMode": "沉浸模式",
-      "exitImmersive": "退出沉浸"
+      "exitImmersive": "退出沉浸",
+      "syncScroll": "同步滚动"
     },
     "reply": {
       "channel": "回复通道: [管理员]",

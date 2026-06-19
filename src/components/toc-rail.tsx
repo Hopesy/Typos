@@ -15,6 +15,8 @@ type TocRailProps = {
   // 传入 true 时目录嵌入预览窗格（配合 containerRef），否则跟随 window（文章页）。
   embedded?: boolean;
   containerRef?: React.RefObject<HTMLElement | null>;
+  // 默认隐藏，鼠标移到页面侧边才展开（带背景面板）。
+  revealOnHover?: boolean;
 };
 
 function findHeading(items: TocItem[], id: string, root: HTMLElement | Document) {
@@ -61,12 +63,13 @@ function buildVisibleSet(items: TocItem[], activeId: string | null) {
   return visible;
 }
 
-export default function TocRail({ toc, embedded = false, containerRef }: TocRailProps) {
+export default function TocRail({ toc, embedded = false, containerRef, revealOnHover = false }: TocRailProps) {
   const t = useTranslations('aria');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -79,7 +82,8 @@ export default function TocRail({ toc, embedded = false, containerRef }: TocRail
       setActiveId(resolveActiveId(toc, container));
 
       if (embedded) {
-        setIsRevealed(true);
+        // 悬停模式下显隐由 hovered 控制，不强制展开。
+        if (!revealOnHover) setIsRevealed(true);
         return;
       }
       const titleBlock = document.querySelector('[data-post-title-block]');
@@ -107,7 +111,7 @@ export default function TocRail({ toc, embedded = false, containerRef }: TocRail
       window.removeEventListener('resize', onScrollOrResize);
       window.removeEventListener('hashchange', onScrollOrResize);
     };
-  }, [toc, containerRef, embedded]);
+  }, [toc, containerRef, embedded, revealOnHover]);
 
   useEffect(() => {
     const listEl = listRef.current;
@@ -158,11 +162,10 @@ export default function TocRail({ toc, embedded = false, containerRef }: TocRail
     container.scrollTo({ top, behavior: 'smooth' });
   };
 
-  return (
-    <nav
-      className={`toc-rail hidden md:flex ${embedded ? 'toc-rail-embedded' : ''} ${isRevealed ? 'is-revealed' : ''}`}
-      aria-label={t('toc')}
-    >
+  const showRail = revealOnHover ? hovered : isRevealed;
+
+  const railBody = (
+    <>
       {canScrollUp ? (
         <div className="toc-scroll-hint toc-scroll-hint-top" aria-hidden>
           <ChevronUp className="h-3.5 w-3.5 text-hud-faint" />
@@ -192,6 +195,33 @@ export default function TocRail({ toc, embedded = false, containerRef }: TocRail
           <ChevronDown className="h-3.5 w-3.5 text-hud-faint" />
         </div>
       ) : null}
+    </>
+  );
+
+  // 悬停模式：默认隐藏，外层热区检测鼠标进入页面侧边后展开带背景的面板。
+  if (revealOnHover) {
+    return (
+      <div
+        className={`toc-hover-region hidden xl:flex ${showRail ? 'is-open' : ''}`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <nav
+          className={`toc-rail toc-rail-embedded toc-rail-hover ${showRail ? 'is-revealed' : ''}`}
+          aria-label={t('toc')}
+        >
+          {railBody}
+        </nav>
+      </div>
+    );
+  }
+
+  return (
+    <nav
+      className={`toc-rail hidden ${embedded ? 'xl:flex toc-rail-embedded' : 'md:flex'} ${isRevealed ? 'is-revealed' : ''}`}
+      aria-label={t('toc')}
+    >
+      {railBody}
     </nav>
   );
 }

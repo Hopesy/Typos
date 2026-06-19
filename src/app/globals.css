@@ -236,6 +236,25 @@
     font-family: var(--font-press-start);
   }
 
+  /*
+   * 大写文案在按钮中的「视觉垂直居中」。
+   * 根因：行盒高度 = line-height，但字形按字体基线定位，大写字母没有下伸部，
+   * 基线下方的下伸区是空白却仍计入行盒，flex 居中行盒时字形整体偏上 ~1px。
+   * 方案：text-box-trim 把行盒裁到「大写顶 ↔ 基线」，去掉上方半行距与下方下伸空白，
+   * 再由父级 items-center 居中即真正居中。不支持的浏览器回退到 0.5px 下移。
+   */
+  .text-trim-caps {
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+
+  @supports not (text-box-trim: trim-both) {
+    .text-trim-caps {
+      display: inline-block;
+      transform: translateY(0.5px);
+    }
+  }
+
   .bg-fade-to-bottom {
     background: linear-gradient(to bottom,
         transparent 0,
@@ -705,20 +724,67 @@
     transform: translateY(-50%) translateX(0);
   }
 
-  /* 嵌入编辑预览窗格：相对窗格绝对定位，始终可见，不依赖 window 滚动。 */
+  /* 嵌入编辑预览：跟随预览窗格滚动，但视觉上固定在页面右侧边缘（而非预览窗格内部）。 */
   .toc-rail.toc-rail-embedded {
-    position: absolute;
+    position: fixed;
     top: 50%;
-    right: 8px;
-    width: 180px;
+    right: calc(env(safe-area-inset-right) + 8px);
+    width: 200px;
     transform: translateY(-50%);
     opacity: 1;
     pointer-events: auto;
-    z-index: 5;
+    z-index: 50;
   }
 
   .toc-rail.toc-rail-embedded .toc-tick {
-    width: 168px;
+    width: 188px;
+  }
+
+  /* 悬停热区：默认贴右侧边缘的窄条，鼠标进入后展开以容纳目录面板。 */
+  .toc-hover-region {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 30px;
+    height: min(72vh, 460px);
+    z-index: 50;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    transition: width 0.22s ease;
+  }
+
+  .toc-hover-region.is-open {
+    width: 244px;
+  }
+
+  /* 悬停目录面板：带背景，覆盖在正文之上仍清晰可读；显隐随 is-revealed 渐变。 */
+  .toc-rail.toc-rail-hover {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    width: 216px;
+    max-height: min(72vh, 460px);
+    padding: 12px 8px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .toc-rail.toc-rail-hover.is-revealed {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .toc-rail.toc-rail-hover .toc-tick {
+    width: 100%;
   }
 
   .toc-ticks {

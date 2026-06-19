@@ -37,9 +37,15 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import TocRail from "@/components/toc-rail";
+import { Bold, Italic, Heading2, Heading3, Quote, Link2, Image as ImageIcon, Code, List, SquareCode, ArrowDownUp } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment' | 'tokens';
+
+type MdTool =
+    | { Icon: LucideIcon; title: string; run: () => void }
+    | { divider: true };
 
 
 type PostData = {
@@ -103,8 +109,8 @@ type DashboardData = {
 
 type ChartRange = '7d' | '30d';
 
-const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] uppercase leading-[14px] tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white";
-const adminActionButtonTextClass = "inline-flex translate-y-px leading-none";
+const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white [&>svg]:shrink-0";
+const adminActionButtonTextClass = "leading-none text-trim-caps";
 
 const visitorSeries: Record<ChartRange, number[]> = {
     '7d': [18, 24, 21, 32, 27, 15, 17],
@@ -539,7 +545,7 @@ const buildPostDataFromMarkdown = (raw: string, filename: string, fallbackDate: 
         description: data.description || '',
         content: content.trimStart(),
         slug: safeSlug(data.slug || fileSlug, fallbackSlug),
-        category: categories,
+        category: categories.length > 0 ? categories : ['随笔'],
         cover: data.cover || '',
     };
 };
@@ -580,8 +586,10 @@ export default function AdminPage() {
     const [previewHtml, setPreviewHtml] = useState('');
     const [previewToc, setPreviewToc] = useState<{ depth: number; text: string; id: string }[]>([]);
     const [previewLoading, setPreviewLoading] = useState(false);
-    const immersivePreviewRef = useRef<HTMLDivElement | null>(null);
-    const inlinePreviewRef = useRef<HTMLDivElement | null>(null);
+    // 原文 / 预览同步滚动开关。
+    const [scrollSync, setScrollSync] = useState(false);
+    const previewScrollRef = useRef<HTMLDivElement | null>(null);
+    const scrollSyncLock = useRef(false);
 
     // API Token state
     const [apiTokens, setApiTokens] = useState<ApiToken[]>([]);
@@ -822,19 +830,6 @@ export default function AdminPage() {
         }
     }, [type, isAuthorized, fetchTokens]);
 
-    const autoResizePostContent = useCallback(() => {
-        const textarea = postContentRef.current;
-        if (!textarea) return;
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
-    }, []);
-
-    useEffect(() => {
-        if (viewMode === 'edit' && type === 'post') {
-            autoResizePostContent();
-        }
-    }, [viewMode, type, postData.content, autoResizePostContent]);
-
     // 防抖请求服务端渲染预览（与文章页同一管线）。仅在编辑文章时启用。
     useEffect(() => {
         if (viewMode !== 'edit' || type !== 'post') return;
@@ -891,6 +886,39 @@ export default function AdminPage() {
             return () => window.removeEventListener('keydown', handleEscape);
         }
     }, [isImmersiveMode]);
+
+    // 通知统一以 toast 形式呈现，3.2s 后自动消失。
+    useEffect(() => {
+        if (!message) return;
+        const timer = window.setTimeout(() => setMessage(null), 3200);
+        return () => window.clearTimeout(timer);
+    }, [message]);
+
+    // 原文与预览按滚动百分比同步。开启后任一侧滚动都会驱动另一侧。
+    useEffect(() => {
+        if (!(viewMode === 'edit' && type === 'post') || !scrollSync) return;
+        const source = postContentRef.current;
+        const preview = previewScrollRef.current;
+        if (!source || !preview) return;
+
+        const sync = (from: HTMLElement, to: HTMLElement) => {
+            if (scrollSyncLock.current) return;
+            scrollSyncLock.current = true;
+            const fromMax = from.scrollHeight - from.clientHeight;
+            const toMax = to.scrollHeight - to.clientHeight;
+            to.scrollTop = fromMax > 0 ? (from.scrollTop / fromMax) * toMax : 0;
+            requestAnimationFrame(() => { scrollSyncLock.current = false; });
+        };
+
+        const onSource = () => sync(source, preview);
+        const onPreview = () => sync(preview, source);
+        source.addEventListener('scroll', onSource, { passive: true });
+        preview.addEventListener('scroll', onPreview, { passive: true });
+        return () => {
+            source.removeEventListener('scroll', onSource);
+            preview.removeEventListener('scroll', onPreview);
+        };
+    }, [viewMode, type, scrollSync, previewHtml, isImmersiveMode]);
 
     const handleEditPost = (item: AdminItem) => {
         if (type === 'comment' || type === 'dashboard') return;
@@ -984,6 +1012,43 @@ export default function AdminPage() {
             textarea?.setSelectionRange(cursorStart, cursorEnd);
         });
     };
+
+    // Markdown 快捷工具：图标化、分组，编辑器与沉浸模式工具栏共用。
+    const mdTools: MdTool[] = [
+        { Icon: Bold, title: 'Bold', run: () => insertPostMarkdown('**', '**', 'bold text') },
+        { Icon: Italic, title: 'Italic', run: () => insertPostMarkdown('*', '*', 'italic text') },
+        { divider: true },
+        { Icon: Heading2, title: 'Heading 2', run: () => insertPostMarkdown('## ', '', 'Heading') },
+        { Icon: Heading3, title: 'Heading 3', run: () => insertPostMarkdown('### ', '', 'Subheading') },
+        { divider: true },
+        { Icon: Quote, title: 'Quote', run: () => insertPostMarkdown('> ', '', tr('md.quote')) },
+        { Icon: List, title: 'List', run: () => insertPostMarkdown('- ', '', 'list item') },
+        { divider: true },
+        { Icon: Link2, title: 'Link', run: () => insertPostMarkdown('[', '](https://)', 'link text') },
+        { Icon: ImageIcon, title: 'Image', run: () => insertPostMarkdown('![', '](https://)', 'image alt') },
+        { Icon: Code, title: 'Inline code', run: () => insertPostMarkdown('`', '`', 'code') },
+        { Icon: SquareCode, title: 'Code block', run: () => insertPostMarkdown('```\n', '\n```', 'code block') },
+    ];
+
+    const renderMdTools = () =>
+        mdTools.map((tool, index) => {
+            if ('divider' in tool) {
+                return <span key={`md-div-${index}`} className="mx-1 h-5 w-px bg-neutral-800/70" aria-hidden />;
+            }
+            const Icon = tool.Icon;
+            return (
+                <button
+                    key={tool.title}
+                    type="button"
+                    title={tool.title}
+                    aria-label={tool.title}
+                    onClick={tool.run}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+                >
+                    <Icon className="h-4 w-4" strokeWidth={2} />
+                </button>
+            );
+        });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1261,7 +1326,7 @@ export default function AdminPage() {
                                 type="submit"
                                 className="w-full bg-white text-black hover:bg-neutral-200 transition-colors font-mono text-[10px] tracking-[0.18em] h-9"
                             >
-                                {loading ? '...' : tr('login.enter')}
+                                <span className="text-trim-caps">{loading ? '...' : tr('login.enter')}</span>
                             </Button>
                         </form>
                     </CardContent>
@@ -1276,6 +1341,19 @@ export default function AdminPage() {
     }
 
 
+    // 全局通知 toast：终端风格，半透明配色在明暗主题下均可读。
+    const messageToast = message ? (
+        <div className="fixed bottom-6 right-6 z-[100] animate-in fade-in slide-in-from-bottom-3 duration-300">
+            <div className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 font-mono text-[11px] leading-tight shadow-2xl backdrop-blur-sm ${message.isError ? 'border-red-500/30 bg-red-500/10 text-red-400' : 'border-green-500/30 bg-green-500/10 text-green-400'}`}>
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${message.isError ? 'bg-red-500' : 'bg-green-500'} animate-pulse`} />
+                {message.text}
+            </div>
+        </div>
+    ) : null;
+
+    // 文章编辑视图：整页填满视口、不产生外层滚动，仅源码/预览面板内部滚动。
+    const isPostEditor = viewMode === 'edit' && type === 'post';
+
     // Immersive mode full-screen editor
     if (isImmersiveMode && type === 'post' && viewMode === 'edit') {
         return (
@@ -1283,88 +1361,79 @@ export default function AdminPage() {
                 {/* Editor container */}
                 <div className="flex h-full flex-col">
                     {/* Toolbar */}
-                    <div className="flex flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 p-2">
-                        <button type="button" onClick={() => setIsImmersiveMode(false)} className="flex h-7 items-center gap-1.5 rounded-md border border-neutral-800 px-2.5 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-400 hover:border-neutral-600 hover:text-white" title={tr('btn.exitImmersive')}>
-                            <FiMinimize2 className="h-3 w-3" />
-                            <span>{tr('btn.exitImmersive')}</span>
+                    <div className="flex flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 px-2 py-1.5">
+                        <button type="button" onClick={() => setIsImmersiveMode(false)} className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 font-mono text-[10px] uppercase leading-none tracking-[0.18em] text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white" title={tr('btn.exitImmersive')}>
+                            <FiMinimize2 className="h-3.5 w-3.5" />
+                            <span className="text-trim-caps">{tr('btn.exitImmersive')}</span>
                         </button>
-                        <span className="mx-1 h-5 w-px bg-neutral-800" />
-                        <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
-                        <button type="button" onClick={() => insertPostMarkdown('*', '*', 'italic text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] italic text-neutral-300 hover:border-neutral-600 hover:text-white">I</button>
-                        <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
-                        <button type="button" onClick={() => insertPostMarkdown('### ', '', 'Subheading')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H3</button>
-                        <span className="mx-1 h-5 w-px bg-neutral-800" />
-                        <button type="button" onClick={() => insertPostMarkdown('> ', '', tr('md.quote'))} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
-                        <button type="button" onClick={() => insertPostMarkdown('[', '](https://)', 'link text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LINK</button>
-                        <button type="button" onClick={() => insertPostMarkdown('![', '](https://)', 'image alt')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">IMG</button>
-                        <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
-                        <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
-                        <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
+                        <span className="mx-1 h-5 w-px bg-neutral-800/70" aria-hidden />
+                        {renderMdTools()}
 
-                        {/* Clear Button */}
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (confirm(tr('confirm.clearContent'))) {
-                                    setPostData({ ...postData, content: '' });
-                                }
-                            }}
-                            className="ml-auto inline-flex items-center justify-center h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
-                        >
-                            {tr('btn.clear')}
-                        </button>
-
-                        {/* Publish Button */}
-                        <button
-                            type="button"
-                            onClick={handleSubmit}
-                            disabled={loading}
-                            className="inline-flex items-center justify-center h-7 px-4 rounded-md bg-white text-black font-mono text-[10px] uppercase tracking-[0.18em] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
-                        >
-                            {loading ? tr('btn.publishing') : tr('btn.publish')}
-                        </button>
+                        <div className="ml-auto flex items-center gap-1.5">
+                            <button
+                                type="button"
+                                onClick={() => setScrollSync((v) => !v)}
+                                title={tr('btn.syncScroll')}
+                                aria-label={tr('btn.syncScroll')}
+                                aria-pressed={scrollSync}
+                                className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${scrollSync ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
+                            >
+                                <ArrowDownUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (confirm(tr('confirm.clearContent'))) {
+                                        setPostData({ ...postData, content: '' });
+                                    }
+                                }}
+                                className="inline-flex h-8 items-center justify-center rounded-md px-3 font-mono text-[10px] uppercase leading-none tracking-[0.18em] text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+                            >
+                                <span className="text-trim-caps">{tr('btn.clear')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                className="inline-flex h-8 items-center justify-center rounded-md bg-white px-4 font-mono text-[10px] font-semibold uppercase leading-none tracking-[0.18em] text-black transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <span className="text-trim-caps">{loading ? tr('btn.publishing') : (isEditing ? tr('btn.update') : tr('btn.publish'))}</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Editor and preview split */}
                     <div className="grid flex-1 grid-cols-1 lg:grid-cols-2 overflow-hidden">
                         {/* Source editor */}
                         <div className="flex flex-col border-b border-neutral-900 lg:border-b-0 lg:border-r">
-                            <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.source')}</div>
                             <textarea
                                 ref={postContentRef}
                                 rows={25}
                                 value={postData.content}
-                                onChange={(e) => {
-                                    updatePostContent(e.target.value);
-                                    autoResizePostContent();
-                                }}
+                                onChange={(e) => updatePostContent(e.target.value)}
                                 className="block h-full w-full resize-none overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                             />
                         </div>
 
                         {/* Preview */}
-                        <div className="flex flex-col overflow-hidden bg-background">
-                            <div className="flex items-center gap-2 border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">
-                                <span>{tr('md.preview')}</span>
-                                {previewLoading && <span className="text-neutral-700 normal-case tracking-normal">…</span>}
-                            </div>
+                        <div className="relative flex flex-col overflow-hidden bg-background">
+                            {previewLoading && <span className="pointer-events-none absolute right-3 top-3 z-10 h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-500" aria-hidden />}
                             {previewHtml ? (
-                                <div className="relative flex-1 overflow-hidden">
-                                    <div
-                                        ref={immersivePreviewRef}
-                                        className="article max-w-none h-full overflow-auto p-5 text-[15px]"
-                                        dangerouslySetInnerHTML={{ __html: previewHtml }}
-                                    />
-                                    <TocRail toc={previewToc} embedded containerRef={immersivePreviewRef} />
-                                </div>
+                                <div
+                                    ref={previewScrollRef}
+                                    className="article max-w-none flex-1 overflow-auto p-5 text-[15px]"
+                                    dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                />
                             ) : (
                                 <div className="p-5 font-mono text-xs uppercase tracking-[0.18em] text-neutral-600">
                                     Preview_Waiting_For_Input
                                 </div>
                             )}
+                            <TocRail toc={previewToc} embedded revealOnHover containerRef={previewScrollRef} />
                         </div>
                     </div>
                 </div>
+                {messageToast}
             </div>
         );
     }
@@ -1395,8 +1464,8 @@ export default function AdminPage() {
                                     setViewMode('list');
                                 }}
 
-                                className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} rounded-md ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} transition-all cursor-pointer ${type === t
-                                    ? 'bg-neutral-900 text-white shadow-sm border border-neutral-800'
+                                className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} rounded-md border border-transparent ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} transition-all cursor-pointer ${type === t
+                                    ? 'bg-neutral-900 text-white shadow-sm border-neutral-800'
                                     : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900/50'
                                     }`}
                             >
@@ -1435,9 +1504,9 @@ export default function AdminPage() {
                 </div>
             </aside>
 
-            <main className="flex-1 overflow-y-auto bg-neutral-950 scroll-smooth">
-                <div className="max-w-5xl mx-auto py-8 px-1">
-                    <div className="mb-6 flex justify-between items-end border-b border-neutral-900 pb-4">
+            <main className="flex-1 bg-neutral-950 scroll-smooth flex flex-col overflow-hidden">
+                <div className="max-w-[76rem] mx-auto w-full px-1 flex flex-1 flex-col min-h-0">
+                    <div className="mb-6 flex h-[60px] shrink-0 items-center justify-between border-b border-neutral-900">
                         <div>
                             <h1 className="text-lg font-bold tracking-tight text-white mb-1 capitalize flex items-center gap-2">
                                 {type === 'dashboard'
@@ -1526,15 +1595,7 @@ export default function AdminPage() {
 
                     </div>
 
-                    <div className="bg-neutral-950">
-                        {viewMode === 'list' && message && (
-                            <div className={`mb-4 rounded-md border p-3 text-[10px] font-mono leading-tight transition-all duration-300 ${message.isError ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}`}>
-                                <div className="flex items-center gap-2">
-                                    <div className={`h-1.5 w-1.5 rounded-full ${message.isError ? 'bg-red-500' : 'bg-green-500'} animate-pulse`}></div>
-                                    {message.text}
-                                </div>
-                            </div>
-                        )}
+                    <div className={`bg-neutral-950 ${isPostEditor ? 'flex flex-1 flex-col min-h-0 pb-6' : 'flex-1 overflow-y-auto pb-8'}`}>
                         {type === 'dashboard' ? (
                             <DashboardView data={dashboardData} loading={dashboardLoading} />
                         ) : type === 'tokens' ? (
@@ -1662,42 +1723,31 @@ export default function AdminPage() {
                                 </div>
                             </div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                            <form onSubmit={handleSubmit} className={`space-y-4 ${isPostEditor ? 'flex flex-1 flex-col min-h-0' : ''}`}>
                                 {type === 'post' && (
-                                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                        {isEditing && (
-                                            <div className="bg-blue-900/10 border border-blue-900/20 rounded-md px-3 py-2 flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <FiEdit3 className="text-blue-500 w-3 h-3" />
-                                                    <p className="text-[10px] uppercase tracking-wider text-blue-400 font-mono">{tr('editing')} <span className="text-white">{currentFilename}</span></p>
-                                                </div>
-                                                <Button type="button" onClick={handleNewPost} variant="ghost" size="sm" className="h-6 text-[10px] uppercase font-mono tracking-wider text-blue-400/60 hover:text-blue-300 p-0 hover:bg-transparent">
-                                                    {tr('close')}
-                                                </Button>
-                                            </div>
-                                        )}
+                                    <div className="flex flex-1 flex-col min-h-0 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                         {/* 第一行：标题、日期、别名 */}
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="post-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.title')}</Label>
-                                                <Input id="post-title" placeholder="New Entry..." value={postData.title} onChange={(e) => setPostData({ ...postData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white placeholder:text-neutral-700" />
+                                        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-x-4 shrink-0">
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="post-title" className="shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{tr('form.title')}</Label>
+                                                <Input id="post-title" placeholder="New Entry..." value={postData.title} onChange={(e) => setPostData({ ...postData, title: e.target.value })} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm text-white focus:bg-neutral-900 placeholder:text-neutral-700" />
                                             </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="post-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.date')}</Label>
-                                                <Input id="post-date" type="date" value={postData.date} onChange={(e) => { const val = e.target.value; setPostData(prev => ({ ...prev, date: val, slug: isSlugModified ? prev.slug : dateToSlug(val) })); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white [&::-webkit-calendar-picker-indicator]:invert" />
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="post-date" className="shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{tr('form.date')}</Label>
+                                                <Input id="post-date" type="date" value={postData.date} onChange={(e) => { const val = e.target.value; setPostData(prev => ({ ...prev, date: val, slug: isSlugModified ? prev.slug : dateToSlug(val) })); }} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm text-white focus:bg-neutral-900 [&::-webkit-calendar-picker-indicator]:invert" />
                                             </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="post-slug" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.slug')}</Label>
-                                                <Input id="post-slug" value={postData.slug} onChange={(e) => { setPostData({ ...postData, slug: e.target.value }); setIsSlugModified(true); }} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm font-mono text-neutral-400 focus:bg-neutral-900" />
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="post-slug" className="shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{tr('form.slug')}</Label>
+                                                <Input id="post-slug" value={postData.slug} onChange={(e) => { setPostData({ ...postData, slug: e.target.value }); setIsSlugModified(true); }} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm font-mono text-neutral-400 focus:bg-neutral-900" />
                                             </div>
                                         </div>
 
                                         {/* 第二行：分类、描述、封面 */}
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="post-category" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.category')}</Label>
+                                        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-x-4 shrink-0">
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="post-category" className="shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{tr('form.category')}</Label>
                                                 {/* 标签输入框 */}
-                                                <div className="bg-neutral-900/50 border border-neutral-800 rounded focus-within:border-neutral-700 min-h-[36px] flex flex-wrap items-center gap-1 p-1">
+                                                <div className="flex min-h-[36px] flex-1 flex-wrap items-center gap-1 rounded border border-neutral-800 bg-neutral-900/50 p-1 focus-within:border-neutral-700">
                                                     {/* 已选分类标签 */}
                                                     {postData.category.map((cat, idx) => (
                                                         <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 bg-neutral-800 text-[11px] text-neutral-300 rounded font-mono">
@@ -1734,103 +1784,90 @@ export default function AdminPage() {
                                                                 setPostData({ ...postData, category: newCats });
                                                             }
                                                         }}
-                                                        placeholder={postData.category.length === 0 ? "输入后按Enter（默认：随笔）" : ""}
+                                                        placeholder=""
                                                         className="flex-1 min-w-[100px] bg-transparent border-0 outline-none text-sm text-neutral-300 placeholder:text-neutral-700 h-7"
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="post-desc" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.description')}</Label>
-                                                <Input id="post-desc" value={postData.description} onChange={(e) => setPostData({ ...postData, description: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300" />
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="post-desc" className="shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{tr('form.description')}</Label>
+                                                <Input id="post-desc" value={postData.description} onChange={(e) => setPostData({ ...postData, description: e.target.value })} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm text-neutral-300 focus:bg-neutral-900" />
                                             </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="post-cover" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.cover')}</Label>
-                                                <Input id="post-cover" placeholder="https://..." value={postData.cover} onChange={(e) => setPostData({ ...postData, cover: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-neutral-300 placeholder:text-neutral-700" />
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="post-cover" className="shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{tr('form.cover')}</Label>
+                                                <Input id="post-cover" placeholder="https://..." value={postData.cover} onChange={(e) => setPostData({ ...postData, cover: e.target.value })} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm text-neutral-300 focus:bg-neutral-900 placeholder:text-neutral-700" />
                                             </div>
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <Label htmlFor="post-content" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.content')}</Label>
-                                            <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950">
-                                                <div className="flex flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 p-2">
-                                                    <button type="button" onClick={() => insertPostMarkdown('**', '**', 'bold text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] font-bold text-neutral-300 hover:border-neutral-600 hover:text-white">B</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('*', '*', 'italic text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] italic text-neutral-300 hover:border-neutral-600 hover:text-white">I</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('## ', '', 'Heading')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H2</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('### ', '', 'Subheading')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">H3</button>
-                                                    <span className="mx-1 h-5 w-px bg-neutral-800" />
-                                                    <button type="button" onClick={() => insertPostMarkdown('> ', '', tr('md.quote'))} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">QUOTE</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('[', '](https://)', 'link text')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LINK</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('![', '](https://)', 'image alt')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">IMG</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('`', '`', 'code')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">CODE</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('- ', '', 'list item')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">LIST</button>
-                                                    <button type="button" onClick={() => insertPostMarkdown('```\n', '\n```', 'code block')} className="inline-flex items-center justify-center h-7 rounded-md border border-neutral-800 px-2 font-mono text-[10px] text-neutral-300 hover:border-neutral-600 hover:text-white">BLOCK</button>
+                                        <div className="flex flex-1 flex-col min-h-0">
+                                            <div className="flex flex-1 flex-col min-h-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950">
+                                                <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 px-2 py-1.5">
+                                                    {renderMdTools()}
 
-                                                    {/* Clear Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (confirm(tr('confirm.clearContent'))) {
-                                                                setPostData({ ...postData, content: '' });
-                                                            }
-                                                        }}
-                                                        className="ml-auto inline-flex items-center justify-center h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
-                                                    >
-                                                        {tr('btn.clear')}
-                                                    </button>
-
-                                                    {/* Immersive Mode Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setIsImmersiveMode(true)}
-                                                        className="inline-flex items-center justify-center h-7 px-3 rounded-md border border-neutral-700 text-neutral-400 font-mono text-[10px] uppercase tracking-[0.18em] hover:border-neutral-500 hover:text-neutral-200 transition-colors"
-                                                        title={tr('btn.immersiveMode')}
-                                                    >
-                                                        <FiMaximize2 className="w-3.5 h-3.5" />
-                                                    </button>
-
-                                                    {/* Publish Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleSubmit}
-                                                        disabled={loading}
-                                                        className="inline-flex items-center justify-center h-7 px-4 rounded-md bg-white text-black font-mono text-[10px] uppercase tracking-[0.18em] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
-                                                    >
-                                                        {loading ? tr('btn.publishing') : tr('btn.publish')}
-                                                    </button>
+                                                    <div className="ml-auto flex items-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setScrollSync((v) => !v)}
+                                                            title={tr('btn.syncScroll')}
+                                                            aria-label={tr('btn.syncScroll')}
+                                                            aria-pressed={scrollSync}
+                                                            className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${scrollSync ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
+                                                        >
+                                                            <ArrowDownUp className="h-3.5 w-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (confirm(tr('confirm.clearContent'))) {
+                                                                    setPostData({ ...postData, content: '' });
+                                                                }
+                                                            }}
+                                                            className="inline-flex h-8 items-center justify-center rounded-md px-3 font-mono text-[10px] uppercase leading-none tracking-[0.18em] text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+                                                        >
+                                                            <span className="text-trim-caps">{tr('btn.clear')}</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setIsImmersiveMode(true)}
+                                                            title={tr('btn.immersiveMode')}
+                                                            aria-label={tr('btn.immersiveMode')}
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+                                                        >
+                                                            <FiMaximize2 className="h-3.5 w-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleSubmit}
+                                                            disabled={loading}
+                                                            className="inline-flex h-8 items-center justify-center rounded-md bg-white px-4 font-mono text-[10px] font-semibold uppercase leading-none tracking-[0.18em] text-black transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        >
+                                                            <span className="text-trim-caps">{loading ? tr('btn.publishing') : (isEditing ? tr('btn.update') : tr('btn.publish'))}</span>
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div className="grid grid-cols-1 lg:grid-cols-2">
-                                                    <div className="border-b border-neutral-900 lg:border-b-0 lg:border-r">
-                                                        <div className="border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">{tr('md.source')}</div>
+                                                <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
+                                                    <div className="flex min-h-0 flex-col border-b border-neutral-900 lg:border-b-0 lg:border-r">
                                                         <textarea
                                                             ref={postContentRef}
                                                             id="post-content"
-                                                            rows={25}
                                                             value={postData.content}
-                                                            onChange={(e) => {
-                                                                updatePostContent(e.target.value);
-                                                                autoResizePostContent();
-                                                            }}
-                                                            className="block min-h-[560px] w-full resize-none overflow-hidden border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
+                                                            onChange={(e) => updatePostContent(e.target.value)}
+                                                            className="block w-full min-h-0 flex-1 resize-none overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                                                         />
                                                     </div>
-                                                    <div className="min-h-[560px] bg-background">
-                                                        <div className="flex items-center gap-2 border-b border-neutral-900 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">
-                                                            <span>{tr('md.preview')}</span>
-                                                            {previewLoading && <span className="text-neutral-700 normal-case tracking-normal">…</span>}
-                                                        </div>
+                                                    <div className="relative flex min-h-0 flex-col bg-background">
+                                                        {previewLoading && <span className="pointer-events-none absolute right-3 top-3 z-10 h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-500" aria-hidden />}
                                                         {previewHtml ? (
-                                                            <div className="relative h-[560px] overflow-hidden">
-                                                                <div
-                                                                    ref={inlinePreviewRef}
-                                                                    className="article max-w-none h-full overflow-auto p-5 text-[15px]"
-                                                                    dangerouslySetInnerHTML={{ __html: previewHtml }}
-                                                                />
-                                                                <TocRail toc={previewToc} embedded containerRef={inlinePreviewRef} />
-                                                            </div>
+                                                            <div
+                                                                ref={previewScrollRef}
+                                                                className="article max-w-none min-h-0 flex-1 overflow-auto p-5 text-[15px]"
+                                                                dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                                            />
                                                         ) : (
-                                                            <div className="p-5 font-mono text-xs uppercase tracking-[0.18em] text-neutral-600">
+                                                            <div className="min-h-0 flex-1 overflow-auto p-5 font-mono text-xs uppercase tracking-[0.18em] text-neutral-600">
                                                                 Preview_Waiting_For_Input
                                                             </div>
                                                         )}
+                                                        <TocRail toc={previewToc} embedded revealOnHover containerRef={previewScrollRef} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1878,35 +1915,29 @@ export default function AdminPage() {
                                     </div>
                                 )}
 
-                                {message && (
-                                    <div className={`p-3 rounded-md text-[10px] font-mono leading-tight border transition-all duration-300 ${message.isError ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}`}>
-                                        <div className="flex items-center gap-2">
-                                            <div className={`h-1.5 w-1.5 rounded-full ${message.isError ? 'bg-red-500' : 'bg-green-500'} animate-pulse`}></div>
-                                            {message.text}
-                                        </div>
+                                {type !== 'post' && (
+                                    <div className="pt-4 border-t border-neutral-900">
+                                        <Button disabled={loading} type="submit" size="sm" className="w-full md:w-auto min-w-[120px] bg-white text-black hover:bg-neutral-200 transition-all font-bold tracking-[0.18em] text-[10px] h-9 shadow-lg shadow-white/5 active:scale-95 cursor-pointer">
+                                            {loading ? (
+                                                <div className="flex items-center gap-2 italic">
+                                                    <div className="animate-spin h-2.5 w-2.5 border-2 border-current border-t-transparent rounded-full" />
+                                                    <span className="text-trim-caps">{tr('btn.saving')}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <FiSave className="w-3.5 h-3.5" />
+                                                    <span className="text-trim-caps">{isEditing ? tr('btn.update') : tr('btn.publish')}</span>
+                                                </div>
+                                            )}
+                                        </Button>
                                     </div>
                                 )}
-
-                                <div className="pt-4 border-t border-neutral-900">
-                                    <Button disabled={loading} type="submit" size="sm" className="w-full md:w-auto min-w-[120px] bg-white text-black hover:bg-neutral-200 transition-all font-bold tracking-[0.18em] text-[10px] h-9 shadow-lg shadow-white/5 active:scale-95 cursor-pointer">
-                                        {loading ? (
-                                            <div className="flex items-center gap-2 italic">
-                                                <div className="animate-spin h-2.5 w-2.5 border-2 border-current border-t-transparent rounded-full" />
-                                                {tr('btn.saving')}
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-2">
-                                                <FiSave className="w-3.5 h-3.5" />
-                                                {isEditing ? tr('btn.update') : tr('btn.publish')}
-                                            </div>
-                                        )}
-                                    </Button>
-                                </div>
                             </form>
                         )}
                     </div>
                 </div>
             </main>
+            {messageToast}
             {/* Reply Dialog */}
             {replyModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
