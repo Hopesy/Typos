@@ -73,6 +73,10 @@ async function getDatabase() {
             try {
               await client.execute(statement);
             } catch (error) {
+              // 容忍重复迁移：列/表已存在时跳过，保证脚本可重复运行
+              if (/duplicate column name|already exists/i.test(error.message || '')) {
+                continue;
+              }
               console.error(`Error executing statement: ${statement.substring(0, 100)}...`);
               throw error;
             }
@@ -121,12 +125,18 @@ async function runMigration() {
   const db = await getDatabase();
 
   try {
-    const migrationFile = path.join(process.cwd(), 'migrations', '0001_init.sql');
-    const sql = fs.readFileSync(migrationFile, 'utf-8');
+    const migrationsDir = path.join(process.cwd(), 'migrations');
+    const files = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
 
-    console.log('Running migration: 0001_init.sql');
-    await db.exec(sql);
-    console.log('✓ Migration completed successfully');
+    for (const file of files) {
+      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+      console.log(`Running migration: ${file}`);
+      await db.exec(sql);
+    }
+    console.log('✓ Migrations completed successfully');
   } catch (error) {
     console.error('✗ Migration failed:', error.message);
     process.exit(1);

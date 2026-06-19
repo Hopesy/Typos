@@ -1285,7 +1285,7 @@ export default function AdminPage() {
 
     if (!isAuthorized) {
         return (
-            <div className="admin-shell min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-white selection:text-black font-sans">
+            <div className="admin-shell min-h-screen bg-neutral-950 flex items-center justify-center p-4 font-sans">
                 <div className="fixed right-4 top-4 flex items-center gap-2">
                     <LangToggle compact />
                     <ThemeToggle compact />
@@ -1411,7 +1411,7 @@ export default function AdminPage() {
                                 rows={25}
                                 value={postData.content}
                                 onChange={(e) => updatePostContent(e.target.value)}
-                                className="block h-full w-full resize-none overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
+                                className="block h-full w-full resize-none select-text overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                             />
                         </div>
 
@@ -1439,7 +1439,7 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="admin-shell flex h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-white selection:text-black overflow-hidden">
+        <div className="admin-shell flex h-screen bg-neutral-950 text-neutral-200 font-sans overflow-hidden">
             <aside
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 className={`${isSidebarCollapsed ? 'w-16' : 'w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full transition-all duration-300 relative group cursor-pointer`}
@@ -1851,7 +1851,7 @@ export default function AdminPage() {
                                                             id="post-content"
                                                             value={postData.content}
                                                             onChange={(e) => updatePostContent(e.target.value)}
-                                                            className="block w-full min-h-0 flex-1 resize-none overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
+                                                            className="block w-full min-h-0 flex-1 resize-none select-text overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                                                         />
                                                     </div>
                                                     <div className="relative flex min-h-0 flex-col bg-background">

@@ -1,11 +1,9 @@
-import { getPostBySlug } from "@/lib/content";
-import { renderArticle } from "@/components/markdown-renderer";
+import { getRenderedPost } from "@/lib/content";
 import TocRail from "@/components/toc-rail";
 import Comments from "@/components/comments";
 import { PostNotFound } from "@/components/post-not-found";
 
 export const dynamicParams = true;
-export const dynamic = 'force-dynamic';
 
 export default async function PostPage({
   params,
@@ -14,16 +12,16 @@ export default async function PostPage({
 }) {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug).trim();
-  let post: Awaited<ReturnType<typeof getPostBySlug>> | null = null;
+  let data: Awaited<ReturnType<typeof getRenderedPost>> | null = null;
 
   try {
-    post = await getPostBySlug(slug);
+    data = await getRenderedPost(slug);
   } catch (error) {
     console.error(`Failed to render post "${slug}":`, error);
-    post = null;
+    data = null;
   }
 
-  if (!post) {
+  if (!data) {
     return (
       <div className="container mx-auto px-4 py-8">
         <PostNotFound />
@@ -31,7 +29,7 @@ export default async function PostPage({
     );
   }
 
-  const { html, toc } = await renderArticle(post.content);
+  const { post, html, toc } = data;
 
   return (
     <div className="max-w-3xl mx-auto pt-12 pb-32 px-6">

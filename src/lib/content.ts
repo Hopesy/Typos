@@ -60,6 +60,86 @@ export async function getPostBySlug(slug: string): Promise<PostDetail> {
   return post;
 }
 
+// 正文内容哈希（FNV-1a，非加密、快速），仅用于检测内容是否变化以决定缓存命中。
+function hashContent(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+type CachedPostRow = PostDetail & {
+  rendered_html?: string;
+  rendered_toc?: string;
+  render_hash?: string;
+};
+
+// 取文章并返回渲染结果，命中渲染缓存时跳过 Shiki/unified（避免 Workers CPU 超限 1102）。
+// 缓存以正文哈希为键存于 posts 表；未命中才渲染并回写。旧库未跑迁移（缺列）时自动回退为无缓存渲染。
+export async function getRenderedPost(
+  slug: string
+): Promise<{ post: PostDetail; html: string; toc: TocItem[] }> {
+  const db = await getDatabase();
+  if (!db) {
+    throw new Error('Database not available');
+  }
+
+  let row: CachedPostRow | null = null;
+  let cacheColumnsExist = true;
+  try {
+    row = await db
+      .prepare(
+        "SELECT slug, title, date, description, category, cover, content, rendered_html, rendered_toc, render_hash FROM posts WHERE slug = ?"
+      )
+      .bind(slug)
+      .first<CachedPostRow>();
+  } catch {
+    // 渲染缓存列不存在（迁移未执行）：回退到基础查询，本次照常渲染但不缓存。
+    cacheColumnsExist = false;
+    row = await db
+      .prepare("SELECT slug, title, date, description, category, cover, content FROM posts WHERE slug = ?")
+      .bind(slug)
+      .first<CachedPostRow>();
+  }
+
+  if (!row) {
+    throw new Error("Post not found");
+  }
+
+  const { rendered_html, rendered_toc, render_hash, ...post } = row;
+  const hash = hashContent(post.content);
+
+  // 命中缓存：直接返回，不跑高亮管线。
+  if (cacheColumnsExist && rendered_html && render_hash === hash) {
+    let toc: TocItem[] = [];
+    try {
+      toc = JSON.parse(rendered_toc || "[]") as TocItem[];
+    } catch {
+      toc = [];
+    }
+    return { post, html: rendered_html, toc };
+  }
+
+  // 未命中：动态引入渲染器（避免 Shiki 进入仅用列表数据的模块图）并回写缓存。
+  const { renderArticle } = await import("@/components/markdown-renderer");
+  const { html, toc } = await renderArticle(post.content);
+
+  if (cacheColumnsExist) {
+    try {
+      await db
+        .prepare("UPDATE posts SET rendered_html = ?, rendered_toc = ?, render_hash = ? WHERE slug = ?")
+        .bind(html, JSON.stringify(toc), hash, slug)
+        .run();
+    } catch {
+      // 回写失败不影响本次输出。
+    }
+  }
+
+  return { post, html, toc };
+}
+
 export async function getDailyEntries(): Promise<TimelineEntry[]> {
   const db = await getDatabase();
   if (!db) {

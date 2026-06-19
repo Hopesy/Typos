@@ -941,6 +941,19 @@
     color: var(--admin-text);
   }
 
+  /* 后台输入框/文本域强制可拖拽选中文字：覆盖任何继承或第三方样式导致的 user-select 失效。 */
+  .admin-shell input,
+  .admin-shell textarea {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+
+  /* 选区高亮随后台明暗主题自适应（避免浅色主题下白底高亮与背景融为一体看不见）。 */
+  .admin-shell ::selection {
+    background: var(--admin-strong);
+    color: var(--admin-bg);
+  }
+
   html:not(.dark) .admin-shell {
     --admin-bg: #f6f4ee;
     --admin-panel: #fffef9;
