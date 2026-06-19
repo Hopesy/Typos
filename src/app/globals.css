@@ -705,6 +705,22 @@
     transform: translateY(-50%) translateX(0);
   }
 
+  /* 嵌入编辑预览窗格：相对窗格绝对定位，始终可见，不依赖 window 滚动。 */
+  .toc-rail.toc-rail-embedded {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    width: 180px;
+    transform: translateY(-50%);
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 5;
+  }
+
+  .toc-rail.toc-rail-embedded .toc-tick {
+    width: 168px;
+  }
+
   .toc-ticks {
     display: flex;
     flex-direction: column;

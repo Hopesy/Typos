@@ -36,6 +36,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
+import TocRail from "@/components/toc-rail";
 import { useTranslations } from "next-intl";
 
 type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment' | 'tokens';
@@ -577,7 +578,10 @@ export default function AdminPage() {
 
     // 文章预览：复用文章页同一套渲染管线（/api/admin/preview），保证与发布后一致。
     const [previewHtml, setPreviewHtml] = useState('');
+    const [previewToc, setPreviewToc] = useState<{ depth: number; text: string; id: string }[]>([]);
     const [previewLoading, setPreviewLoading] = useState(false);
+    const immersivePreviewRef = useRef<HTMLDivElement | null>(null);
+    const inlinePreviewRef = useRef<HTMLDivElement | null>(null);
 
     // API Token state
     const [apiTokens, setApiTokens] = useState<ApiToken[]>([]);
@@ -840,6 +844,7 @@ export default function AdminPage() {
         const timer = window.setTimeout(async () => {
             if (!source.trim()) {
                 setPreviewHtml('');
+                setPreviewToc([]);
                 setPreviewLoading(false);
                 return;
             }
@@ -856,6 +861,7 @@ export default function AdminPage() {
                 if (res.ok) {
                     const data = await res.json();
                     setPreviewHtml(typeof data.html === 'string' ? data.html : '');
+                    setPreviewToc(Array.isArray(data.toc) ? data.toc : []);
                 }
             } catch (error) {
                 if (!(error instanceof DOMException && error.name === 'AbortError')) {
@@ -1343,10 +1349,14 @@ export default function AdminPage() {
                                 {previewLoading && <span className="text-neutral-700 normal-case tracking-normal">…</span>}
                             </div>
                             {previewHtml ? (
-                                <div
-                                    className="article max-w-none overflow-auto p-5 text-[15px]"
-                                    dangerouslySetInnerHTML={{ __html: previewHtml }}
-                                />
+                                <div className="relative flex-1 overflow-hidden">
+                                    <div
+                                        ref={immersivePreviewRef}
+                                        className="article max-w-none h-full overflow-auto p-5 text-[15px]"
+                                        dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                    />
+                                    <TocRail toc={previewToc} embedded containerRef={immersivePreviewRef} />
+                                </div>
                             ) : (
                                 <div className="p-5 font-mono text-xs uppercase tracking-[0.18em] text-neutral-600">
                                     Preview_Waiting_For_Input
@@ -1808,10 +1818,14 @@ export default function AdminPage() {
                                                             {previewLoading && <span className="text-neutral-700 normal-case tracking-normal">…</span>}
                                                         </div>
                                                         {previewHtml ? (
-                                                            <div
-                                                                className="article max-w-none p-5 text-[15px]"
-                                                                dangerouslySetInnerHTML={{ __html: previewHtml }}
-                                                            />
+                                                            <div className="relative h-[560px] overflow-hidden">
+                                                                <div
+                                                                    ref={inlinePreviewRef}
+                                                                    className="article max-w-none h-full overflow-auto p-5 text-[15px]"
+                                                                    dangerouslySetInnerHTML={{ __html: previewHtml }}
+                                                                />
+                                                                <TocRail toc={previewToc} embedded containerRef={inlinePreviewRef} />
+                                                            </div>
                                                         ) : (
                                                             <div className="p-5 font-mono text-xs uppercase tracking-[0.18em] text-neutral-600">
                                                                 Preview_Waiting_For_Input

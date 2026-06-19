@@ -24,8 +24,8 @@ export async function POST(request: Request) {
   try {
     const body = asRecord(await request.json());
     const content = typeof body.content === "string" ? body.content : "";
-    const { html } = await renderArticle(content);
-    return noStore(NextResponse.json({ html }));
+    const { html, toc } = await renderArticle(content);
+    return noStore(NextResponse.json({ html, toc }));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return noStore(NextResponse.json({ error: message }, { status: 500 }));

@@ -12,13 +12,24 @@ type TocItem = {
 
 type TocRailProps = {
   toc: TocItem[];
+  // 传入 true 时目录嵌入预览窗格（配合 containerRef），否则跟随 window（文章页）。
+  embedded?: boolean;
+  containerRef?: React.RefObject<HTMLElement | null>;
 };
 
-function resolveActiveId(items: TocItem[]) {
-  const trigger = Math.min(window.innerHeight * 0.28, 220);
+function findHeading(items: TocItem[], id: string, root: HTMLElement | Document) {
+  if (root instanceof Document) return root.getElementById(id);
+  return root.querySelector<HTMLElement>(`[id="${CSS.escape(id)}"]`);
+}
+
+function resolveActiveId(items: TocItem[], container: HTMLElement | null) {
+  const viewportTop = container ? container.getBoundingClientRect().top : 0;
+  const viewportHeight = container ? container.clientHeight : window.innerHeight;
+  const trigger = viewportTop + Math.min(viewportHeight * 0.28, 220);
+  const root: HTMLElement | Document = container ?? document;
 
   for (let index = items.length - 1; index >= 0; index -= 1) {
-    const element = document.getElementById(items[index].id);
+    const element = findHeading(items, items[index].id, root);
     if (!element) continue;
     if (element.getBoundingClientRect().top <= trigger) {
       return items[index].id;
@@ -50,7 +61,7 @@ function buildVisibleSet(items: TocItem[], activeId: string | null) {
   return visible;
 }
 
-export default function TocRail({ toc }: TocRailProps) {
+export default function TocRail({ toc, embedded = false, containerRef }: TocRailProps) {
   const t = useTranslations('aria');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [canScrollUp, setCanScrollUp] = useState(false);
@@ -60,10 +71,17 @@ export default function TocRail({ toc }: TocRailProps) {
 
   useEffect(() => {
     if (toc.length === 0) return;
+    // 嵌入预览时跟随容器滚动；否则跟随 window。
+    const scroller: HTMLElement | Window = containerRef?.current ?? window;
+    const container = containerRef?.current ?? null;
 
     const update = () => {
-      setActiveId(resolveActiveId(toc));
+      setActiveId(resolveActiveId(toc, container));
 
+      if (embedded) {
+        setIsRevealed(true);
+        return;
+      }
       const titleBlock = document.querySelector('[data-post-title-block]');
       setIsRevealed(titleBlock ? titleBlock.getBoundingClientRect().bottom <= 0 : window.scrollY > 0);
     };
@@ -80,16 +98,16 @@ export default function TocRail({ toc }: TocRailProps) {
       });
     };
 
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    scroller.addEventListener('scroll', onScrollOrResize, { passive: true });
     window.addEventListener('resize', onScrollOrResize);
     window.addEventListener('hashchange', onScrollOrResize);
 
     return () => {
-      window.removeEventListener('scroll', onScrollOrResize);
+      scroller.removeEventListener('scroll', onScrollOrResize);
       window.removeEventListener('resize', onScrollOrResize);
       window.removeEventListener('hashchange', onScrollOrResize);
     };
-  }, [toc]);
+  }, [toc, containerRef, embedded]);
 
   useEffect(() => {
     const listEl = listRef.current;
@@ -129,8 +147,22 @@ export default function TocRail({ toc }: TocRailProps) {
 
   if (toc.length === 0) return null;
 
+  // 嵌入预览：在容器内滚动到标题，而非触发 window 级 hash 跳转。
+  const handleClick = (event: React.MouseEvent, id: string) => {
+    const container = containerRef?.current;
+    if (!container) return;
+    event.preventDefault();
+    const target = container.querySelector<HTMLElement>(`[id="${CSS.escape(id)}"]`);
+    if (!target) return;
+    const top = target.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 12;
+    container.scrollTo({ top, behavior: 'smooth' });
+  };
+
   return (
-    <nav className={`toc-rail hidden md:flex ${isRevealed ? 'is-revealed' : ''}`} aria-label={t('toc')}>
+    <nav
+      className={`toc-rail hidden md:flex ${embedded ? 'toc-rail-embedded' : ''} ${isRevealed ? 'is-revealed' : ''}`}
+      aria-label={t('toc')}
+    >
       {canScrollUp ? (
         <div className="toc-scroll-hint toc-scroll-hint-top" aria-hidden>
           <ChevronUp className="h-3.5 w-3.5 text-hud-faint" />
@@ -144,6 +176,7 @@ export default function TocRail({ toc }: TocRailProps) {
             <a
               key={item.id}
               href={`#${item.id}`}
+              onClick={(event) => handleClick(event, item.id)}
               className={`toc-tick ${isActive ? 'is-active' : ''} ${isVisible ? 'is-visible' : ''}`}
               data-depth={item.depth}
               aria-label={`${index + 1}. ${item.text}`}
