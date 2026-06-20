@@ -57,7 +57,7 @@ export function DailyStream({ fragments }: { fragments: DailyFragment[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-sm bg-transparent border border-hud-line px-12 py-3 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
+            className="w-full rounded-full bg-transparent border border-hud-line px-12 py-2.5 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
           />
           {query && (
             <button
@@ -70,7 +70,7 @@ export function DailyStream({ fragments }: { fragments: DailyFragment[] }) {
         </div>
         <button
           onClick={() => setView(view === 'timeline' ? 'cards' : 'timeline')}
-          className="flex-shrink-0 h-[46px] w-[46px] flex items-center justify-center rounded-sm border border-hud-line bg-transparent hover:border-hud-line-strong hover:bg-hud-panel/30 transition-all"
+          className="flex-shrink-0 h-[42px] w-[42px] flex items-center justify-center rounded-full border border-hud-line bg-transparent hover:border-hud-line-strong hover:bg-hud-panel/30 transition-all"
           title={view === 'timeline' ? t('viewCards') : t('viewTimeline')}
         >
           {view === 'timeline' ? (

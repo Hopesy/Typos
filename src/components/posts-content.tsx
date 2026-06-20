@@ -73,7 +73,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t('searchPlaceholder')}
-                        className="w-full rounded-sm bg-transparent border border-hud-line px-12 py-3 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
+                        className="w-full rounded-full bg-transparent border border-hud-line px-12 py-2.5 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
                     />
                     {searchQuery && (
                         <button
