@@ -1055,11 +1055,25 @@ export default function AdminPage() {
         let data: (PostData & { filename?: string | null; rendered?: { html: string; toc: { depth: number; text: string; id: string }[] } }) | DailyData | MomentData;
         if (type === 'post') {
             data = { ...postData, filename: currentFilename };
-            // 方案 C：若已有与当前正文匹配的客户端渲染结果，随保存一并送出，
-            // 服务端直接写入 D1 渲染缓存，无需在 Worker 重跑 Shiki/KaTeX。
-            const cached = lastRenderRef.current;
-            if (cached && cached.content === postData.content && cached.html) {
-                data.rendered = { html: cached.html, toc: cached.toc };
+            // 方案 C：发布时确保带上与当前正文匹配的客户端渲染结果，服务端直接写入
+            // D1 渲染缓存，无需在 Worker 重跑 Shiki/KaTeX。
+            let rendered = lastRenderRef.current;
+            // 预览防抖未跑完 / 正文已变：发布前在客户端当场补渲染一次，避免落到 Worker 兜底。
+            if (postData.content.trim() && (!rendered || rendered.content !== postData.content || !rendered.html)) {
+                try {
+                    const { renderArticle } = await import('@/components/markdown-renderer');
+                    const { html, toc } = await renderArticle(postData.content);
+                    rendered = { content: postData.content, html, toc };
+                    lastRenderRef.current = rendered;
+                } catch (error) {
+                    // 客户端渲染异常（极少数，如内容触发管线 bug）：不带 rendered，
+                    // 由服务端按需兜底渲染一次，保证发布不被阻断。
+                    console.error('Publish-time render failed:', error);
+                    rendered = null;
+                }
+            }
+            if (rendered && rendered.content === postData.content && rendered.html) {
+                data.rendered = { html: rendered.html, toc: rendered.toc };
             }
         }
         else if (type === 'daily') data = dailyData;
