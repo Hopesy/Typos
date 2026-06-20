@@ -62,6 +62,19 @@
     "clear": "CLEAR",
     "noResults": "No matching articles found"
   },
+  "daily": {
+    "logPrefix": "LOG",
+    "captureTag": "CAPTURE",
+    "status": "ARCHIVED",
+    "source": "FIELD NOTE",
+    "systemIdle": "system_idle"
+  },
+  "moments": {
+    "noImage": "No Image",
+    "alt": "Moment",
+    "endOfStream": "End_of_Stream",
+    "totalFragments": "Total_Fragments"
+  },
   "comments": {
     "title": "Terminal Comments",
     "identity": "Identity",

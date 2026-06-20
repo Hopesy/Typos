@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { HeicImage } from "@/components/heic-image";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 interface Moment {
     date: string;
@@ -18,6 +19,7 @@ interface MomentsGridProps {
 export function MomentsGrid({ moments }: MomentsGridProps) {
     const searchParams = useSearchParams();
     const cols = searchParams.get('cols') || '4';
+    const t = useTranslations('moments');
 
     // Map cols to Tailwind classes
     const getColumnsClass = (c: string) => {
@@ -50,12 +52,12 @@ export function MomentsGrid({ moments }: MomentsGridProps) {
                         {moment.image ? (
                             <HeicImage
                                 src={moment.image}
-                                alt={moment.title || "Moment"}
+                                alt={moment.title || t('alt')}
                                 className="w-full h-auto block transition-opacity duration-300"
                             />
                         ) : (
                             <div className="flex aspect-square w-full items-center justify-center text-[11px] text-hud-faint uppercase font-mono">
-                                No Image
+                                {t('noImage')}
                             </div>
                         )}
 

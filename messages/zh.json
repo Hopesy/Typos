@@ -62,6 +62,19 @@
     "clear": "清除",
     "noResults": "未找到匹配的文章"
   },
+  "daily": {
+    "logPrefix": "日志",
+    "captureTag": "影像",
+    "status": "已归档",
+    "source": "手记",
+    "systemIdle": "系统空闲"
+  },
+  "moments": {
+    "noImage": "暂无图片",
+    "alt": "瞬间",
+    "endOfStream": "流已结束",
+    "totalFragments": "片段总数"
+  },
   "comments": {
     "title": "终端评论系统",
     "identity": "称呼",

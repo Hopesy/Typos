@@ -1,9 +1,11 @@
 import { getDailyEntries } from "@/lib/content";
 import MarkdownRenderer from "@/components/markdown-renderer";
+import { getTranslations } from "next-intl/server";
 export const dynamic = 'force-dynamic';
 
 export default async function DailyPage() {
   const dailyPosts = await getDailyEntries();
+  const t = await getTranslations('daily');
   return (
     <div className="container mx-auto max-w-3xl px-6 py-16">
       {/* Main Content Stream */}
@@ -19,7 +21,7 @@ export default async function DailyPage() {
                 <span className="text-[10px] text-hud-muted">➜</span>
               </div>
               <span className="text-hud-muted group-hover:text-hud-strong transition-colors uppercase tracking-[0.18em] text-[11px]">
-                cat log_{post.date}.txt
+                {t('logPrefix')} · {post.date}
               </span>
             </div>
 
@@ -38,7 +40,7 @@ export default async function DailyPage() {
                   <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-hud-muted"></div>
                   {/* Metadata overlay on image */}
                   <div className="absolute top-2 right-2 font-mono text-[10px] text-white/30 px-1.5 py-0.5 bg-black/40">
-                    CAPTURE_PROT_01
+                    {t('captureTag')}
                   </div>
                 </div>
               )}
@@ -58,9 +60,9 @@ export default async function DailyPage() {
 
               {/* System Metadata Tags */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[10px] uppercase tracking-[0.16em] text-hud-faint group-hover:text-hud-muted transition-colors">
-                <span>[STATUS: ARCHIVED]</span>
-                <span>[CRC: 0x{post.date.slice(-4)}]</span>
-                <span>[SOURCE: OMEGA_DRIVE]</span>
+                <span>[ {t('status')} ]</span>
+                <span>[ {post.date} ]</span>
+                <span>[ {t('source')} ]</span>
               </div>
             </div>
           </article>
@@ -73,7 +75,7 @@ export default async function DailyPage() {
               <span className="text-[10px] text-hud-muted">➜</span>
             </div>
             <div className="flex gap-1 items-center">
-              <span className="text-hud-dim tracking-[0.18em] uppercase">system_idle</span>
+              <span className="text-hud-dim tracking-[0.18em] uppercase">{t('systemIdle')}</span>
               <span className="w-2 h-4 bg-hud-muted cursor-blink ml-1"></span>
             </div>
           </div>
