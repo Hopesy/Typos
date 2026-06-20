@@ -77,27 +77,49 @@ unified()
 
 ---
 
-## 5. 候选方案（下一步要做的是 B）
+## 5. 已实施方案：B + C
 
-| 方案 | 做法 | 优点 | 缺点 |
-|------|------|------|------|
-| **A. 升级 Workers Paid** | `wrangler.jsonc` 配 `limits.cpu_ms`，上限 10ms→30s | 不改架构，最彻底 | $5/月 |
-| **B. 预览改客户端渲染** ✅ | 编辑器预览不再调 `/api/admin/preview`，改用浏览器端 markdown 渲染 | 免费档也能流畅实时预览，Worker 零负担 | 预览与发布渲染器不同源，效果可能有细微差异；客户端 bundle 变大 |
-| **C. 保存时预渲染** | `/api/admin/save` 保存即渲染写库，读取永命中缓存 | 访客端 1102 根治 | 保存请求本身仍跑渲染，超长文章在免费档仍可能 1102（风险转移到作者） |
-| **D. 渲染管线减负** | 砍 Shiki 语言、无公式跳 KaTeX、无代码块跳 Shiki | 免费、降单次 CPU | 治标不治本，牺牲功能 |
+下面两项已落地（commit 见 git 历史），其余 A/D 作为后续可选项保留。
 
-**下一步采用方案 B**：把编辑器预览迁到客户端渲染，CPU 花在用户本机、不占 Worker。配合现有 D1 缓存（第 3 节）覆盖访客端，免费档下仅剩"保存超长文章"那一瞬间有理论风险，可后续用 C/D 兜底。
+| 方案 | 做法 | 状态 |
+|------|------|------|
+| **B. 预览改客户端渲染** | 编辑器预览不再调 `/api/admin/preview`，改为在浏览器内 `import('@/components/markdown-renderer')` 直接跑 `renderArticle()` | ✅ 已实施 |
+| **C. 保存时预热渲染缓存** | 保存文章时把渲染结果写入 D1（`rendered_html/rendered_toc/render_hash`），读取路径永命中缓存 | ✅ 已实施 |
+| A. 升级 Workers Paid | `wrangler.jsonc` 配 `limits.cpu_ms`，上限 10ms→30s | 备选 |
+| D. 渲染管线减负 | 砍 Shiki 语言、按需跳过 KaTeX/Shiki | 备选 |
+
+### B + C 如何协同消除 1102
+
+1. **编辑器预览（高频，原 1102 重灾区）**：`renderArticle` 在用户浏览器里跑，CPU 完全不落在 Worker 上。因为复用的是**同一套管线**（remark/rehype + Shiki + KaTeX），预览与发布后效果**完全一致**，没有"渲染器不同源"的差异问题。
+2. **保存文章**：浏览器把刚渲染好的 HTML/TOC 随保存请求一并送给 `/api/admin/save`；服务端直接写入 D1 缓存，**保存路径也不在 Worker 跑 Shiki/KaTeX**。仅当客户端结果缺失时才回退为服务端渲染一次（低频，可接受）。
+3. **访客读取文章**：`getRenderedPost` 命中第 2 步写入的缓存，直接返回 HTML，**永不现场渲染**。第一位访客也命中，不再有"冷缓存首访 1102 且反复失败"的问题。
+
+结果：免费档 10ms 下，三条原本会触发 1102 的路径全部不再在 Worker 上跑渲染管线。
+
+### 关键改动文件
+
+- `src/app/admin/page.tsx`：预览 `useEffect` 改为浏览器内 `renderArticle`；`lastRenderRef` 暂存渲染结果；`handleSubmit` 保存时附带 `rendered`。
+- `src/lib/content.ts`：导出 `hashContent`；新增 `warmPostRenderCache()`（优先用客户端渲染结果，否则服务端渲染一次，失败静默）。
+- `src/lib/admin-content.ts`：`saveD1Item` 的 post 分支在 upsert 后调用 `warmPostRenderCache`。
+- `src/app/api/admin/preview/route.ts`：**已删除**（B 之后无人调用，且正是 Worker 侧 CPU 风险点）。
 
 ---
 
-## 6. 回退基线
+## 6. 候选方案备注（A / D）
 
-本文档提交时的关键文件状态，作为方案 B 改造出问题时的回退参照：
+- **A. 升级 Workers Paid（$5/月）**：一行配置把 CPU 上限拉到 30s，是唯一能彻底无视管线成本的解。若日后出现"保存超长文章"偶发 1102，可考虑。
+- **D. 渲染管线减负**：砍 Shiki 语言、无公式跳 KaTeX、无代码块跳 Shiki，可进一步降低单次 CPU，作为 A 的免费替代兜底。
 
-- 渲染管线：`src/components/markdown-renderer.tsx`（`renderArticle`）
-- 高亮器：`src/lib/shiki.ts`（2 主题 + 12 语言）
-- 文章页读取 + D1 缓存：`src/lib/content.ts`（`getRenderedPost`）
-- 服务端预览接口：`src/app/api/admin/preview/route.ts`
-- 编辑器预览触发：`src/app/admin/page.tsx`（400 ms 防抖 useEffect）
+---
 
-改造方案 B 时，预期改动集中在 `src/app/admin/page.tsx`（预览来源切换为客户端），`/api/admin/preview` 可保留兜底或逐步弃用，**第 3 节的 D1 缓存逻辑应保持不变**（访客端仍依赖它）。
+## 7. 回退基线
+
+本轮 B+C 改造前的干净基线为 commit `65bdcfc`（仅含本文档初版）。若改造出问题，`git reset --hard 65bdcfc` 即可回到"服务端预览 + 仅读取缓存"的状态。
+
+改造后涉及的关键文件：
+
+- 渲染管线：`src/components/markdown-renderer.tsx`（`renderArticle`，服务端/浏览器同构）
+- 高亮器：`src/lib/shiki.ts`（2 主题 + 12 语言，JS 引擎无 WASM，浏览器可跑）
+- 读取 + 缓存：`src/lib/content.ts`（`getRenderedPost` 读缓存、`warmPostRenderCache` 写缓存）
+- 保存：`src/lib/admin-content.ts`（`saveD1Item` post 分支）
+- 编辑器：`src/app/admin/page.tsx`（预览 effect / `lastRenderRef` / `handleSubmit`）

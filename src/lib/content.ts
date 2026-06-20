@@ -61,7 +61,7 @@ export async function getPostBySlug(slug: string): Promise<PostDetail> {
 }
 
 // 正文内容哈希（FNV-1a，非加密、快速），仅用于检测内容是否变化以决定缓存命中。
-function hashContent(input: string): string {
+export function hashContent(input: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < input.length; i += 1) {
     hash ^= input.charCodeAt(i);
@@ -138,6 +138,40 @@ export async function getRenderedPost(
   }
 
   return { post, html, toc };
+}
+
+// 保存时预渲染并写入 D1 渲染缓存（方案 C）：发布/更新文章后调用，
+// 让首位访客也能直接命中缓存，文章页读取路径永不在 Worker 现场渲染（规避 1102）。
+// 优先采用客户端已渲染好的 HTML/TOC（方案 B 预览复用同一管线，零 Worker CPU）；
+// 缺省时回退为服务端渲染一次。任何失败都不抛出——读取路径仍可现场兜底。
+export async function warmPostRenderCache(
+  slug: string,
+  content: string,
+  prerendered?: { html?: string; toc?: TocItem[] }
+): Promise<void> {
+  const db = await getDatabase();
+  if (!db) return;
+
+  try {
+    let html = prerendered?.html;
+    let toc = prerendered?.toc;
+
+    // 没有可信的客户端渲染结果时，服务端渲染一次（保存动作低频，可接受这次 CPU）。
+    if (typeof html !== "string" || !html) {
+      const { renderArticle } = await import("@/components/markdown-renderer");
+      const rendered = await renderArticle(content);
+      html = rendered.html;
+      toc = rendered.toc;
+    }
+
+    const hash = hashContent(content);
+    await db
+      .prepare("UPDATE posts SET rendered_html = ?, rendered_toc = ?, render_hash = ? WHERE slug = ?")
+      .bind(html, JSON.stringify(toc ?? []), hash, slug)
+      .run();
+  } catch {
+    // 渲染缓存列不存在（迁移未执行）或渲染失败：静默跳过，读取路径会按需现场渲染。
+  }
 }
 
 export async function getDailyEntries(): Promise<TimelineEntry[]> {

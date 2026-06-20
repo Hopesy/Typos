@@ -1,5 +1,6 @@
 import matter from "gray-matter";
 import type { D1DatabaseLike } from "@/lib/database";
+import { warmPostRenderCache, type TocItem } from "@/lib/content";
 
 export type AdminContentType = "post" | "daily" | "moment" | "comment";
 export type AdminEditableType = Exclude<AdminContentType, "comment">;
@@ -364,6 +365,8 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
     const slug = safeSegment(stringValue(payload.slug) || stringValue(payload.filename).replace(/\.md$/, ""), "");
     if (!slug) throw new Error("Post slug is required.");
 
+    const content = stringValue(payload.content);
+
     await db
       .prepare(
         `INSERT INTO posts (slug, title, date, description, category, content, cover)
@@ -383,10 +386,20 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
         normalizeDate(payload.date) || new Date().toISOString().slice(0, 10),
         stringValue(payload.description),
         stringValue(payload.category),
-        stringValue(payload.content),
+        content,
         stringValue(payload.cover),
       )
       .run();
+
+    // 方案 C：发布后预热 D1 渲染缓存。优先用客户端随保存一并送来的渲染结果
+    // （方案 B 预览已用同一管线在浏览器渲染好），从而保存路径也不在 Worker 跑 Shiki/KaTeX。
+    const prerendered = isRecord(payload.rendered)
+      ? {
+          html: typeof payload.rendered.html === "string" ? payload.rendered.html : undefined,
+          toc: Array.isArray(payload.rendered.toc) ? (payload.rendered.toc as TocItem[]) : undefined,
+        }
+      : undefined;
+    await warmPostRenderCache(slug, content, prerendered);
     return;
   }
 

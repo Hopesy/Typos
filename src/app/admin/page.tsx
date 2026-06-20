@@ -582,10 +582,13 @@ export default function AdminPage() {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isImmersiveMode, setIsImmersiveMode] = useState(false);
 
-    // 文章预览：复用文章页同一套渲染管线（/api/admin/preview），保证与发布后一致。
+    // 文章预览：在浏览器内复用文章页同一套渲染管线（renderArticle），
+    // CPU 花在本机而非 Worker，规避 Cloudflare Free 套餐的 1102（见 docs/CLOUDFLARE_CPU_LIMITS.md）。
     const [previewHtml, setPreviewHtml] = useState('');
     const [previewToc, setPreviewToc] = useState<{ depth: number; text: string; id: string }[]>([]);
     const [previewLoading, setPreviewLoading] = useState(false);
+    // 最近一次客户端渲染结果（与当前正文对应），保存时一并送往服务端预热 D1 缓存（方案 C）。
+    const lastRenderRef = useRef<{ content: string; html: string; toc: { depth: number; text: string; id: string }[] } | null>(null);
     // 原文 / 预览同步滚动开关。
     const [scrollSync, setScrollSync] = useState(false);
     const previewScrollRef = useRef<HTMLDivElement | null>(null);
@@ -835,40 +838,34 @@ export default function AdminPage() {
         if (viewMode !== 'edit' || type !== 'post') return;
 
         const source = postData.content;
-        const controller = new AbortController();
+        let cancelled = false;
         const timer = window.setTimeout(async () => {
             if (!source.trim()) {
                 setPreviewHtml('');
                 setPreviewToc([]);
                 setPreviewLoading(false);
+                lastRenderRef.current = { content: source, html: '', toc: [] };
                 return;
             }
 
             setPreviewLoading(true);
             try {
-                const res = await fetch('/api/admin/preview', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ content: source }),
-                    signal: controller.signal,
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setPreviewHtml(typeof data.html === 'string' ? data.html : '');
-                    setPreviewToc(Array.isArray(data.toc) ? data.toc : []);
-                }
+                // 浏览器内渲染：与文章页 / 发布后完全同一套管线（remark/rehype + Shiki + KaTeX）。
+                const { renderArticle } = await import('@/components/markdown-renderer');
+                const { html, toc } = await renderArticle(source);
+                if (cancelled) return;
+                setPreviewHtml(html);
+                setPreviewToc(toc);
+                lastRenderRef.current = { content: source, html, toc };
             } catch (error) {
-                if (!(error instanceof DOMException && error.name === 'AbortError')) {
-                    console.error('Preview render error:', error);
-                }
+                if (!cancelled) console.error('Preview render error:', error);
             } finally {
-                setPreviewLoading(false);
+                if (!cancelled) setPreviewLoading(false);
             }
         }, 400);
 
         return () => {
-            controller.abort();
+            cancelled = true;
             window.clearTimeout(timer);
         };
     }, [postData.content, viewMode, type]);
@@ -1055,9 +1052,15 @@ export default function AdminPage() {
         setLoading(true);
         setMessage(null);
 
-        let data: (PostData & { filename?: string | null }) | DailyData | MomentData;
+        let data: (PostData & { filename?: string | null; rendered?: { html: string; toc: { depth: number; text: string; id: string }[] } }) | DailyData | MomentData;
         if (type === 'post') {
             data = { ...postData, filename: currentFilename };
+            // 方案 C：若已有与当前正文匹配的客户端渲染结果，随保存一并送出，
+            // 服务端直接写入 D1 渲染缓存，无需在 Worker 重跑 Shiki/KaTeX。
+            const cached = lastRenderRef.current;
+            if (cached && cached.content === postData.content && cached.html) {
+                data.rendered = { html: cached.html, toc: cached.toc };
+            }
         }
         else if (type === 'daily') data = dailyData;
         else if (type === 'moment') data = momentData;
