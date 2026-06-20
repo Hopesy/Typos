@@ -46,6 +46,7 @@ type DailyRow = {
   title?: string;
   content: string;
   image_url?: string;
+  created_at?: string;
 };
 
 type MomentRow = {
@@ -102,28 +103,6 @@ function safeMarkdownFilename(filename: string) {
   return base;
 }
 
-export function normalizeDailyDate(value: unknown) {
-  const raw = normalizeDate(value);
-  if (!raw) return new Date().toISOString().slice(0, 10);
-
-  if (/^\d{1,2}[.-]\d{1,2}$/.test(raw)) {
-    const [month, day] = raw.split(/[.-]/).map(Number);
-    const year = new Date().getFullYear();
-    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  }
-
-  if (/^\d{6}$/.test(raw)) {
-    return `20${raw.slice(0, 2)}-${raw.slice(2, 4)}-${raw.slice(4, 6)}`;
-  }
-
-  return raw;
-}
-
-export function dailyFilenameFromDate(value: unknown) {
-  const date = normalizeDailyDate(value);
-  return `${date.replace(/-/g, "").slice(2)}.md`;
-}
-
 export function isAdminContentType(value: string): value is AdminContentType {
   return value === "post" || value === "daily" || value === "moment" || value === "comment";
 }
@@ -138,15 +117,6 @@ async function getLocalContent(): Promise<LocalContent | null> {
     return { fs, path, root: path.join(process.cwd(), "content") };
   } catch {
     return null;
-  }
-}
-
-async function pathExists(fs: LocalContent["fs"], target: string) {
-  try {
-    await fs.access(target);
-    return true;
-  } catch {
-    return false;
   }
 }
 
@@ -236,7 +206,7 @@ async function listD1Items(db: D1DatabaseLike, type: AdminContentType): Promise<
 
   if (type === "daily") {
     const { results } = await db
-      .prepare("SELECT filename, date, title, content, image_url FROM daily ORDER BY date DESC")
+      .prepare("SELECT filename, date, title, content, image_url, created_at FROM daily ORDER BY created_at DESC, date DESC")
       .all<DailyRow>();
 
     return results.map((row) => ({
@@ -245,6 +215,7 @@ async function listD1Items(db: D1DatabaseLike, type: AdminContentType): Promise<
       date: row.date,
       content: row.content,
       imageUrl: row.image_url || "",
+      created_at: row.created_at,
     }));
   }
 
@@ -326,21 +297,19 @@ async function saveLocalItem(type: AdminEditableType, data: unknown) {
   }
 
   if (type === "daily") {
-    const date = normalizeDailyDate(payload.date);
-    const filename = dailyFilenameFromDate(date);
+    // 碎片化模型：每条日常独立成文件，不再按日期合并。编辑时复用原 filename。
+    const timestamp = Date.now();
+    const date = normalizeDate(payload.date) || new Date().toISOString().slice(0, 10);
+    const filename = safeMarkdownFilename(stringValue(payload.filename)) || `daily_${timestamp}.md`;
     const filePath = local.path.join(dir, filename);
-    const imageUrl = stringValue(payload.imageUrl);
-    const content = stringValue(payload.content);
-    let finalContent = content;
-
-    if (await pathExists(local.fs, filePath)) {
-      const existing = matter(await local.fs.readFile(filePath, "utf8"));
-      finalContent = `${content}\n---\n${existing.content}`;
-    }
 
     await local.fs.writeFile(
       filePath,
-      matter.stringify(finalContent, { date, title: stringValue(payload.title), imageUrl }),
+      matter.stringify(stringValue(payload.content), {
+        date,
+        title: stringValue(payload.title),
+        imageUrl: stringValue(payload.imageUrl),
+      }),
       "utf8",
     );
     return;
@@ -404,14 +373,11 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
   }
 
   if (type === "daily") {
-    const date = normalizeDailyDate(payload.date);
-    const filename = dailyFilenameFromDate(date);
-    const existing = await db
-      .prepare("SELECT content FROM daily WHERE filename = ?")
-      .bind(filename)
-      .first<{ content: string }>();
-    const content = stringValue(payload.content);
-    const finalContent = existing?.content ? `${content}\n---\n${existing.content}` : content;
+    // 碎片化知识点：每条碎片独立成行。编辑已有碎片时沿用其 filename，
+    // 新建时按时间戳生成唯一 filename（daily_<ts>.md），不再按日期合并。
+    const existingFilename = safeMarkdownFilename(stringValue(payload.filename));
+    const date = normalizeDate(payload.date) || new Date().toISOString().slice(0, 10);
+    const filename = existingFilename || `daily_${Date.now()}.md`;
 
     await db
       .prepare(
@@ -424,7 +390,7 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
            image_url = excluded.image_url,
            updated_at = datetime('now')`,
       )
-      .bind(filename, date, stringValue(payload.title), finalContent, stringValue(payload.imageUrl))
+      .bind(filename, date, stringValue(payload.title), stringValue(payload.content), stringValue(payload.imageUrl))
       .run();
     return;
   }

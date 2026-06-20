@@ -22,6 +22,12 @@ export type TimelineEntry = {
   content: string; // 原始 Markdown
 };
 
+// 日常碎片：每条独立成行，带唯一 id（= filename）与创建时间戳，支持单条编辑/删除与前台搜索。
+export type DailyFragment = TimelineEntry & {
+  id: string;
+  createdAt: string;
+};
+
 export async function getPostSlugs() {
   const db = await getDatabase();
   if (!db) {
@@ -174,21 +180,24 @@ export async function warmPostRenderCache(
   }
 }
 
-export async function getDailyEntries(): Promise<TimelineEntry[]> {
+export async function getDailyEntries(): Promise<DailyFragment[]> {
   const db = await getDatabase();
   if (!db) {
     throw new Error('Database not available');
   }
 
+  // 碎片化知识点：每条独立成行，按创建时间倒序（缺 created_at 的旧行回退按 date）。
   const { results } = await db
-    .prepare("SELECT date, title, image_url, content FROM daily ORDER BY date DESC")
-    .all<{ date: string; title: string; image_url: string; content: string }>();
+    .prepare("SELECT filename, date, title, image_url, content, created_at FROM daily ORDER BY created_at DESC, date DESC")
+    .all<{ filename: string; date: string; title: string; image_url: string; content: string; created_at: string }>();
 
   return results.map((entry) => ({
+    id: entry.filename,
     date: entry.date,
     title: entry.title || "",
     image: entry.image_url || "",
     content: entry.content,
+    createdAt: entry.created_at || "",
   }));
 }
 

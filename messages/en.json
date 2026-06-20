@@ -67,7 +67,14 @@
     "captureTag": "CAPTURE",
     "status": "ARCHIVED",
     "source": "FIELD NOTE",
-    "systemIdle": "system_idle"
+    "systemIdle": "system_idle",
+    "searchPlaceholder": "Search fragments...",
+    "clear": "CLEAR",
+    "viewTimeline": "Timeline view",
+    "viewCards": "Card view",
+    "noResults": "No matching fragments",
+    "empty": "No_Fragments_Logged",
+    "totalFragments": "Total_Fragments"
   },
   "moments": {
     "noImage": "No Image",
@@ -180,6 +187,7 @@
     },
     "form": {
       "title": "Title",
+      "titleOptional": "Title (Optional)",
       "date": "Date",
       "description": "Description",
       "slug": "Slug",

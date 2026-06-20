@@ -67,7 +67,14 @@
     "captureTag": "影像",
     "status": "已归档",
     "source": "手记",
-    "systemIdle": "系统空闲"
+    "systemIdle": "系统空闲",
+    "searchPlaceholder": "搜索碎片...",
+    "clear": "清除",
+    "viewTimeline": "时间线视图",
+    "viewCards": "卡片视图",
+    "noResults": "未找到匹配的碎片",
+    "empty": "暂无碎片记录",
+    "totalFragments": "片段总数"
   },
   "moments": {
     "noImage": "暂无图片",
@@ -186,6 +193,7 @@
       "category": "分类",
       "content": "正文",
       "log": "日志",
+      "titleOptional": "标题（选填）",
       "caption": "说明",
       "imageUrl": "图片地址",
       "imageUrlOptional": "图片地址（选填）",

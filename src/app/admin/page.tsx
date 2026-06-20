@@ -59,6 +59,7 @@ type PostData = {
 };
 
 type DailyData = {
+    title: string;
     date: string;
     imageUrl: string;
     content: string;
@@ -571,7 +572,7 @@ export default function AdminPage() {
     const [postData, setPostData] = useState<PostData>({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: ['随笔'], cover: '' });
     const [isSlugModified, setIsSlugModified] = useState(false);
     const [categoryInput, setCategoryInput] = useState('');
-    const [dailyData, setDailyData] = useState<DailyData>({ date: today, imageUrl: '', content: '' });
+    const [dailyData, setDailyData] = useState<DailyData>({ title: '', date: today, imageUrl: '', content: '' });
     const [momentData, setMomentData] = useState<MomentData>({ title: '', date: today, imageUrl: '', content: '' });
     const [existingPosts, setExistingPosts] = useState<AdminItem[]>([]);
     const [dashboardData, setDashboardData] = useState<DashboardData>({ posts: [], daily: [], moments: [] });
@@ -942,6 +943,7 @@ export default function AdminPage() {
             });
         } else if (type === 'daily') {
             setDailyData({
+                title: item.title || '',
                 date: item.date,
                 content: item.content || '',
                 imageUrl: item.imageUrl || ''
@@ -976,7 +978,7 @@ export default function AdminPage() {
         if (type === 'post') {
             handleNewPost();
         } else if (type === 'daily') {
-            setDailyData({ date: today, imageUrl: '', content: '' });
+            setDailyData({ title: '', date: today, imageUrl: '', content: '' });
             setIsEditing(false);
             setCurrentFilename(null);
             setViewMode('edit');
@@ -1052,7 +1054,7 @@ export default function AdminPage() {
         setLoading(true);
         setMessage(null);
 
-        let data: (PostData & { filename?: string | null; rendered?: { html: string; toc: { depth: number; text: string; id: string }[] } }) | DailyData | MomentData;
+        let data: (PostData & { filename?: string | null; rendered?: { html: string; toc: { depth: number; text: string; id: string }[] } }) | (DailyData & { filename?: string | null }) | MomentData;
         if (type === 'post') {
             data = { ...postData, filename: currentFilename };
             // 方案 C：发布时确保带上与当前正文匹配的客户端渲染结果，服务端直接写入
@@ -1076,7 +1078,7 @@ export default function AdminPage() {
                 data.rendered = { html: rendered.html, toc: rendered.toc };
             }
         }
-        else if (type === 'daily') data = dailyData;
+        else if (type === 'daily') data = { ...dailyData, filename: currentFilename };
         else if (type === 'moment') data = momentData;
         else return;
 
@@ -1102,7 +1104,7 @@ export default function AdminPage() {
                 if (type === 'post') {
                     resetPostEditorState();
                 } else if (type === 'daily') {
-                    setDailyData({ date: today, imageUrl: '', content: '' });
+                    setDailyData({ title: '', date: today, imageUrl: '', content: '' });
                 } else if (type === 'moment') {
                     setMomentData({ title: '', date: today, imageUrl: '', content: '' });
                 }
@@ -1654,7 +1656,9 @@ export default function AdminPage() {
                                                 >
                                                     <div className="flex items-center gap-3 mb-1.5">
                                                         <h3 className="text-sm font-bold text-neutral-200 truncate group-hover:text-white transition-colors">
-                                                            {type === 'daily' ? post.date : (type === 'comment' ? post.content : post.title)}
+                                                            {type === 'daily'
+                                                                ? (post.title?.trim() || (post.content ? post.content.trim().slice(0, 40) : post.date))
+                                                                : (type === 'comment' ? post.content : post.title)}
                                                         </h3>
                                                         <span className="text-[10px] font-mono text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800 uppercase tracking-normal shrink-0">{post.date || post.created_at}</span>
                                                         {type === 'comment' && (
@@ -1899,9 +1903,15 @@ export default function AdminPage() {
 
                                 {type === 'daily' && (
                                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                        <div className="space-y-1.5">
-                                            <Label htmlFor="daily-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.date')}</Label>
-                                            <Input id="daily-date" type="date" className="max-w-[150px] bg-neutral-900/50 border-neutral-800 h-9 text-xs text-white [&::-webkit-calendar-picker-indicator]:invert" value={dailyData.date} onChange={(e) => setDailyData({ ...dailyData, date: e.target.value })} />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="daily-title" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.titleOptional')}</Label>
+                                                <Input id="daily-title" value={dailyData.title} onChange={(e) => setDailyData({ ...dailyData, title: e.target.value })} className="bg-neutral-900/50 border-neutral-800 h-9 text-sm focus:bg-neutral-900 text-white" />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="daily-date" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.date')}</Label>
+                                                <Input id="daily-date" type="date" className="bg-neutral-900/50 border-neutral-800 h-9 text-xs text-white [&::-webkit-calendar-picker-indicator]:invert" value={dailyData.date} onChange={(e) => setDailyData({ ...dailyData, date: e.target.value })} />
+                                            </div>
                                         </div>
                                         <div className="space-y-1.5">
                                             <Label htmlFor="daily-url" className="text-[10px] text-neutral-500 font-semibold px-0.5 uppercase tracking-wider">{tr('form.imageUrlOptional')}</Label>
