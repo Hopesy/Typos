@@ -1101,11 +1101,16 @@ export default function AdminPage() {
                 setMessage({ text: `SUCCESS: ${type.toUpperCase()} SAVED`, isError: false });
                 if (type === 'post') {
                     resetPostEditorState();
-                    await fetchPosts();
-                    setViewMode('list');
+                } else if (type === 'daily') {
+                    setDailyData({ date: today, imageUrl: '', content: '' });
+                } else if (type === 'moment') {
+                    setMomentData({ title: '', date: today, imageUrl: '', content: '' });
                 }
-                else if (type === 'daily') setDailyData({ date: today, imageUrl: '', content: '' });
-                else if (type === 'moment') setMomentData({ title: '', date: today, imageUrl: '', content: '' });
+                // 发布/更新成功后统一刷新列表并回到列表视图（post/daily/moment 一致）。
+                setCurrentFilename(null);
+                setIsEditing(false);
+                await fetchPosts();
+                setViewMode('list');
 
                 setTimeout(() => setMessage(null), 3000);
             } else {
