@@ -79,6 +79,18 @@ function stringValue(value: unknown, fallback = "") {
   return fallback;
 }
 
+// 分类归一：后台以数组形式编辑多分类，DB 单列存逗号分隔串（与 handleEditPost 的 split(',') 对应）。
+// 兼容传入字符串（原样去空白）或数组（过滤空项后用逗号连接）。
+function categoryValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value
+      .map((c) => stringValue(c).trim())
+      .filter(Boolean)
+      .join(",");
+  }
+  return stringValue(value).trim();
+}
+
 function normalizeDate(value: unknown) {
   return stringValue(value).split("T")[0];
 }
@@ -288,7 +300,7 @@ async function saveLocalItem(type: AdminEditableType, data: unknown) {
       title: stringValue(payload.title, slug),
       date,
       description: stringValue(payload.description),
-      category: stringValue(payload.category),
+      category: categoryValue(payload.category),
       cover: stringValue(payload.cover),
     });
 
@@ -354,7 +366,7 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
         stringValue(payload.title, slug),
         normalizeDate(payload.date) || new Date().toISOString().slice(0, 10),
         stringValue(payload.description),
-        stringValue(payload.category),
+        categoryValue(payload.category),
         content,
         stringValue(payload.cover),
       )

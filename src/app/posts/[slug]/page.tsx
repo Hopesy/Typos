@@ -44,10 +44,6 @@ export default async function PostPage({
           <h1 className="text-[clamp(1.75rem,5vw,2.5rem)] font-extrabold leading-[1.2] text-hud-strong tracking-[-0.03em] mb-6">
             {post.title}
           </h1>
-          <div className="flex items-center gap-2 text-xs text-hud-muted font-mono italic">
-            <span>AUTHOR: </span>
-            <span className="text-hud underline decoration-hud-line underline-offset-4">Author</span>
-          </div>
         </header>
 
         <div className="mt-10 border-t border-hud-line pt-10">

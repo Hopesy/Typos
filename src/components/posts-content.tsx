@@ -26,18 +26,26 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
+    // 分类为逗号分隔的多分类串：拆开后每个分类独立成桶。
+    const splitCategories = (value?: string) =>
+        (value || '')
+            .split(',')
+            .map((c) => c.trim())
+            .filter(Boolean);
+
     const categories = useMemo(() => {
-        const cats = new Set(initialPosts.map(p => p.category).filter(Boolean));
+        const cats = new Set<string>();
+        initialPosts.forEach((p) => splitCategories(p.category).forEach((c) => cats.add(c)));
         return [ALL_CATEGORY, ...Array.from(cats)];
     }, [initialPosts]);
 
     const categoryCounts = useMemo(() => {
         const counts = new Map<string, number>();
         counts.set(ALL_CATEGORY, initialPosts.length);
-        initialPosts.forEach(post => {
-            if (post.category) {
-                counts.set(post.category, (counts.get(post.category) || 0) + 1);
-            }
+        initialPosts.forEach((post) => {
+            splitCategories(post.category).forEach((c) => {
+                counts.set(c, (counts.get(c) || 0) + 1);
+            });
         });
         return counts;
     }, [initialPosts]);
@@ -45,9 +53,9 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
     const filteredPosts = useMemo(() => {
         let posts = initialPosts;
 
-        // 按分类筛选
+        // 按分类筛选（命中文章任一分类即保留）
         if (selectedCategory !== ALL_CATEGORY) {
-            posts = posts.filter(p => p.category === selectedCategory);
+            posts = posts.filter((p) => splitCategories(p.category).includes(selectedCategory));
         }
 
         // 按搜索词筛选
@@ -138,11 +146,11 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                                                     <CardTitle className="text-[17px] font-bold text-hud-strong transition-colors tracking-tight">
                                                         {post.title}
                                                     </CardTitle>
-                                                    {post.category && (
-                                                        <span className="text-[10px] font-mono px-2 py-0.5 border border-hud-line-soft text-hud-dim uppercase tracking-[0.16em] group-hover:text-hud-muted group-hover:border-hud-line-strong transition-all">
-                                                            {post.category}
+                                                    {splitCategories(post.category).map((cat) => (
+                                                        <span key={cat} className="text-[10px] font-mono px-2 py-0.5 border border-hud-line-soft text-hud-dim uppercase tracking-[0.16em] group-hover:text-hud-muted group-hover:border-hud-line-strong transition-all">
+                                                            {cat}
                                                         </span>
-                                                    )}
+                                                    ))}
                                                 </div>
                                                 <CardDescription className="text-hud-muted text-sm leading-relaxed transition-colors">
                                                     {post.description}
@@ -190,9 +198,9 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
 
                                     <div className="px-2 py-1.5 flex flex-row items-center gap-2 border-t border-hud-line-soft">
                                         {/* Meta Info - Single Line, Minimal Height */}
-                                        {post.category && (
+                                        {splitCategories(post.category)[0] && (
                                             <span className="flex-shrink-0 px-1 py-0.5 border border-hud-line-soft text-hud-dim uppercase tracking-wider group-hover:text-hud-muted transition-colors text-[9px] font-mono">
-                                                {post.category}
+                                                {splitCategories(post.category)[0]}
                                             </span>
                                         )}
                                         <span className="text-hud-strong text-[11px] truncate flex-1 font-medium">{post.title}</span>
