@@ -138,10 +138,10 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                     <div className="space-y-4">
                         {filteredPosts.map((post) => (
                             <a key={post.slug} href={`/posts/${encodeURIComponent(post.slug.trim())}`} className="block group">
-                                <Card className="rounded-sm border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 relative overflow-hidden p-1">
-                                    <CardHeader className="gap-2 px-6 py-4 pr-12">
+                                <Card className="rounded-2xl border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 relative overflow-hidden p-0.5">
+                                    <CardHeader className="gap-1 px-5 py-2 pr-12">
                                         <div className="flex items-start justify-between">
-                                            <div className="flex flex-col gap-3 flex-1">
+                                            <div className="flex flex-col gap-1 flex-1">
                                                 <div className="flex items-center gap-4">
                                                     <CardTitle className="text-[17px] font-bold text-hud-strong transition-colors tracking-tight">
                                                         {post.title}
