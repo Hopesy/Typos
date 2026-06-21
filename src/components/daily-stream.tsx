@@ -47,7 +47,7 @@ export function DailyStream({ fragments }: { fragments: DailyFragment[] }) {
   }, [fragments, query]);
 
   return (
-    <div className={`container mx-auto px-6 py-16 space-y-10 ${view === 'cards' ? 'max-w-5xl' : 'max-w-3xl'}`}>
+    <div className={`container mx-auto px-6 py-16 space-y-10 ${view === 'cards' ? 'max-w-6xl' : 'max-w-3xl'}`}>
       {/* Search + View Toggle */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 group">
@@ -90,7 +90,7 @@ export function DailyStream({ fragments }: { fragments: DailyFragment[] }) {
       ) : view === 'timeline' ? (
         <TimelineView fragments={filtered} t={t} />
       ) : (
-        <CardsView fragments={filtered} t={t} />
+        <CardsView fragments={filtered} />
       )}
     </div>
   );
@@ -168,33 +168,31 @@ function TimelineView({ fragments, t }: ViewProps) {
   );
 }
 
-// 卡片流视图：知识碎片墙（类 flomo），每条碎片独立成卡。
-function CardsView({ fragments, t }: ViewProps) {
+// 卡片流视图：知识碎片墙（类 flomo），密集小卡，每条碎片独立成卡。
+function CardsView({ fragments }: { fragments: DailyFragment[] }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
       {fragments.map((f) => (
         <article
           key={f.id}
           className="flex flex-col rounded-sm border border-hud-line-soft bg-transparent hover:bg-hud-panel/40 transition-colors duration-500 overflow-hidden"
         >
           {f.image && (
-            <div className="relative w-full aspect-[16/9] overflow-hidden bg-hud-panel/10">
+            <div className="relative w-full aspect-square overflow-hidden bg-hud-panel/10">
               {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary remote URLs without known dimensions. */}
               <img src={f.image} alt={f.title || f.date} className="w-full h-full object-cover opacity-70 hover:opacity-90 transition-opacity duration-500" />
             </div>
           )}
-          <div className="flex flex-1 flex-col gap-2 p-3.5">
-            <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.16em] text-hud-faint">
-              <span>{t('logPrefix')}</span>
-              <span className="h-[1px] w-5 bg-hud-line" />
-              <span>{f.date}</span>
+          <div className="flex flex-1 flex-col gap-1.5 p-2.5">
+            <div className="font-mono text-[8px] uppercase tracking-[0.14em] text-hud-faint">
+              {f.date}
             </div>
             {f.title && (
-              <div className="text-[12px] font-bold text-hud-strong font-mono uppercase tracking-tight">
+              <div className="text-[10px] font-bold text-hud-strong font-mono uppercase tracking-tight line-clamp-1">
                 {f.title}
               </div>
             )}
-            <FragmentBody content={f.content} className="text-[12.5px] leading-6 font-sans" />
+            <FragmentBody content={f.content} className="text-[11px] leading-5 font-sans line-clamp-5" />
           </div>
         </article>
       ))}
