@@ -202,7 +202,7 @@ function TrendChart({
                     ))}
                 </div>
             </div>
-            <svg viewBox="0 0 640 210" className="h-[230px] w-full overflow-visible" role="img" aria-label={title}>
+            <svg viewBox="0 0 640 210" className="h-[180px] md:h-[230px] w-full overflow-visible" role="img" aria-label={title}>
                 <defs>
                     <linearGradient id={`${title}-area`} x1="0" x2="0" y1="0" y2="1">
                         <stop offset="0%" stopColor="#75a7ff" stopOpacity="0.36" />
@@ -1683,14 +1683,14 @@ export default function AdminPage() {
                                         existingPosts.map((post) => (
                                             <div
                                                 key={post.filename}
-                                                className="group flex items-center justify-between p-5 rounded-xl border border-neutral-900 bg-neutral-950 hover:bg-neutral-900 hover:border-neutral-800 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                                                className="group flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-5 rounded-xl border border-neutral-900 bg-neutral-950 hover:bg-neutral-900 hover:border-neutral-800 transition-all cursor-pointer shadow-sm hover:shadow-md gap-3"
                                             >
                                                 <div
-                                                    className="flex-1 min-w-0 pr-6"
+                                                    className="flex-1 min-w-0 sm:pr-6"
                                                     onClick={() => handleEditPost(post)}
                                                 >
-                                                    <div className="flex items-center gap-3 mb-1.5">
-                                                        <h3 className="text-sm font-bold text-neutral-200 truncate group-hover:text-white transition-colors">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                                        <h3 className="text-sm font-bold text-neutral-200 truncate group-hover:text-white transition-colors min-w-0 flex-shrink">
                                                             {type === 'daily'
                                                                 ? (post.title?.trim() || (post.content ? post.content.trim().slice(0, 40) : post.date))
                                                                 : (type === 'comment' ? post.content : post.title)}
@@ -1714,11 +1714,11 @@ export default function AdminPage() {
                                                     </p>
 
                                                 </div>
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                                     {type === 'comment' && (
                                                         <button
                                                             onClick={(e) => handleReply(e, post)}
-                                                            className="p-2 text-neutral-600 hover:text-blue-400 hover:bg-blue-950/30 rounded-md transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                                                            className="p-2 text-neutral-600 hover:text-blue-400 hover:bg-blue-950/30 rounded-md transition-all sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
                                                             title={tr('list.reply')}
                                                         >
                                                             <FiCornerUpLeft className="w-4 h-4" />
@@ -1730,7 +1730,7 @@ export default function AdminPage() {
                                                                 e.stopPropagation();
                                                                 downloadMarkdown(post);
                                                             }}
-                                                            className="p-2 text-neutral-600 hover:text-green-400 hover:bg-green-950/30 rounded-md transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                                                            className="p-2 text-neutral-600 hover:text-green-400 hover:bg-green-950/30 rounded-md transition-all sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
                                                             title={tr('list.download')}
                                                         >
                                                             <FiDownload className="w-4 h-4" />
@@ -1739,7 +1739,7 @@ export default function AdminPage() {
                                                     <div className="relative">
                                                         <button
                                                             onClick={(e) => handleDelete(e, post.filename)}
-                                                            className={`p-2 rounded-md transition-all cursor-pointer ${deleteTargetId === post.filename ? 'text-red-500 bg-red-500/10' : 'text-neutral-600 hover:text-red-400 hover:bg-red-950/30 opacity-0 group-hover:opacity-100'}`}
+                                                            className={`p-2 rounded-md transition-all cursor-pointer ${deleteTargetId === post.filename ? 'text-red-500 bg-red-500/10' : 'text-neutral-600 hover:text-red-400 hover:bg-red-950/30 sm:opacity-0 sm:group-hover:opacity-100'}`}
                                                             title={tr('list.delete')}
                                                         >
                                                             <FiTrash2 className="w-4 h-4" />
@@ -1772,7 +1772,7 @@ export default function AdminPage() {
                                                     </div>
 
                                                     <div
-                                                        className="p-2 text-neutral-600 hover:text-white transition-colors"
+                                                        className="hidden sm:block p-2 text-neutral-600 hover:text-white transition-colors"
                                                         onClick={() => handleEditPost(post)}
                                                     >
                                                         <FiChevronRight className="w-4 h-4" />
