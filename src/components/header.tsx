@@ -186,30 +186,30 @@ export function Header() {
         ? "bg-background/10 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,transparent_100%)]"
         : "bg-background/95 border-b border-border/40 backdrop-blur-md"
         }`}>
-        <div className={`container mx-auto flex h-14 items-center ${isMomentsPage ? 'max-w-full px-6' : 'max-w-4xl px-4'}`}>
+        <div className={`container mx-auto flex h-14 items-center ${isMomentsPage ? 'max-w-full px-3 sm:px-6' : 'max-w-4xl px-4'}`}>
           {isMomentsPage ? (
             // Moments Page Special Header
             <div className="flex w-full items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full border border-hud-line flex items-center justify-center bg-hud-panel">
-                  <Image src="/icon3.svg" alt="Avatar" width={20} height={20} className="h-5 w-5 dark:invert dark:brightness-0" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full border border-hud-line flex items-center justify-center bg-hud-panel">
+                  <Image src="/icon3.svg" alt="Avatar" width={20} height={20} className="h-4 w-4 sm:h-5 sm:w-5 dark:invert dark:brightness-0" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-press-start text-[10px] text-hud-strong">TYPOS</span>
-                  <span className="font-mono text-[10px] text-hud-muted uppercase tracking-normal mt-1">
+                  <span className="font-press-start text-[9px] sm:text-[10px] text-hud-strong">TYPOS</span>
+                  <span className="font-mono text-[9px] sm:text-[10px] text-hud-muted uppercase tracking-normal mt-0.5 sm:mt-1">
                     Views: {viewCount.toLocaleString()}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
                 {/* Layout Switcher */}
-                <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-hud-panel border border-hud-line cursor-pointer">
+                <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2 py-1 rounded-lg bg-hud-panel border border-hud-line cursor-pointer">
                   {[2, 4, 6].map((cols) => (
                     <button
                       key={cols}
                       onClick={() => handleLayoutChange(cols.toString())}
-                      className={`h-6 w-6 rounded flex items-center justify-center transition-all ${currentCols === cols.toString()
+                      className={`h-5 w-5 sm:h-6 sm:w-6 rounded flex items-center justify-center transition-all ${currentCols === cols.toString()
                         ? "bg-hud-soft text-hud-strong shadow-sm"
                         : "text-hud-faint hover:text-hud-muted hover:bg-hud-panel-strong"
                         }`}
@@ -227,8 +227,8 @@ export function Header() {
                   ))}
                 </div>
 
-                {/* Status Info */}
-                <div className="flex items-center gap-2">
+                {/* Status Info - Hidden on mobile */}
+                <div className="hidden sm:flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
                   <span className="font-mono text-[10px] text-hud-dim uppercase tracking-[0.18em] leading-none">Live_Proto</span>
                 </div>
@@ -303,7 +303,7 @@ export function Header() {
                 </button>
 
                 {/* Site Logo/Name */}
-                <Link href="/" className="font-press-start text-[10px] text-hud-strong">
+                <Link href="/" className="font-press-start text-xs sm:text-[10px] text-hud-strong">
                   TYPOS
                 </Link>
 

@@ -168,7 +168,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                     </div>
                 ) : (
                     /* Grid View */
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {filteredPosts.map((post) => (
                             <a key={post.slug} href={`/posts/${encodeURIComponent(post.slug.trim())}`} className="block group">
                                 <div className="rounded-sm border border-hud-line-soft bg-transparent hover:bg-hud-panel transition-all duration-500 overflow-hidden p-1">
