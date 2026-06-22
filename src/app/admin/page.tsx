@@ -25,7 +25,8 @@ import {
     FiMinimize2,
     FiKey,
     FiCopy,
-    FiDownload
+    FiDownload,
+    FiMenu
 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
@@ -111,7 +112,6 @@ type DashboardData = {
 type ChartRange = '7d' | '30d';
 
 const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white [&>svg]:shrink-0";
-const adminActionButtonTextClass = "leading-none text-trim-caps";
 
 const visitorSeries: Record<ChartRange, number[]> = {
     '7d': [18, 24, 21, 32, 27, 15, 17],
@@ -581,6 +581,7 @@ export default function AdminPage() {
     const [currentFilename, setCurrentFilename] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'edit' | 'list'>('list');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [isImmersiveMode, setIsImmersiveMode] = useState(false);
 
     // 文章预览：在浏览器内复用文章页同一套渲染管线（renderArticle），
@@ -1464,15 +1465,33 @@ export default function AdminPage() {
 
     return (
         <div className="admin-shell flex h-screen bg-neutral-950 text-neutral-200 font-sans overflow-hidden">
+            {/* Mobile sidebar backdrop */}
+            {isMobileSidebarOpen && (
+                <button
+                    type="button"
+                    aria-label="Close menu"
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+                />
+            )}
             <aside
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className={`${isSidebarCollapsed ? 'w-16' : 'w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full transition-all duration-300 relative group cursor-pointer`}
+                onClick={() => { if (typeof window !== 'undefined' && window.innerWidth >= 768) setIsSidebarCollapsed(!isSidebarCollapsed); }}
+                className={`fixed inset-y-0 left-0 z-50 w-64 -translate-x-full transition-transform duration-300 md:static md:z-auto md:translate-x-0 md:transition-all ${isMobileSidebarOpen ? 'translate-x-0' : ''} ${isSidebarCollapsed ? 'md:w-16' : 'md:w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full relative group md:cursor-pointer`}
             >
                 {/* Brand Area */}
-                <div className="p-4 border-b border-neutral-900" onClick={(e) => e.stopPropagation()}>
+                <div className="p-4 border-b border-neutral-900 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                     {!isSidebarCollapsed && (
                         <span className="font-bold text-lg text-neutral-200 tracking-tight animate-in fade-in duration-300">Typos</span>
                     )}
+                    {/* Mobile close button */}
+                    <button
+                        type="button"
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                        className="md:hidden p-1.5 -mr-1 text-neutral-500 hover:text-white transition-colors"
+                        aria-label="Close menu"
+                    >
+                        <FiChevronRight className="w-4 h-4 rotate-180" />
+                    </button>
                 </div>
 
                 <div className="p-4" onClick={(e) => e.stopPropagation()}>
@@ -1486,26 +1505,31 @@ export default function AdminPage() {
                                     setExistingPosts([]); // 立即清空，防止闪烁
                                     setType(t);
                                     setViewMode('list');
+                                    setIsMobileSidebarOpen(false);
                                 }}
 
-                                className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} rounded-md border border-transparent ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} transition-all cursor-pointer ${type === t
+                                className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'md:px-0 md:justify-center md:py-2 px-3 py-2.5' : 'px-3 py-2.5'} rounded-md border border-transparent ${isSidebarCollapsed ? 'md:text-xs text-sm' : 'text-sm'} transition-all cursor-pointer ${type === t
                                     ? 'bg-neutral-900 text-white shadow-sm border-neutral-800'
                                     : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900/50'
                                     }`}
                             >
                                 <span className={`p-1 rounded text-[11px] shrink-0 ${type === t ? 'bg-neutral-950 text-white shadow-inner' : 'bg-transparent text-neutral-600'}`}>
-                                    {t === 'dashboard' && <FiBarChart2 className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
-                                    {t === 'post' && <FiEdit3 className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
-                                    {t === 'daily' && <FiTerminal className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
-                                    {t === 'moment' && <FiImage className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
-                                    {t === 'comment' && <FiMessageSquare className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
-                                    {t === 'tokens' && <FiKey className={isSidebarCollapsed ? "w-3 h-3" : "w-3.5 h-3.5"} />}
+                                    {t === 'dashboard' && <FiBarChart2 className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
+                                    {t === 'post' && <FiEdit3 className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
+                                    {t === 'daily' && <FiTerminal className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
+                                    {t === 'moment' && <FiImage className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
+                                    {t === 'comment' && <FiMessageSquare className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
+                                    {t === 'tokens' && <FiKey className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
                                 </span>
 
                                 {!isSidebarCollapsed && (
                                     <span className="font-medium tracking-normal truncate animate-in fade-in duration-300">{tr(`nav.${t}`)}</span>
                                 )}
                                 {!isSidebarCollapsed && type === t && <FiCheck className="ml-auto w-3 h-3 text-neutral-500 shrink-0" />}
+                                {/* Collapsed-desktop label fallback for mobile drawer */}
+                                {isSidebarCollapsed && (
+                                    <span className="font-medium tracking-normal truncate md:hidden">{tr(`nav.${t}`)}</span>
+                                )}
                             </button>
                         ))}
                     </nav>
@@ -1513,26 +1537,37 @@ export default function AdminPage() {
                 <div className="mt-auto p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
                     <Separator className="bg-neutral-900" />
                     <nav className="space-y-1">
-                        <Link href="/" className={`flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} text-neutral-500 hover:text-white transition-colors group rounded-md hover:bg-neutral-900/50 cursor-pointer`}>
-                            <FiHome className={isSidebarCollapsed ? "w-3.5 h-3.5 group-hover:scale-105 transition-transform shrink-0" : "w-4 h-4 group-hover:scale-105 transition-transform shrink-0"} />
+                        <Link href="/" onClick={() => setIsMobileSidebarOpen(false)} className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:px-0 md:justify-center md:py-2 px-3 py-2.5' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'md:text-xs text-sm' : 'text-sm'} text-neutral-500 hover:text-white transition-colors group rounded-md hover:bg-neutral-900/50 cursor-pointer`}>
+                            <FiHome className={isSidebarCollapsed ? "md:w-3.5 md:h-3.5 w-4 h-4 group-hover:scale-105 transition-transform shrink-0" : "w-4 h-4 group-hover:scale-105 transition-transform shrink-0"} />
                             {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">{tr('nav.viewSite')}</span>}
+                            {isSidebarCollapsed && <span className="md:hidden">{tr('nav.viewSite')}</span>}
                         </Link>
                         <button
                             onClick={handleLogout}
-                            className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'px-0 justify-center py-2' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'text-xs' : 'text-sm'} text-red-500/60 hover:text-red-500 transition-colors group rounded-md hover:bg-red-950/20 cursor-pointer`}
+                            className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'md:px-0 md:justify-center md:py-2 px-3 py-2.5' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'md:text-xs text-sm' : 'text-sm'} text-red-500/60 hover:text-red-500 transition-colors group rounded-md hover:bg-red-950/20 cursor-pointer`}
                         >
-                            <FiLogOut className={isSidebarCollapsed ? "w-3.5 h-3.5 shrink-0" : "w-4 h-4 shrink-0"} />
+                            <FiLogOut className={isSidebarCollapsed ? "md:w-3.5 md:h-3.5 w-4 h-4 shrink-0" : "w-4 h-4 shrink-0"} />
                             {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">{tr('nav.logout')}</span>}
+                            {isSidebarCollapsed && <span className="md:hidden">{tr('nav.logout')}</span>}
                         </button>
                     </nav>
                 </div>
             </aside>
 
             <main className="flex-1 bg-neutral-950 scroll-smooth flex flex-col overflow-hidden">
-                <div className="max-w-[76rem] mx-auto w-full px-1 flex flex-1 flex-col min-h-0">
-                    <div className="mb-6 flex h-[60px] shrink-0 items-center justify-between border-b border-neutral-900">
-                        <div>
-                            <h1 className="text-lg font-bold tracking-tight text-white mb-1 capitalize flex items-center gap-2">
+                <div className="max-w-[76rem] mx-auto w-full px-3 md:px-1 flex flex-1 flex-col min-h-0">
+                    <div className="mb-6 flex h-[60px] shrink-0 items-center justify-between border-b border-neutral-900 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                            {/* Mobile hamburger */}
+                            <button
+                                type="button"
+                                onClick={() => setIsMobileSidebarOpen(true)}
+                                className="md:hidden shrink-0 p-2 -ml-1 text-neutral-400 hover:text-white transition-colors"
+                                aria-label="Open menu"
+                            >
+                                <FiMenu className="w-5 h-5" />
+                            </button>
+                            <h1 className="text-base md:text-lg font-bold tracking-tight text-white mb-0 md:mb-1 capitalize flex items-center gap-2 min-w-0 truncate">
                                 {type === 'dashboard'
                                     ? tr('title.dashboard')
                                     : type === 'tokens'
@@ -1552,7 +1587,7 @@ export default function AdminPage() {
 
                             </h1>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3 shrink-0">
                             <LangToggle compact />
                             <ThemeToggle compact />
                             {type === 'tokens' && (
@@ -1564,7 +1599,7 @@ export default function AdminPage() {
                                     disabled={tokensDbUnavailable}
                                 >
                                     <FiPlus className="h-3 w-3" />
-                                    <span className={adminActionButtonTextClass}>{tr('tokens.newToken')}</span>
+                                    <span className="hidden sm:inline">{tr('tokens.newToken')}</span>
                                 </Button>
                             )}
                             {type !== 'comment' && type !== 'dashboard' && type !== 'tokens' && (
@@ -1587,7 +1622,7 @@ export default function AdminPage() {
                                             disabled={loading}
                                         >
                                             <FiDownload className="h-3 w-3" />
-                                            <span className={adminActionButtonTextClass}>{tr('action.downloadAll')}</span>
+                                            <span className="hidden sm:inline">{tr('action.downloadAll')}</span>
                                         </Button>
                                     )}
                                     {type === 'post' && (
@@ -1598,7 +1633,7 @@ export default function AdminPage() {
                                             className={adminActionButtonClass}
                                         >
                                             <FiUpload className="h-3 w-3" />
-                                            <span className={adminActionButtonTextClass}>{tr('action.uploadMd')}</span>
+                                            <span className="hidden sm:inline">{tr('action.uploadMd')}</span>
                                         </Button>
                                     )}
                                     <Button
@@ -1608,7 +1643,7 @@ export default function AdminPage() {
                                         className={adminActionButtonClass}
                                     >
                                         {viewMode === 'edit' ? <FiList className="h-3 w-3" /> : <FiPlus className="h-3 w-3" />}
-                                        <span className={adminActionButtonTextClass}>
+                                        <span className="hidden sm:inline">
                                             {viewMode === 'edit' ? tr('action.library') : tr('title.newTyped', { name: tr(`type.${type}`) })}
                                         </span>
                                     </Button>
