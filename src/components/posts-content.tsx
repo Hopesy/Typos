@@ -73,7 +73,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
     return (
         <div>
             {/* Search Bar - HUD Style */}
-            <section className="mx-auto max-w-2xl">
+            <section className="mx-auto max-w-3xl">
                 <div className="relative group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-hud-faint pointer-events-none" />
                     <input

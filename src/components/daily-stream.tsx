@@ -47,7 +47,7 @@ export function DailyStream({ fragments }: { fragments: DailyFragment[] }) {
   }, [fragments, query]);
 
   return (
-    <div className={`container mx-auto px-6 py-8 space-y-10 ${view === 'cards' ? 'max-w-6xl' : 'max-w-3xl'}`}>
+    <div className="container mx-auto px-6 py-8 space-y-10 max-w-3xl">
       {/* Search + View Toggle */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 group">
@@ -171,11 +171,11 @@ function TimelineView({ fragments, t }: ViewProps) {
 // 卡片流视图：知识碎片墙（类 flomo），密集小卡，每条碎片独立成卡。
 function CardsView({ fragments }: { fragments: DailyFragment[] }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+    <div className="grid grid-cols-4 gap-2">
       {fragments.map((f) => (
         <article
           key={f.id}
-          className="flex flex-col rounded-sm border border-hud-line-soft bg-transparent hover:bg-hud-panel/40 transition-colors duration-500 overflow-hidden"
+          className="flex flex-col h-32 rounded-sm border border-hud-line-soft bg-transparent hover:bg-hud-panel/40 transition-colors duration-500 overflow-hidden"
         >
           {f.image && (
             <div className="relative w-full aspect-square overflow-hidden bg-hud-panel/10">
