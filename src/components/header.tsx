@@ -141,7 +141,7 @@ export function Header() {
                       href={item.href ?? "#"}
                       target={item.target}
                       rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
-                      className={`px-3 py-1.5 text-sm transition-colors ${active ? 'text-hud-strong font-medium' : 'text-hud-muted hover:text-hud-strong'}`}
+                      className={`relative px-3 py-1.5 text-sm transition-colors group ${active ? 'text-hud-strong font-medium' : 'text-hud-muted hover:text-hud-strong'}`}
                       aria-label={label}
                       title={label}
                       onClick={(event) => {
@@ -149,18 +149,30 @@ export function Header() {
                       }}
                     >
                       {item.isIcon ? (
-                        <Image src="/icon3.svg" alt={label} width={42} height={42} className="opacity-90 dark:invert" />
-                      ) : label}
+                        <div className="relative">
+                          <Image src="/icon3.svg" alt={label} width={42} height={42} className="opacity-90 dark:invert transition-transform group-hover:scale-110 duration-300" />
+                          {/* Breathing glow for icon */}
+                          <div className="absolute inset-0 rounded-full bg-hud-muted/20 blur-md animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        </div>
+                      ) : (
+                        <>
+                          {label}
+                          {/* Bottom line only for active item - medium length */}
+                          <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[1px] bg-hud-strong transition-all duration-300 ${active ? 'w-2/3' : 'w-0'}`} />
+                        </>
+                      )}
                     </Link>
                   );
                 })}
               </nav>
               <Link
                 href="/admin"
-                className="px-3 py-1.5 text-sm text-hud-muted hover:text-hud-strong transition-colors font-mono"
+                className="relative px-3 py-1.5 text-sm text-hud-muted hover:text-hud-strong transition-colors font-mono group"
                 title="Admin"
               >
-                Typos
+                <span className="relative z-10">Typos</span>
+                {/* Border glow effect on hover */}
+                <span className="absolute inset-0 rounded border border-hud-line opacity-0 group-hover:opacity-100 group-hover:shadow-[0_0_8px_rgba(23,23,23,0.3)] dark:group-hover:shadow-[0_0_8px_rgba(255,255,255,0.2)] transition-all duration-300" />
               </Link>
               <LangToggle compact />
               <ThemeToggle compact />

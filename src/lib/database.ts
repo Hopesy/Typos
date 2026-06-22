@@ -38,9 +38,27 @@ export type TyposEnv = CloudflareEnv & {
   ADMIN_SESSION_SECRET?: string;
 };
 
+type LibSqlClientModule = {
+  createClient: (config: Record<string, unknown>) => LibSqlClient;
+};
+
+type LibSqlClient = {
+  execute: (statement: { sql: string; args: unknown[] }) => Promise<{ rows: Record<string, unknown>[] }>;
+};
+
+type PostgresClient = {
+  (query: string, values: unknown[]): Promise<Record<string, unknown>[]>;
+};
+
+async function importLibSqlClient(): Promise<LibSqlClientModule> {
+  const { createRequire } = await import("node:module");
+  const requireFromProject = createRequire(`${process.cwd()}/package.json`);
+  return requireFromProject("@libsql/client") as LibSqlClientModule;
+}
+
 // PostgreSQL 适配器（使用 @neondatabase/serverless 或 postgres.js）
 class PostgresAdapter implements Database {
-  private client: any;
+  private client?: PostgresClient;
   private initPromise: Promise<void>;
 
   constructor(connectionString: string) {
@@ -51,12 +69,12 @@ class PostgresAdapter implements Database {
     try {
       // 尝试使用 Neon serverless
       const { neon } = await import('@neondatabase/serverless');
-      this.client = neon(connectionString);
+      this.client = neon(connectionString) as unknown as PostgresClient;
     } catch {
       try {
         // 备选：使用 postgres.js
         const postgres = (await import('postgres')).default;
-        this.client = postgres(connectionString);
+        this.client = postgres(connectionString) as unknown as PostgresClient;
       } catch (error) {
         console.error('PostgreSQL client not available:', error);
       }
@@ -66,6 +84,9 @@ class PostgresAdapter implements Database {
   prepare(query: string): Statement {
     const getClient = async () => {
       await this.initPromise;
+      if (!this.client) {
+        throw new Error('PostgreSQL client not available');
+      }
       return this.client;
     };
     let boundValues: unknown[] = [];
@@ -115,7 +136,7 @@ class PostgresAdapter implements Database {
 
 // Turso 适配器
 class TursoAdapter implements Database {
-  private client: any;
+  private client?: LibSqlClient;
   private initPromise: Promise<void>;
 
   constructor(url: string, authToken: string) {
@@ -124,7 +145,7 @@ class TursoAdapter implements Database {
 
   private async initClient(url: string, authToken: string) {
     try {
-      const { createClient } = await import('@libsql/client');
+      const { createClient } = await importLibSqlClient();
       this.client = createClient({ url, authToken });
       console.log('[Turso] Connected');
     } catch (error) {
@@ -147,6 +168,9 @@ class TursoAdapter implements Database {
       first: async <T = Record<string, unknown>>() => {
         try {
           const client = await getClient();
+          if (!client) {
+            return null;
+          }
           const result = await client.execute({ sql: query, args: boundValues });
           return result.rows[0] ? ({ ...result.rows[0] } as T) : null;
         } catch (error) {
@@ -157,6 +181,9 @@ class TursoAdapter implements Database {
       all: async <T = Record<string, unknown>>() => {
         try {
           const client = await getClient();
+          if (!client) {
+            return { results: [] };
+          }
           const result = await client.execute({ sql: query, args: boundValues });
           return { results: result.rows.map((row: Record<string, unknown>) => ({ ...row })) as T[] };
         } catch (error) {
@@ -167,6 +194,9 @@ class TursoAdapter implements Database {
       run: async () => {
         try {
           const client = await getClient();
+          if (!client) {
+            throw new Error('Turso client not available');
+          }
           return await client.execute({ sql: query, args: boundValues });
         } catch (error) {
           console.error('Turso run() error:', error);
@@ -180,7 +210,7 @@ class TursoAdapter implements Database {
 
 // Local SQLite 适配器（使用 libsql 本地文件模式）
 class LocalSQLiteAdapter implements Database {
-  private client: any;
+  private client?: LibSqlClient;
   private initPromise: Promise<void>;
 
   constructor(filePath: string = './data/typos.db') {
@@ -189,7 +219,7 @@ class LocalSQLiteAdapter implements Database {
 
   private async initClient(filePath: string) {
     try {
-      const { createClient } = await import('@libsql/client');
+      const { createClient } = await importLibSqlClient();
       const { mkdirSync } = await import('fs');
       const { dirname } = await import('path');
 
@@ -220,6 +250,9 @@ class LocalSQLiteAdapter implements Database {
       first: async <T = Record<string, unknown>>() => {
         try {
           const client = await getClient();
+          if (!client) {
+            return null;
+          }
           const result = await client.execute({ sql: query, args: boundValues });
           return result.rows[0] ? ({ ...result.rows[0] } as T) : null;
         } catch (error) {
@@ -230,6 +263,9 @@ class LocalSQLiteAdapter implements Database {
       all: async <T = Record<string, unknown>>() => {
         try {
           const client = await getClient();
+          if (!client) {
+            return { results: [] };
+          }
           const result = await client.execute({ sql: query, args: boundValues });
           return { results: result.rows.map((row: Record<string, unknown>) => ({ ...row })) as T[] };
         } catch (error) {
@@ -240,6 +276,9 @@ class LocalSQLiteAdapter implements Database {
       run: async () => {
         try {
           const client = await getClient();
+          if (!client) {
+            throw new Error('Local SQLite client not available');
+          }
           return await client.execute({ sql: query, args: boundValues });
         } catch (error) {
           console.error('Local SQLite run() error:', error);
