@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import { useTranslations } from "next-intl";
@@ -25,6 +26,7 @@ export function Header() {
   const isMomentsPage = pathname === "/moments";
   const isAdminPage = pathname?.startsWith("/admin");
   const [viewCount, setViewCount] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -49,6 +51,23 @@ export function Header() {
       setViewCount(newCount);
     }
   }, [isMomentsPage]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   if (isAdminPage) return null;
 
@@ -109,41 +128,118 @@ export function Header() {
           </div>
         ) : (
           // Standard Global Navigation
-          <div className="mx-auto flex items-center gap-2">
-            <nav className="flex items-center gap-2">
-              {navItems.map((item) => {
-                const active = isActive(item.href);
-                const label = t(item.key);
-                return (
-                  <Link
-                    key={item.key}
-                    href={item.href ?? "#"}
-                    target={item.target}
-                    rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
-                    className={`px-3 py-1.5 text-sm transition-colors ${active ? 'text-hud-strong font-medium' : 'text-hud-muted hover:text-hud-strong'}`}
-                    aria-label={label}
-                    title={label}
-                    onClick={(event) => {
-                      if (!item.href) event.preventDefault();
-                    }}
-                  >
-                    {item.isIcon ? (
-                      <Image src="/icon3.svg" alt={label} width={42} height={42} className="opacity-90 dark:invert" />
-                    ) : label}
-                  </Link>
-                );
-              })}
-            </nav>
-            <Link
-              href="/admin"
-              className="px-3 py-1.5 text-sm text-hud-muted hover:text-hud-strong transition-colors font-mono"
-              title="Admin"
-            >
-              Typos
-            </Link>
-            <LangToggle compact />
-            <ThemeToggle compact />
-          </div>
+          <>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex mx-auto items-center gap-2">
+              <nav className="flex items-center gap-2">
+                {navItems.map((item) => {
+                  const active = isActive(item.href);
+                  const label = t(item.key);
+                  return (
+                    <Link
+                      key={item.key}
+                      href={item.href ?? "#"}
+                      target={item.target}
+                      rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+                      className={`px-3 py-1.5 text-sm transition-colors ${active ? 'text-hud-strong font-medium' : 'text-hud-muted hover:text-hud-strong'}`}
+                      aria-label={label}
+                      title={label}
+                      onClick={(event) => {
+                        if (!item.href) event.preventDefault();
+                      }}
+                    >
+                      {item.isIcon ? (
+                        <Image src="/icon3.svg" alt={label} width={42} height={42} className="opacity-90 dark:invert" />
+                      ) : label}
+                    </Link>
+                  );
+                })}
+              </nav>
+              <Link
+                href="/admin"
+                className="px-3 py-1.5 text-sm text-hud-muted hover:text-hud-strong transition-colors font-mono"
+                title="Admin"
+              >
+                Typos
+              </Link>
+              <LangToggle compact />
+              <ThemeToggle compact />
+            </div>
+
+            {/* Mobile Navigation */}
+            <div className="flex md:hidden w-full items-center justify-between">
+              {/* Hamburger Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-hud-muted hover:text-hud-strong transition-colors"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+
+              {/* Site Logo/Name */}
+              <Link href="/" className="font-press-start text-[10px] text-hud-strong">
+                TYPOS
+              </Link>
+
+              {/* Right Controls */}
+              <div className="flex items-center gap-2">
+                <LangToggle compact />
+                <ThemeToggle compact />
+              </div>
+            </div>
+
+            {/* Mobile Menu Overlay */}
+            {mobileMenuOpen && (
+              <div className="fixed inset-0 top-14 z-40 md:hidden">
+                {/* Backdrop */}
+                <div
+                  className="absolute inset-0 bg-background/95 backdrop-blur-lg"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+
+                {/* Menu Content */}
+                <nav className="relative h-full overflow-y-auto">
+                  <div className="container mx-auto px-6 py-8 space-y-1">
+                    {navItems.map((item) => {
+                      const active = isActive(item.href);
+                      const label = t(item.key);
+                      return (
+                        <Link
+                          key={item.key}
+                          href={item.href ?? "#"}
+                          target={item.target}
+                          rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+                          className={`flex items-center justify-between px-4 py-4 text-base border-b border-hud-line-soft transition-colors ${
+                            active ? 'text-hud-strong font-medium' : 'text-hud-muted'
+                          }`}
+                          onClick={(event) => {
+                            if (!item.href) event.preventDefault();
+                          }}
+                        >
+                          {item.isIcon ? (
+                            <span className="flex items-center gap-3">
+                              <Image src="/icon3.svg" alt={label} width={24} height={24} className="opacity-90 dark:invert" />
+                              <span>{label}</span>
+                            </span>
+                          ) : (
+                            <span>{label}</span>
+                          )}
+                          {active && <span className="text-hud-faint text-sm">•</span>}
+                        </Link>
+                      );
+                    })}
+                    <Link
+                      href="/admin"
+                      className="flex items-center justify-between px-4 py-4 text-base border-b border-hud-line-soft text-hud-muted font-mono"
+                    >
+                      <span>Typos</span>
+                    </Link>
+                  </div>
+                </nav>
+              </div>
+            )}
+          </>
         )}
       </div>
     </header>
