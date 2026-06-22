@@ -1476,7 +1476,7 @@ export default function AdminPage() {
             )}
             <aside
                 onClick={() => { if (typeof window !== 'undefined' && window.innerWidth >= 768) setIsSidebarCollapsed(!isSidebarCollapsed); }}
-                className={`fixed inset-y-0 left-0 z-50 w-64 -translate-x-full transition-transform duration-300 md:static md:z-auto md:translate-x-0 md:transition-all ${isMobileSidebarOpen ? 'translate-x-0' : ''} ${isSidebarCollapsed ? 'md:w-16' : 'md:w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full relative group md:cursor-pointer`}
+                className={`md:relative md:flex fixed inset-y-0 left-0 z-50 w-[280px] -translate-x-full transition-transform duration-300 md:translate-x-0 md:transition-all ${isMobileSidebarOpen ? 'translate-x-0' : ''} ${isSidebarCollapsed ? 'md:w-16' : 'md:w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full group md:cursor-pointer`}
             >
                 {/* Brand Area */}
                 <div className="p-4 border-b border-neutral-900 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
