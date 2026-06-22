@@ -47,7 +47,7 @@ export function DailyStream({ fragments }: { fragments: DailyFragment[] }) {
   }, [fragments, query]);
 
   return (
-    <div className={`container mx-auto px-6 py-16 space-y-10 ${view === 'cards' ? 'max-w-6xl' : 'max-w-3xl'}`}>
+    <div className={`container mx-auto px-6 py-8 space-y-10 ${view === 'cards' ? 'max-w-6xl' : 'max-w-3xl'}`}>
       {/* Search + View Toggle */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 group">
@@ -57,7 +57,7 @@ export function DailyStream({ fragments }: { fragments: DailyFragment[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-full bg-transparent border border-hud-line px-12 py-2.5 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
+            className="w-full rounded-lg bg-transparent border border-hud-line px-12 py-2.5 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
           />
           {query && (
             <button

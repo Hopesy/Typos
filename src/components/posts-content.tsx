@@ -71,7 +71,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
     }, [initialPosts, selectedCategory, searchQuery]);
 
     return (
-        <div className="space-y-8">
+        <div>
             {/* Search Bar - HUD Style */}
             <section className="mx-auto max-w-2xl">
                 <div className="relative group">
@@ -81,7 +81,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t('searchPlaceholder')}
-                        className="w-full rounded-full bg-transparent border border-hud-line px-12 py-2.5 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
+                        className="w-full rounded-lg bg-transparent border border-hud-line px-12 py-2.5 text-sm font-mono text-hud-strong placeholder:text-hud-faint outline-none focus:border-hud-line-strong transition-colors"
                     />
                     {searchQuery && (
                         <button
@@ -95,7 +95,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
             </section>
 
             {/* Category Filter with View Toggle */}
-            <section className="mb-4">
+            <section className="mt-5">
                 <div className="flex items-center justify-center gap-6 px-4">
                     {/* View Toggle Button */}
                     <button
@@ -111,7 +111,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                     </button>
 
                     {/* Category Tags */}
-                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-4">
+                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-3">
                         {categories.map((category) => (
                             <button
                                 key={category}
@@ -132,7 +132,7 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
             </section>
 
             {/* Posts List/Grid - Enhanced HUD Style Cards */}
-            <section className="mx-auto max-w-3xl">
+            <section className="mx-auto max-w-3xl mt-8">
                 {viewMode === 'list' ? (
                     /* List View */
                     <div className="space-y-4">
