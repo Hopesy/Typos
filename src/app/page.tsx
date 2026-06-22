@@ -139,11 +139,11 @@ export default function Home() {
             <h2 className="text-xs uppercase tracking-[0.2em] text-hud font-mono">{t('home.section.tools')}</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             {tools.map((tool) => (
               <div
                 key={tool.name}
-                className="group/item relative p-5 transition-all duration-500"
+                className="group/item relative p-3 md:p-5 transition-all duration-500"
               >
                 {/* Minimal Corner */}
                 <span className="absolute top-0 right-0 w-1 h-1 bg-hud-faint group-hover/item:bg-hud-muted transition-colors"></span>
