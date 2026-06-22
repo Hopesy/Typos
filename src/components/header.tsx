@@ -134,6 +134,13 @@ export function Header() {
                 );
               })}
             </nav>
+            <Link
+              href="/admin"
+              className="px-3 py-1.5 text-sm text-hud-muted hover:text-hud-strong transition-colors font-mono"
+              title="Admin"
+            >
+              Typos
+            </Link>
             <LangToggle compact />
             <ThemeToggle compact />
           </div>
