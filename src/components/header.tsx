@@ -191,7 +191,7 @@ export function Header() {
 
             {/* Mobile Menu Overlay */}
             {mobileMenuOpen && (
-              <div className="fixed inset-0 top-14 z-40 md:hidden">
+              <div className="fixed inset-0 z-50 md:hidden">
                 {/* Backdrop */}
                 <div
                   className="absolute inset-0 bg-background/95 backdrop-blur-lg"
@@ -199,7 +199,7 @@ export function Header() {
                 />
 
                 {/* Menu Content */}
-                <nav className="relative h-full overflow-y-auto">
+                <nav className="relative h-full overflow-y-auto pt-14">
                   <div className="container mx-auto px-6 py-8 space-y-1">
                     {navItems.map((item) => {
                       const active = isActive(item.href);
