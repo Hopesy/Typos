@@ -590,7 +590,7 @@
     overflow: hidden;
   }
 
-  /* 标题栏（Mac 窗口风格）：居中语言名，仅在已知语言时出现。
+  /* 标题栏（Mac 窗口风格）：居中语言名；裸 ``` fence 标为 text。
      左侧三个交通灯圆点由 ::after 绘制，右侧复制按钮由 CodeCopy 注入。 */
   .article pre[data-language]::before {
     content: attr(data-language);

@@ -78,6 +78,7 @@ function rehypeExternalLinks() {
 }
 
 // Shiki 把语言类写在 <code> 上；提到 <pre data-language> 供样式层标题栏显示。
+// 裸 ``` fence 会落到 plaintext，也显式标成 text，保证仍按代码窗口渲染。
 function rehypeCodeLanguageLabel() {
   return (tree: unknown) => {
     visit(tree as never, 'element', (node: unknown) => {
@@ -88,8 +89,9 @@ function rehypeCodeLanguageLabel() {
       const lang = classList(code?.properties?.class ?? code?.properties?.className)
         .find((c) => c.startsWith('language-'))
         ?.slice('language-'.length);
-      if (lang && lang !== 'plaintext') {
-        (pre.properties ?? (pre.properties = {}))['data-language'] = lang;
+      if (lang) {
+        (pre.properties ?? (pre.properties = {}))['data-language'] =
+          lang === 'plaintext' ? 'text' : lang;
       }
     });
   };
