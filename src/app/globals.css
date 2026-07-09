@@ -618,6 +618,48 @@
     line-height: 2.5rem;
   }
 
+  /* 复制按钮（客户端水合后由 CodeCopy 注入到每个 <pre>）。
+     有标题栏时落在栏内右侧；无 data-language 的裸 <pre> 则悬浮于代码右上角。 */
+  .article pre > .code-copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.6rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid var(--code-line);
+    border-radius: 4px;
+    background: var(--code-header-bg);
+    color: var(--code-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .article pre[data-language] > .code-copy-btn {
+    top: 0.375rem;
+  }
+  .article pre:hover > .code-copy-btn,
+  .article pre > .code-copy-btn:focus-visible {
+    opacity: 1;
+  }
+  .article pre > .code-copy-btn:hover {
+    color: var(--code-foreground);
+    border-color: var(--code-muted);
+  }
+  .article pre > .code-copy-btn.is-copied {
+    opacity: 1;
+    color: #3fb950;
+    border-color: #3fb950;
+  }
+  /* 触屏无 hover：常驻显示（弱化） */
+  @media (hover: none) {
+    .article pre > .code-copy-btn { opacity: 0.65; }
+  }
+
   .article pre > code {
     display: block;
     padding: 1.05rem 1.25rem 1.2rem;

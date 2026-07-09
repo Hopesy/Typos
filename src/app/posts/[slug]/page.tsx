@@ -1,6 +1,7 @@
 import { getRenderedPost } from "@/lib/content";
 import TocRail from "@/components/toc-rail";
 import Comments from "@/components/comments";
+import CodeCopy from "@/components/code-copy";
 import { PostNotFound } from "@/components/post-not-found";
 
 export const dynamicParams = true;
@@ -48,6 +49,7 @@ export default async function PostPage({
 
         <div className="mt-10 border-t border-hud-line pt-10">
           <div className="article" dangerouslySetInnerHTML={{ __html: html }} />
+          <CodeCopy />
         </div>
         <Comments
           pageId={slug}
