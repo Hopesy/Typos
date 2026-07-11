@@ -5,7 +5,7 @@ import { FiFileText, FiLayers, FiRefreshCw, FiMapPin, FiMusic, FiBookOpen, FiVid
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { ActivityHeatmap, ActivityHeatmapPreview } from "@/components/activity-heatmap";
+import { ActivityHeatmap } from "@/components/activity-heatmap";
 import { useEffect, useState } from "react";
 import type { ActivityStats } from "@/lib/content";
 
@@ -46,19 +46,9 @@ const books: {
   hoverText: string;
 }[] = [];
 
-const signalTags = ["BUILD", "WRITE", "PHOTO", "DAILY"];
-
 const noise = (seed: number) => {
   const x = Math.sin(seed * 12.9898) * 43758.5453;
   return x - Math.floor(x);
-};
-
-const cellShade = (seed: number) => {
-  const r = noise(seed);
-  if (r > 0.8) return 'bg-hud/40';
-  if (r > 0.6) return 'bg-hud/20';
-  if (r > 0.4) return 'bg-hud/10';
-  return 'bg-hud/[0.03]';
 };
 
 const hexTag = (seed: number) => {

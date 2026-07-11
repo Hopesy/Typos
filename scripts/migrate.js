@@ -18,8 +18,6 @@ async function getDatabase() {
     // 使用本地 SQLite (libsql)
     console.log('Using local SQLite database (libsql)...');
     const { createClient } = require('@libsql/client');
-    const fs = require('fs');
-    const path = require('path');
     const dbPath = path.join(process.cwd(), 'data', 'typos.db');
 
     // 确保目录存在

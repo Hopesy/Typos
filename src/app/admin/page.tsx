@@ -38,16 +38,57 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import TocRail from "@/components/toc-rail";
-import { Bold, Italic, Heading2, Heading3, Quote, Link2, Image as ImageIcon, Code, List, SquareCode, ArrowDownUp } from "lucide-react";
+import { Bold, Italic, Heading2, Heading3, Quote, Link2, Image as ImageIcon, Code, List, SquareCode, ArrowDownUp, Undo2, Redo2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment' | 'tokens';
 
 type MdTool =
-    | { Icon: LucideIcon; title: string; run: () => void }
+    | { Icon: LucideIcon; title: string; before: string; after?: string; placeholder?: string }
     | { divider: true };
 
+type PostEditorSnapshot = {
+    content: string;
+    selectionStart: number;
+    selectionEnd: number;
+};
+
+type PostEditorHistory = {
+    past: PostEditorSnapshot[];
+    current: PostEditorSnapshot;
+    future: PostEditorSnapshot[];
+    lastChangeKind: 'typing' | 'command' | null;
+};
+
+const MAX_POST_EDITOR_HISTORY = 100;
+
+function MarkdownTools({
+    tools,
+    onInsert,
+}: {
+    tools: MdTool[];
+    onInsert: (before: string, after?: string, placeholder?: string) => void;
+}) {
+    return tools.map((tool, index) => {
+        if ('divider' in tool) {
+            return <span key={`md-div-${index}`} className="mx-1 h-5 w-px bg-neutral-800/70" aria-hidden />;
+        }
+        const Icon = tool.Icon;
+        return (
+            <button
+                key={tool.title}
+                type="button"
+                title={tool.title}
+                aria-label={tool.title}
+                onClick={() => onInsert(tool.before, tool.after, tool.placeholder)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+            >
+                <Icon className="h-4 w-4" strokeWidth={2} />
+            </button>
+        );
+    });
+}
 
 type PostData = {
     title: string;
@@ -570,6 +611,14 @@ export default function AdminPage() {
     const defaultSlug = today.replace(/-/g, '').slice(2); // YYMMDD
 
     const [postData, setPostData] = useState<PostData>({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: ['随笔'], cover: '' });
+    const postHistoryRef = useRef<PostEditorHistory>({
+        past: [],
+        current: { content: '', selectionStart: 0, selectionEnd: 0 },
+        future: [],
+        lastChangeKind: null,
+    });
+    const postTypingMergeTimerRef = useRef<number | null>(null);
+    const [postHistoryAvailability, setPostHistoryAvailability] = useState({ canUndo: false, canRedo: false });
     const [isSlugModified, setIsSlugModified] = useState(false);
     const [categoryInput, setCategoryInput] = useState('');
     const [dailyData, setDailyData] = useState<DailyData>({ title: '', date: today, imageUrl: '', content: '' });
@@ -919,6 +968,146 @@ export default function AdminPage() {
         };
     }, [viewMode, type, scrollSync, previewHtml, isImmersiveMode]);
 
+    const syncPostHistoryAvailability = () => {
+        const history = postHistoryRef.current;
+        setPostHistoryAvailability({
+            canUndo: history.past.length > 0,
+            canRedo: history.future.length > 0,
+        });
+    };
+
+    const resetPostContentHistory = (content: string) => {
+        const cursor = content.length;
+        if (postTypingMergeTimerRef.current) window.clearTimeout(postTypingMergeTimerRef.current);
+        postTypingMergeTimerRef.current = null;
+        postHistoryRef.current = {
+            past: [],
+            current: { content, selectionStart: cursor, selectionEnd: cursor },
+            future: [],
+            lastChangeKind: null,
+        };
+        setPostHistoryAvailability({ canUndo: false, canRedo: false });
+    };
+
+    const focusPostEditorAt = (snapshot: PostEditorSnapshot) => {
+        requestAnimationFrame(() => {
+            const textarea = postContentRef.current;
+            if (!textarea) return;
+            textarea.focus();
+            textarea.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
+        });
+    };
+
+    const updatePostContent = (
+        content: string,
+        selectionStart = content.length,
+        selectionEnd = selectionStart,
+        changeKind: 'typing' | 'command' = 'command'
+    ) => {
+        const history = postHistoryRef.current;
+        const nextSnapshot = { content, selectionStart, selectionEnd };
+
+        if (history.current.content === content) {
+            history.current = nextSnapshot;
+            return;
+        }
+
+        const mergesWithPreviousTyping =
+            changeKind === 'typing'
+            && history.lastChangeKind === 'typing'
+            && history.future.length === 0;
+
+        if (!mergesWithPreviousTyping) {
+            history.past.push(history.current);
+            if (history.past.length > MAX_POST_EDITOR_HISTORY) history.past.shift();
+        }
+
+        history.current = nextSnapshot;
+        history.future = [];
+        history.lastChangeKind = changeKind;
+        if (postTypingMergeTimerRef.current) window.clearTimeout(postTypingMergeTimerRef.current);
+        postTypingMergeTimerRef.current = changeKind === 'typing'
+            ? window.setTimeout(() => {
+                if (postHistoryRef.current.lastChangeKind === 'typing') {
+                    postHistoryRef.current.lastChangeKind = null;
+                }
+            }, 750)
+            : null;
+        setPostData(prev => ({ ...prev, content }));
+        syncPostHistoryAvailability();
+    };
+
+    const undoPostContent = () => {
+        const history = postHistoryRef.current;
+        const previous = history.past.pop();
+        if (!previous) return;
+
+        const textarea = postContentRef.current;
+        if (textarea && history.current.content === postData.content) {
+            history.current = {
+                ...history.current,
+                selectionStart: textarea.selectionStart,
+                selectionEnd: textarea.selectionEnd,
+            };
+        }
+
+        history.future.push(history.current);
+        history.current = previous;
+        history.lastChangeKind = null;
+        if (postTypingMergeTimerRef.current) window.clearTimeout(postTypingMergeTimerRef.current);
+        postTypingMergeTimerRef.current = null;
+        setPostData(prev => ({ ...prev, content: previous.content }));
+        syncPostHistoryAvailability();
+        focusPostEditorAt(previous);
+    };
+
+    const redoPostContent = () => {
+        const history = postHistoryRef.current;
+        const next = history.future.pop();
+        if (!next) return;
+
+        history.past.push(history.current);
+        history.current = next;
+        history.lastChangeKind = null;
+        if (postTypingMergeTimerRef.current) window.clearTimeout(postTypingMergeTimerRef.current);
+        postTypingMergeTimerRef.current = null;
+        setPostData(prev => ({ ...prev, content: next.content }));
+        syncPostHistoryAvailability();
+        focusPostEditorAt(next);
+    };
+
+    const handlePostContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const textarea = event.currentTarget;
+        const inputType = (event.nativeEvent as InputEvent).inputType || '';
+        const isContinuousTyping = [
+            'insertText',
+            'insertCompositionText',
+            'deleteContentBackward',
+            'deleteContentForward',
+        ].includes(inputType);
+
+        updatePostContent(
+            textarea.value,
+            textarea.selectionStart,
+            textarea.selectionEnd,
+            isContinuousTyping ? 'typing' : 'command'
+        );
+    };
+
+    const handlePostEditorKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+        const key = event.key.toLowerCase();
+
+        if (key === 'z') {
+            event.preventDefault();
+            if (event.shiftKey) redoPostContent();
+            else undoPostContent();
+        } else if (key === 'y') {
+            event.preventDefault();
+            redoPostContent();
+        }
+    };
+
     const handleEditPost = (item: AdminItem) => {
         if (type === 'comment' || type === 'dashboard') return;
 
@@ -933,7 +1122,7 @@ export default function AdminPage() {
                 }
             }
 
-            setPostData({
+            const nextPostData = {
                 title: item.title || '',
                 date: item.date,
                 description: item.description || '',
@@ -941,7 +1130,9 @@ export default function AdminPage() {
                 slug: item.slug || defaultSlug,
                 category: categories.length > 0 ? categories : ['随笔'],
                 cover: ''
-            });
+            };
+            setPostData(nextPostData);
+            resetPostContentHistory(nextPostData.content);
         } else if (type === 'daily') {
             setDailyData({
                 title: item.title || '',
@@ -965,6 +1156,7 @@ export default function AdminPage() {
 
     const resetPostEditorState = () => {
         setPostData({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: ['随笔'], cover: '' });
+        resetPostContentHistory('');
         setIsSlugModified(false);
         setIsEditing(false);
         setCurrentFilename(null);
@@ -991,10 +1183,6 @@ export default function AdminPage() {
         }
     };
 
-    const updatePostContent = (content: string) => {
-        setPostData(prev => ({ ...prev, content }));
-    };
-
     const insertPostMarkdown = (before: string, after = '', placeholder = 'text') => {
         const textarea = postContentRef.current;
         const current = postData.content;
@@ -1003,52 +1191,54 @@ export default function AdminPage() {
         const selected = current.slice(start, end) || placeholder;
         const nextContent = `${current.slice(0, start)}${before}${selected}${after}${current.slice(end)}`;
 
-        updatePostContent(nextContent);
-
-        requestAnimationFrame(() => {
-            textarea?.focus();
-            const cursorStart = start + before.length;
-            const cursorEnd = cursorStart + selected.length;
-            textarea?.setSelectionRange(cursorStart, cursorEnd);
-        });
+        const cursorStart = start + before.length;
+        const cursorEnd = cursorStart + selected.length;
+        updatePostContent(nextContent, cursorStart, cursorEnd, 'command');
+        focusPostEditorAt({ content: nextContent, selectionStart: cursorStart, selectionEnd: cursorEnd });
     };
 
     // Markdown 快捷工具：图标化、分组，编辑器与沉浸模式工具栏共用。
     const mdTools: MdTool[] = [
-        { Icon: Bold, title: 'Bold', run: () => insertPostMarkdown('**', '**', 'bold text') },
-        { Icon: Italic, title: 'Italic', run: () => insertPostMarkdown('*', '*', 'italic text') },
+        { Icon: Bold, title: 'Bold', before: '**', after: '**', placeholder: 'bold text' },
+        { Icon: Italic, title: 'Italic', before: '*', after: '*', placeholder: 'italic text' },
         { divider: true },
-        { Icon: Heading2, title: 'Heading 2', run: () => insertPostMarkdown('## ', '', 'Heading') },
-        { Icon: Heading3, title: 'Heading 3', run: () => insertPostMarkdown('### ', '', 'Subheading') },
+        { Icon: Heading2, title: 'Heading 2', before: '## ', placeholder: 'Heading' },
+        { Icon: Heading3, title: 'Heading 3', before: '### ', placeholder: 'Subheading' },
         { divider: true },
-        { Icon: Quote, title: 'Quote', run: () => insertPostMarkdown('> ', '', tr('md.quote')) },
-        { Icon: List, title: 'List', run: () => insertPostMarkdown('- ', '', 'list item') },
+        { Icon: Quote, title: 'Quote', before: '> ', placeholder: tr('md.quote') },
+        { Icon: List, title: 'List', before: '- ', placeholder: 'list item' },
         { divider: true },
-        { Icon: Link2, title: 'Link', run: () => insertPostMarkdown('[', '](https://)', 'link text') },
-        { Icon: ImageIcon, title: 'Image', run: () => insertPostMarkdown('![', '](https://)', 'image alt') },
-        { Icon: Code, title: 'Inline code', run: () => insertPostMarkdown('`', '`', 'code') },
-        { Icon: SquareCode, title: 'Code block', run: () => insertPostMarkdown('```\n', '\n```', 'code block') },
+        { Icon: Link2, title: 'Link', before: '[', after: '](https://)', placeholder: 'link text' },
+        { Icon: ImageIcon, title: 'Image', before: '![', after: '](https://)', placeholder: 'image alt' },
+        { Icon: Code, title: 'Inline code', before: '`', after: '`', placeholder: 'code' },
+        { Icon: SquareCode, title: 'Code block', before: '```\n', after: '\n```', placeholder: 'code block' },
     ];
 
-    const renderMdTools = () =>
-        mdTools.map((tool, index) => {
-            if ('divider' in tool) {
-                return <span key={`md-div-${index}`} className="mx-1 h-5 w-px bg-neutral-800/70" aria-hidden />;
-            }
-            const Icon = tool.Icon;
-            return (
-                <button
-                    key={tool.title}
-                    type="button"
-                    title={tool.title}
-                    aria-label={tool.title}
-                    onClick={tool.run}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
-                >
-                    <Icon className="h-4 w-4" strokeWidth={2} />
-                </button>
-            );
-        });
+    const renderPostHistoryTools = () => (
+        <>
+            <button
+                type="button"
+                onClick={undoPostContent}
+                disabled={!postHistoryAvailability.canUndo}
+                title={`${tr('btn.undo')} (Ctrl/Cmd+Z)`}
+                aria-label={tr('btn.undo')}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-neutral-400"
+            >
+                <Undo2 className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <button
+                type="button"
+                onClick={redoPostContent}
+                disabled={!postHistoryAvailability.canRedo}
+                title={`${tr('btn.redo')} (Ctrl/Cmd+Shift+Z / Ctrl+Y)`}
+                aria-label={tr('btn.redo')}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-neutral-400"
+            >
+                <Redo2 className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <span className="mx-1 h-5 w-px bg-neutral-800/70" aria-hidden />
+        </>
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1145,6 +1335,7 @@ export default function AdminPage() {
             const importedPost = buildPostDataFromMarkdown(raw, file.name, today);
             setType('post');
             setPostData(importedPost);
+            resetPostContentHistory(importedPost.content);
             setIsSlugModified(true);
             setIsEditing(false);
             setCurrentFilename(null);
@@ -1392,7 +1583,8 @@ export default function AdminPage() {
                             <span className="text-trim-caps">{tr('btn.exitImmersive')}</span>
                         </button>
                         <span className="mx-1 h-5 w-px bg-neutral-800/70" aria-hidden />
-                        {renderMdTools()}
+                        {renderPostHistoryTools()}
+                        <MarkdownTools tools={mdTools} onInsert={insertPostMarkdown} />
 
                         <div className="ml-auto flex items-center gap-1.5">
                             <button
@@ -1409,7 +1601,7 @@ export default function AdminPage() {
                                 type="button"
                                 onClick={() => {
                                     if (confirm(tr('confirm.clearContent'))) {
-                                        setPostData({ ...postData, content: '' });
+                                        updatePostContent('', 0, 0, 'command');
                                     }
                                 }}
                                 className="inline-flex h-8 items-center justify-center rounded-md px-3 font-mono text-[10px] uppercase leading-none tracking-[0.18em] text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
@@ -1435,7 +1627,8 @@ export default function AdminPage() {
                                 ref={postContentRef}
                                 rows={25}
                                 value={postData.content}
-                                onChange={(e) => updatePostContent(e.target.value)}
+                                onChange={handlePostContentChange}
+                                onKeyDown={handlePostEditorKeyDown}
                                 className="block h-full w-full resize-none select-text overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                             />
                         </div>
@@ -1862,7 +2055,8 @@ export default function AdminPage() {
                                         <div className="flex flex-1 flex-col min-h-0">
                                             <div className="flex flex-1 flex-col min-h-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950">
                                                 <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 px-2 py-1.5">
-                                                    {renderMdTools()}
+                                                    {renderPostHistoryTools()}
+                                                    <MarkdownTools tools={mdTools} onInsert={insertPostMarkdown} />
 
                                                     <div className="ml-auto flex items-center gap-1.5">
                                                         <button
@@ -1879,7 +2073,7 @@ export default function AdminPage() {
                                                             type="button"
                                                             onClick={() => {
                                                                 if (confirm(tr('confirm.clearContent'))) {
-                                                                    setPostData({ ...postData, content: '' });
+                                                                    updatePostContent('', 0, 0, 'command');
                                                                 }
                                                             }}
                                                             className="inline-flex h-8 items-center justify-center rounded-md px-3 font-mono text-[10px] uppercase leading-none tracking-[0.18em] text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
@@ -1911,7 +2105,8 @@ export default function AdminPage() {
                                                             ref={postContentRef}
                                                             id="post-content"
                                                             value={postData.content}
-                                                            onChange={(e) => updatePostContent(e.target.value)}
+                                                            onChange={handlePostContentChange}
+                                                            onKeyDown={handlePostEditorKeyDown}
                                                             className="block w-full min-h-0 flex-1 resize-none select-text overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                                                         />
                                                     </div>

@@ -175,9 +175,12 @@ export function PostsContent({ initialPosts }: PostsContentProps) {
                                     {/* Cover Image (or placeholder) with Hover Overlay */}
                                     <div className="relative w-full aspect-[2/1] overflow-hidden bg-hud-panel/10">
                                         {post.cover ? (
+                                            // eslint-disable-next-line @next/next/no-img-element -- post covers accept arbitrary remote URLs that cannot be enumerated in next/image remotePatterns.
                                             <img
                                                 src={post.cover}
                                                 alt={post.title}
+                                                loading="lazy"
+                                                decoding="async"
                                                 className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-all duration-500"
                                             />
                                         ) : (

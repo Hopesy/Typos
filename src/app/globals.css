@@ -509,6 +509,18 @@
     background: var(--article-image-bg);
     object-fit: contain;
   }
+  .article img[data-image-lightbox-ready="true"] {
+    cursor: zoom-in;
+    transition: border-color 160ms ease, filter 160ms ease;
+  }
+  .article img[data-image-lightbox-ready="true"]:hover {
+    border-color: var(--hud-muted);
+    filter: brightness(1.04);
+  }
+  .article img[data-image-lightbox-ready="true"]:focus-visible {
+    outline: 1px solid var(--hud-strong);
+    outline-offset: 4px;
+  }
 
   .article figure {
     position: relative;

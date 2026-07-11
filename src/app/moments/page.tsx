@@ -17,7 +17,7 @@ export default async function MomentsPage() {
 
             {/* Bottom info */}
             <div className="mt-16 text-center text-[10px] font-mono text-hud-faint uppercase tracking-[0.2em]">
-                {t('endOfStream')} // {t('totalFragments')}: {moments.length}
+                {t('endOfStream')} {' // '} {t('totalFragments')}: {moments.length}
             </div>
         </div>
     );

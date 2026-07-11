@@ -124,6 +124,13 @@
   "carousel": {
     "view": "查看 →"
   },
+  "imageViewer": {
+    "open": "放大查看图片",
+    "dialogLabel": "图片预览",
+    "actualSize": "查看原始尺寸",
+    "fitToScreen": "适合屏幕",
+    "close": "关闭图片预览"
+  },
   "admin": {
     "checking": "正在检查访问权限...",
     "login": {
@@ -227,6 +234,8 @@
       "publishing": "发布中...",
       "update": "更新",
       "clear": "清空",
+      "undo": "撤销",
+      "redo": "重做",
       "immersiveMode": "沉浸模式",
       "exitImmersive": "退出沉浸",
       "syncScroll": "同步滚动"

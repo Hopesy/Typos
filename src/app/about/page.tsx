@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { ComponentType, ReactElement } from 'react';
-import { FiCommand, FiActivity, FiGlobe, FiCpu, FiMessageCircle } from "react-icons/fi";
+import { FiActivity, FiGlobe, FiCpu, FiMessageCircle } from "react-icons/fi";
 import { SiReact, SiNextdotjs, SiTypescript, SiTailwindcss, SiThreedotjs, SiFramer, SiVercel } from 'react-icons/si';
 import _LogoLoop from '@/components/logo-loop/LogoLoop';
 import { useTranslations } from 'next-intl';

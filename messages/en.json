@@ -124,6 +124,13 @@
   "carousel": {
     "view": "View →"
   },
+  "imageViewer": {
+    "open": "Open enlarged image",
+    "dialogLabel": "Image preview",
+    "actualSize": "View actual size",
+    "fitToScreen": "Fit to screen",
+    "close": "Close image preview"
+  },
   "admin": {
     "checking": "Checking access...",
     "login": {
@@ -227,6 +234,8 @@
       "publishing": "PUBLISHING...",
       "update": "UPDATE",
       "clear": "CLEAR",
+      "undo": "UNDO",
+      "redo": "REDO",
       "immersiveMode": "IMMERSIVE",
       "exitImmersive": "EXIT",
       "syncScroll": "SYNC SCROLL"

@@ -7,6 +7,7 @@ import "./globals.css";
 import "katex/dist/katex.min.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import ArticleImageLightbox from "@/components/article-image-lightbox";
 
 const pressStart2P = localFont({
   variable: "--font-press-start",
@@ -76,8 +77,6 @@ export const metadata: Metadata = {
   },
 };
 
-import { Suspense } from "react";
-
 const themeScript = `
 (() => {
   try {
@@ -113,6 +112,7 @@ export default async function RootLayout({
           <Header />
           <main className="flex-1 relative z-10">{children}</main>
           <Footer />
+          <ArticleImageLightbox />
         </NextIntlClientProvider>
       </body>
     </html>
