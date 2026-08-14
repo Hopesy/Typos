@@ -8,7 +8,7 @@
 
 | 条件 | 说明 |
 |------|------|
-| **数据库** | API 上传依赖已配置的数据库后端(D1 / PostgreSQL / Turso / 本地 SQLite 均可)。未配置任何数据库时接口返回 `503` |
+| **数据库** | API 上传依赖 Cloudflare D1、Turso/libSQL 或本地 libSQL 数据库。数据库不可用时接口返回 `503` |
 | **API Token** | 所有请求必须带 `Authorization: Bearer <token>` 请求头 |
 
 ### 获取 Token
@@ -47,7 +47,7 @@ Content-Type: application/json
 | `date` | string | 否 | 会截断到 `YYYY-MM-DD`;缺省为当天 |
 | `description` | string | 否 | 摘要 |
 | `category` | string \| string[] | 否 | 数组会拼成 `"A, B, C"` |
-| `slug` | string | 否 | 缺省时由日期推导(去掉 `-` 后取后 6 位,如 `2026-06-18` → `260618`) |
+| `slug` | string | 否 | 缺省时使用日期加随机短标识，例如 `260618-a1b2c3d4`；显式 slug 可实现幂等更新 |
 | `cover` | string | 否 | 封面图 URL |
 
 示例:
@@ -134,7 +134,7 @@ curl -X POST https://你的域名/api/v1/posts \
 
 ## ⚠️ 注意事项
 
-1. **slug 会被清洗**:只保留 `a-z A-Z 0-9 _ -`,其它字符替换成 `-`。中文 slug 会被打散,建议显式传英文或数字 slug。
+1. **slug 会被清洗**:只保留 `a-z A-Z 0-9 _ -`,其它字符替换成 `-`。中文 slug 会被打散,建议显式传英文或数字 slug。未传 slug 时会追加随机短标识，避免同一天的文章互相覆盖。
 2. **同 slug 覆盖更新**:写入使用 `INSERT ... ON CONFLICT(slug) DO UPDATE`,slug 相同即更新已有文章而非新增。可借此实现编辑。
 3. **`date` 只保留日期部分**:即使带时间也会被截断为 `YYYY-MM-DD`。
 4. **接口禁用缓存**:响应头带 `Cache-Control: no-store`。

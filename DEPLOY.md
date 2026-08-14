@@ -21,10 +21,12 @@ Git account: Hopesy
 Repository: Hopesy/Typos
 Project name: typos
 Production branch: main
-Build command: npm run build
-Deploy command: npm run deploy
+Build command: npm run build:worker
+Deploy command: npm run deploy:worker
 Root directory: /
 ```
+
+现有项目如果仍使用 `npm run build` + `npm run deploy`，可以保持不变：这两个兼容入口仍会完成 OpenNext 构建、D1 migration 和 Worker 发布。只有在同时修改 Build command 与 Deploy command 时才切换到上面的拆分命令，避免混用导致缺少 `.open-next` 产物。
 
 然后点：
 
@@ -75,10 +77,13 @@ D1 binding: DB
 数据库表结构由 `migrations/` 下的 SQL 文件定义，按文件名顺序执行：
 
 ```txt
-migrations/0001_init.sql    全部表结构（posts / daily / moments / comments / rate_limits / api_tokens）+ 初始内容
+migrations/0001_init.sql    基础表结构和初始内容
+migrations/0002_render_cache.sql    文章 HTML/TOC 渲染缓存字段
+migrations/0003_daily_fragments.sql    日常碎片数据迁移
+migrations/0004_admin_login_attempts.sql    管理员登录失败限流
 ```
 
-迁移是**自动执行**的。`npm run deploy` 在部署前会先运行 `wrangler d1 migrations apply DB --remote`，把所有未执行的迁移按顺序应用到远端 D1。Cloudflare Git Integration 的 Deploy command 就是 `npm run deploy`，所以每次 git push 触发构建时都会自动迁移。
+迁移是**自动执行**的。推荐配置的 Deploy command 使用 `npm run deploy:worker`，该命令先运行 `wrangler d1 migrations apply DB --remote`，再执行 OpenNext Worker 部署；Build command 使用 `npm run build:worker`，避免重复构建。兼容配置中的 `npm run deploy` 执行相同顺序，只会额外触发一次 Worker 构建。
 
 因此：
 
@@ -114,7 +119,7 @@ git push origin main
 
 推送后 Cloudflare 会自动构建并发布。
 
-不要在 Windows 本机用 `npm run deploy` 当生产发布方式。
+不要在 Windows 本机用 `npm run build:worker` 或 `npm run deploy:worker` 作为生产发布方式；OpenNext 的 Worker 打包应在 Cloudflare/Linux CI 环境执行。`npm run deploy` 是组合命令，适合已确认运行环境兼容时使用。
 
 ## 发布文章
 

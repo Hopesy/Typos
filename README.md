@@ -56,6 +56,7 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js、React�
 
 ```bash
 npm install
+npm run db:migrate
 ```
 
 本地使用 `/admin` 前，创建 `.env.local`：
@@ -85,11 +86,21 @@ http://localhost:3000
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | TypeScript 类型检查 |
 | `npm run build` | Next.js 构建 |
+| `npm run build:worker` | OpenNext Cloudflare Worker 构建（Linux/CI） |
 | `npm run preview` | OpenNext Workers runtime 预览 |
+| `npm run db:migrate` | 本地 libSQL 文件迁移 |
 | `npm run db:migrations:apply` | 应用远端 D1 migration |
 | `npm run db:migrations:apply:local` | 应用本地 D1 migration |
 
 ## 内容数据
+
+数据库边界固定为 Cloudflare D1、Turso/libSQL 和本地 libSQL 文件：
+
+- Cloudflare D1：生产 Worker 通过 `DB` binding 使用。
+- Turso/libSQL：设置 `DATABASE_URL=libsql://...` 和 `TURSO_AUTH_TOKEN`。
+- 本地 libSQL：未设置 `DATABASE_URL` 时使用 `./data/typos.db`，也可显式设置 `DATABASE_URL=file:...`。
+
+不支持 PostgreSQL、Neon、Supabase 或 Better-SQLite3；数据库连接和查询失败会直接报错，不会伪装成空页面或回退到文件系统。
 
 生产环境优先读取 D1：
 
@@ -100,7 +111,7 @@ http://localhost:3000
 - `rate_limits`：评论限流记录
 - `api_tokens`：API 上传密钥（哈希存储，支持可选过期时间）
 
-本地没有 D1 时，内容读取会回退到 `content/` 下的 Markdown 文件。
+`content/` 目录仅保留为示例和导入素材，不是数据库故障时的运行时回退路径。
 
 ## 项目入口
 

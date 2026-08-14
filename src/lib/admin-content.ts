@@ -1,4 +1,3 @@
-import matter from "gray-matter";
 import type { D1DatabaseLike } from "@/lib/database";
 import { warmPostRenderCache, type TocItem } from "@/lib/content";
 
@@ -22,12 +21,6 @@ export type AdminItem = {
   created_at?: string;
   parent_id?: string | null;
   is_admin?: number;
-};
-
-type LocalContent = {
-  fs: typeof import("node:fs/promises");
-  path: typeof import("node:path");
-  root: string;
 };
 
 type PostRow = {
@@ -79,12 +72,10 @@ function stringValue(value: unknown, fallback = "") {
   return fallback;
 }
 
-// 分类归一：后台以数组形式编辑多分类，DB 单列存逗号分隔串（与 handleEditPost 的 split(',') 对应）。
-// 兼容传入字符串（原样去空白）或数组（过滤空项后用逗号连接）。
 function categoryValue(value: unknown): string {
   if (Array.isArray(value)) {
     return value
-      .map((c) => stringValue(c).trim())
+      .map((category) => stringValue(category).trim())
       .filter(Boolean)
       .join(",");
   }
@@ -93,12 +84,6 @@ function categoryValue(value: unknown): string {
 
 function normalizeDate(value: unknown) {
   return stringValue(value).split("T")[0];
-}
-
-function sortTimestamp(value?: string) {
-  if (!value) return 0;
-  const timestamp = Date.parse(value);
-  return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
 function safeSegment(value: string, fallback: string) {
@@ -115,6 +100,11 @@ function safeMarkdownFilename(filename: string) {
   return base;
 }
 
+function requireDatabase(db: D1DatabaseLike | null): D1DatabaseLike {
+  if (!db) throw new Error("A D1 or libSQL database is required.");
+  return db;
+}
+
 export function isAdminContentType(value: string): value is AdminContentType {
   return value === "post" || value === "daily" || value === "moment" || value === "comment";
 }
@@ -123,104 +113,18 @@ export function isAdminEditableType(value: string): value is AdminEditableType {
   return value === "post" || value === "daily" || value === "moment";
 }
 
-async function getLocalContent(): Promise<LocalContent | null> {
-  try {
-    const [fs, path] = await Promise.all([import("node:fs/promises"), import("node:path")]);
-    return { fs, path, root: path.join(process.cwd(), "content") };
-  } catch {
-    return null;
-  }
-}
-
-function localDir(local: LocalContent, type: AdminEditableType) {
-  const folder = type === "moment" ? "moments" : type === "daily" ? "daily" : "posts";
-  return local.path.join(local.root, folder);
-}
-
-async function readLocalMarkdown(local: LocalContent, type: AdminEditableType) {
-  const dir = localDir(local, type);
-  try {
-    const files = await local.fs.readdir(dir);
-    return Promise.all(
-      files
-        .filter((file) => file.endsWith(".md") && !file.startsWith("."))
-        .map(async (file) => ({
-          file,
-          raw: await local.fs.readFile(local.path.join(dir, file), "utf8"),
-        })),
-    );
-  } catch {
-    return [];
-  }
-}
-
-async function listLocalItems(type: AdminContentType): Promise<AdminItem[]> {
-  if (type === "comment") return [];
-
-  const local = await getLocalContent();
-  if (!local) return [];
-
-  const files = await readLocalMarkdown(local, type);
-  const items = files.map(({ file, raw }) => {
-    const parsed = matter(raw);
-    const data = parsed.data as Record<string, unknown>;
-
-    if (type === "post") {
-      const slug = file.replace(/\.md$/, "");
-      const date = normalizeDate(data.date);
-      return {
-        filename: file,
-        title: stringValue(data.title, slug),
-        date,
-        description: stringValue(data.description),
-        category: stringValue(data.category),
-        slug,
-        content: parsed.content,
-      };
-    }
-
-    if (type === "daily") {
-      const date = normalizeDate(data.date) || file.replace(/\.md$/, "");
-      return {
-        filename: file,
-        title: stringValue(data.title),
-        date,
-        content: parsed.content,
-        imageUrl: stringValue(data.imageUrl) || stringValue(data.image),
-      };
-    }
-
-    const date = normalizeDate(data.date);
-    return {
-      filename: file,
-      title: stringValue(data.title, file),
-      date,
-      content: parsed.content,
-      imageUrl: stringValue(data.imageUrl) || stringValue(data.image),
-    };
-  });
-
-  return items.sort((left, right) => sortTimestamp(right.date) - sortTimestamp(left.date));
-}
-
-async function listD1Items(db: D1DatabaseLike, type: AdminContentType): Promise<AdminItem[]> {
+async function listDatabaseItems(db: D1DatabaseLike, type: AdminContentType): Promise<AdminItem[]> {
   if (type === "post") {
     const { results } = await db
       .prepare("SELECT slug, title, date, description, category, content, cover FROM posts ORDER BY date DESC")
       .all<PostRow>();
-
-    return results.map((row) => ({
-      ...row,
-      cover: row.cover || "",
-      filename: `${row.slug}.md`,
-    }));
+    return results.map((row) => ({ ...row, cover: row.cover || "", filename: `${row.slug}.md` }));
   }
 
   if (type === "daily") {
     const { results } = await db
       .prepare("SELECT filename, date, title, content, image_url, created_at FROM daily ORDER BY created_at DESC, date DESC")
       .all<DailyRow>();
-
     return results.map((row) => ({
       filename: row.filename,
       title: row.title || "",
@@ -235,7 +139,6 @@ async function listD1Items(db: D1DatabaseLike, type: AdminContentType): Promise<
     const { results } = await db
       .prepare("SELECT filename, title, date, image_url, content FROM moments ORDER BY date DESC")
       .all<MomentRow>();
-
     return results.map((row) => ({
       filename: row.filename,
       title: row.title || "",
@@ -278,68 +181,10 @@ async function listD1Items(db: D1DatabaseLike, type: AdminContentType): Promise<
 }
 
 export async function listAdminItems(db: D1DatabaseLike | null, type: AdminContentType) {
-  if (db) return listD1Items(db, type);
-  return listLocalItems(type);
+  return listDatabaseItems(requireDatabase(db), type);
 }
 
-async function saveLocalItem(type: AdminEditableType, data: unknown) {
-  const local = await getLocalContent();
-  if (!local) throw new Error("No writable local content storage is available.");
-
-  const payload = isRecord(data) ? data : {};
-  const dir = localDir(local, type);
-  await local.fs.mkdir(dir, { recursive: true });
-
-  if (type === "post") {
-    const date = normalizeDate(payload.date) || new Date().toISOString().slice(0, 10);
-    const slug = safeSegment(stringValue(payload.slug) || date.replace(/-/g, "").slice(2), "post");
-    const filename = safeMarkdownFilename(stringValue(payload.filename)) || `${slug}.md`;
-    const filePath = local.path.join(dir, filename);
-
-    const fileContent = matter.stringify(stringValue(payload.content), {
-      title: stringValue(payload.title, slug),
-      date,
-      description: stringValue(payload.description),
-      category: categoryValue(payload.category),
-      cover: stringValue(payload.cover),
-    });
-
-    await local.fs.writeFile(filePath, fileContent, "utf8");
-    return;
-  }
-
-  if (type === "daily") {
-    // 碎片化模型：每条日常独立成文件，不再按日期合并。编辑时复用原 filename。
-    const timestamp = Date.now();
-    const date = normalizeDate(payload.date) || new Date().toISOString().slice(0, 10);
-    const filename = safeMarkdownFilename(stringValue(payload.filename)) || `daily_${timestamp}.md`;
-    const filePath = local.path.join(dir, filename);
-
-    await local.fs.writeFile(
-      filePath,
-      matter.stringify(stringValue(payload.content), {
-        date,
-        title: stringValue(payload.title),
-        imageUrl: stringValue(payload.imageUrl),
-      }),
-      "utf8",
-    );
-    return;
-  }
-
-  const timestamp = Date.now();
-  const filename = safeMarkdownFilename(stringValue(payload.filename)) || `moment_${timestamp}.md`;
-  const date = normalizeDate(payload.date) || new Date().toISOString().slice(0, 10);
-  const fileContent = matter.stringify(stringValue(payload.content), {
-    title: stringValue(payload.title, `Moment_${timestamp}`),
-    date,
-    image: stringValue(payload.imageUrl),
-  });
-
-  await local.fs.writeFile(local.path.join(dir, filename), fileContent, "utf8");
-}
-
-async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unknown) {
+async function saveDatabaseItem(db: D1DatabaseLike, type: AdminEditableType, data: unknown) {
   const payload = isRecord(data) ? data : {};
 
   if (type === "post") {
@@ -347,6 +192,14 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
     if (!slug) throw new Error("Post slug is required.");
 
     const content = stringValue(payload.content);
+    const originalSlug = safeSegment(stringValue(payload.filename).replace(/\.md$/, ""), "");
+    if (originalSlug && originalSlug !== slug) {
+      const existingTarget = await db
+        .prepare("SELECT slug FROM posts WHERE slug = ?")
+        .bind(slug)
+        .first<{ slug: string }>();
+      if (existingTarget) throw new Error("The target post slug already exists.");
+    }
 
     await db
       .prepare(
@@ -372,25 +225,25 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
       )
       .run();
 
-    // 方案 C：发布后预热 D1 渲染缓存。优先用客户端随保存一并送来的渲染结果
-    // （方案 B 预览已用同一管线在浏览器渲染好），从而保存路径也不在 Worker 跑 Shiki/KaTeX。
+    if (originalSlug && originalSlug !== slug) {
+      await db.prepare("UPDATE comments SET slug = ? WHERE slug = ?").bind(slug, originalSlug).run();
+      await db.prepare("DELETE FROM posts WHERE slug = ?").bind(originalSlug).run();
+    }
+
     const prerendered = isRecord(payload.rendered)
       ? {
           html: typeof payload.rendered.html === "string" ? payload.rendered.html : undefined,
           toc: Array.isArray(payload.rendered.toc) ? (payload.rendered.toc as TocItem[]) : undefined,
         }
       : undefined;
-    await warmPostRenderCache(slug, content, prerendered);
+    await warmPostRenderCache(db, slug, content, prerendered);
     return;
   }
 
   if (type === "daily") {
-    // 碎片化知识点：每条碎片独立成行。编辑已有碎片时沿用其 filename，
-    // 新建时按时间戳生成唯一 filename（daily_<ts>.md），不再按日期合并。
     const existingFilename = safeMarkdownFilename(stringValue(payload.filename));
     const date = normalizeDate(payload.date) || new Date().toISOString().slice(0, 10);
     const filename = existingFilename || `daily_${Date.now()}.md`;
-
     await db
       .prepare(
         `INSERT INTO daily (filename, date, title, content, image_url)
@@ -410,7 +263,16 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
   const timestamp = Date.now();
   const filename = safeMarkdownFilename(stringValue(payload.filename)) || `moment_${timestamp}.md`;
   await db
-    .prepare("INSERT INTO moments (filename, title, date, image_url, content) VALUES (?, ?, ?, ?, ?)")
+    .prepare(
+      `INSERT INTO moments (filename, title, date, image_url, content)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(filename) DO UPDATE SET
+         title = excluded.title,
+         date = excluded.date,
+         image_url = excluded.image_url,
+         content = excluded.content,
+         updated_at = datetime('now')`,
+    )
     .bind(
       filename,
       stringValue(payload.title, `Moment_${timestamp}`),
@@ -422,34 +284,14 @@ async function saveD1Item(db: D1DatabaseLike, type: AdminEditableType, data: unk
 }
 
 export async function saveAdminItem(db: D1DatabaseLike | null, type: AdminEditableType, data: unknown) {
-  if (db) {
-    await saveD1Item(db, type, data);
-    return;
-  }
-
-  await saveLocalItem(type, data);
+  await saveDatabaseItem(requireDatabase(db), type, data);
 }
 
-async function deleteLocalItem(type: AdminContentType, filename: string) {
-  if (type === "comment") return;
-
-  const local = await getLocalContent();
-  if (!local) throw new Error("No writable local content storage is available.");
-
-  const safeName = safeMarkdownFilename(filename);
-  if (!safeName) throw new Error("Invalid filename.");
-
-  const filePath = local.path.join(localDir(local, type), safeName);
-  try {
-    await local.fs.unlink(filePath);
-  } catch (error) {
-    if (!isRecord(error) || error.code !== "ENOENT") throw error;
-  }
-}
-
-async function deleteD1Item(db: D1DatabaseLike, type: AdminContentType, filename: string) {
+async function deleteDatabaseItem(db: D1DatabaseLike, type: AdminContentType, filename: string) {
   if (type === "post") {
-    await db.prepare("DELETE FROM posts WHERE slug = ?").bind(filename.replace(/\.md$/, "")).run();
+    const slug = filename.replace(/\.md$/, "");
+    await db.prepare("DELETE FROM comments WHERE slug = ?").bind(slug).run();
+    await db.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
   } else if (type === "daily") {
     await db.prepare("DELETE FROM daily WHERE filename = ?").bind(filename).run();
   } else if (type === "moment") {
@@ -460,10 +302,5 @@ async function deleteD1Item(db: D1DatabaseLike, type: AdminContentType, filename
 }
 
 export async function deleteAdminItem(db: D1DatabaseLike | null, type: AdminContentType, filename: string) {
-  if (db) {
-    await deleteD1Item(db, type, filename);
-    return;
-  }
-
-  await deleteLocalItem(type, filename);
+  await deleteDatabaseItem(requireDatabase(db), type, filename);
 }

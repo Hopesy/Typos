@@ -1,237 +1,101 @@
-# 数据库配置指南
+# 数据库配置
 
-Typos 支持多种数据库后端，可以根据部署环境灵活选择。
+Typos 的运行时数据库边界是 libSQL 兼容接口，当前支持 Cloudflare D1、Turso/libSQL 和本地 libSQL SQLite 文件。项目不支持 PostgreSQL、Neon、Supabase 或 Better-SQLite3。
 
-## 支持的数据库
+## 支持的后端
 
-### 1. **Cloudflare D1**（推荐用于生产）
-- **适用场景**：Cloudflare Pages/Workers 部署
-- **配置**：无需额外配置，自动检测 D1 绑定
-- **优势**：全球边缘分布、零配置、免费额度高
+| 后端 | 用途 | 配置 |
+| --- | --- | --- |
+| Cloudflare D1 | 线上 Worker | `wrangler.jsonc` 的 `DB` binding，无需 `DATABASE_URL` |
+| Turso/libSQL | 远程或边缘数据库 | `DATABASE_URL=libsql://...`、`TURSO_AUTH_TOKEN=...` |
+| 本地 libSQL 文件 | 本地开发和测试 | 未设置 `DATABASE_URL` 时默认 `./data/typos.db`，或使用 `DATABASE_URL=file:./data/typos.db` |
 
-### 2. **Better-SQLite3**（推荐用于本地开发）
-- **适用场景**：本地开发、测试
-- **配置**：自动在 `./data/typos.db` 创建数据库
-- **优势**：零配置、快速、无需外部服务
+Cloudflare 运行时从 `DB` binding 读取数据；本地 Next 开发服务无法使用 D1 binding 时，数据库模块会创建或打开本地 libSQL 文件。任何连接、SQL 或迁移错误都会向上抛出，避免把故障误报为“没有文章”。
 
-**安装依赖**：
+## 本地开发
+
 ```bash
-npm install better-sqlite3 --save-optional
-npm install @types/better-sqlite3 --save-dev
+npm ci
+npm run db:migrate
+npm run dev
 ```
 
-### 3. **PostgreSQL**（推荐用于 Vercel/通用部署）
-- **适用场景**：Vercel、Netlify、自建服务器
-- **支持的服务**：Neon、Supabase、Railway、任何 PostgreSQL
-- **配置**：设置 `DATABASE_URL` 环境变量
+数据库默认创建在 `./data/typos.db`。管理员使用前，在 `.env.local` 设置 `ADMIN_PASSWORD` 和 `ADMIN_SESSION_SECRET`。
 
-**安装依赖**：
-```bash
-# Neon (推荐用于 Vercel)
-npm install @neondatabase/serverless
+## Turso/libSQL
 
-# 或使用通用 postgres.js
-npm install postgres
-```
-
-**环境变量**：
-```bash
-DATABASE_URL=postgres://user:password@host:5432/database
-# 或 Neon
-DATABASE_URL=neon://user:password@host/database
-```
-
-### 4. **Turso**（推荐用于边缘部署）
-- **适用场景**：需要边缘复制的 SQLite
-- **配置**：设置 `DATABASE_URL` 和 `TURSO_AUTH_TOKEN`
-- **优势**：全球复制、低延迟
-
-**安装依赖**：
-```bash
-npm install @libsql/client
-```
-
-**环境变量**：
-```bash
+```dotenv
 DATABASE_URL=libsql://your-db.turso.io
 TURSO_AUTH_TOKEN=your_token_here
 ```
 
----
+迁移脚本会按 `migrations/*.sql` 文件名顺序执行，并在 `typos_migrations` 表记录已执行文件。已有旧库会根据真实表结构登记基础迁移；只有实际存在渲染缓存列时才登记 `0002`。具有清空旧 `daily` 数据语义的 `0003` 会保守登记为已执行，避免迁移历史缺失导致数据被再次删除。
 
-## 快速开始
+## Cloudflare D1
 
-### 本地开发（SQLite）
+`wrangler.jsonc` 已包含真实绑定：
 
-1. 安装依赖：
-```bash
-npm install better-sqlite3 --save-optional
+```jsonc
+{
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "typos-db",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
 ```
 
-2. 初始化数据库：
-```bash
-npm run db:migrate
-```
-
-3. 启动开发服务器：
-```bash
-npm run dev
-```
-
-数据库会自动创建在 `./data/typos.db`。
-
-### Vercel 部署（PostgreSQL + Neon）
-
-1. 在 [Neon](https://neon.tech) 创建数据库
-
-2. 在 Vercel 项目设置中添加环境变量：
-```
-DATABASE_URL=your_neon_connection_string
-ADMIN_PASSWORD=your_admin_password
-```
-
-3. 部署：
-```bash
-vercel --prod
-```
-
-### Cloudflare Pages 部署（D1）
-
-1. 创建 D1 数据库：
-```bash
-wrangler d1 create typos-db
-```
-
-2. 在 `wrangler.toml` 中配置：
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "typos-db"
-database_id = "your-database-id"
-```
-
-3. 运行迁移：
-```bash
-wrangler d1 execute typos-db --file=./migrations/0001_init.sql
-```
-
-4. 部署：
-```bash
-npm run deploy
-```
-
----
-
-## 数据库迁移
-
-### 初始化数据库结构
-
-**SQLite / D1：**
-```bash
-# 本地 SQLite
-npm run db:migrate
-
-# Cloudflare D1
-wrangler d1 execute typos-db --file=./migrations/0001_init.sql
-```
-
-**PostgreSQL：**
-```bash
-# 自动运行迁移（需要先设置 DATABASE_URL）
-npm run db:migrate:pg
-```
-
----
-
-## 环境变量参考
+手动迁移命令：
 
 ```bash
-# 数据库连接（选择其一）
-DATABASE_URL=postgres://...  # PostgreSQL/Neon
-DATABASE_URL=libsql://...    # Turso
-# 或使用 Cloudflare D1 绑定（无需配置）
-
-# Turso 认证（仅 Turso 需要）
-TURSO_AUTH_TOKEN=your_token
-
-# 管理员密码（必需）
-ADMIN_PASSWORD=your_secure_password
-
-# Session 密钥（可选，建议设置）
-ADMIN_SESSION_SECRET=random_secret_key
+npm run db:migrations:apply         # 远端 D1
+npm run db:migrations:apply:local   # 本地 D1
 ```
 
----
+生产部署脚本 `npm run deploy:worker` 会在 OpenNext 部署前自动执行远端迁移。
 
-## 性能对比
+## 数据表
 
-| 数据库 | 延迟 | 并发 | 成本 | 适用场景 |
-|--------|------|------|------|----------|
-| D1 | 极低（边缘） | 高 | 免费 | Cloudflare 部署 |
-| Turso | 低（边缘复制） | 高 | 免费层+付费 | 全球分布应用 |
-| Neon | 低 | 高 | 免费层+付费 | Vercel/通用 |
-| SQLite | 极低（本地） | 中 | 免费 | 开发/测试/自建 |
-
----
+- `posts`：文章和渲染缓存字段。
+- `daily`：日常碎片，每条记录有独立 `filename`。
+- `moments`：照片瞬间。
+- `comments`：评论和回复，`contact` 只供后台和通知使用，公开 GET 不返回。
+- `rate_limits`：评论限流记录。
+- `admin_login_attempts`：管理员登录失败窗口和封禁时间。
+- `api_tokens`：API Token 哈希、状态和过期时间。
+- `typos_migrations`：本地/Turso 迁移历史。
 
 ## 故障排查
 
-### SQLite 无法连接
-```bash
-# 确保已安装依赖
-npm install better-sqlite3
+### 本地数据库打不开
 
-# 确保 data 目录可写
-mkdir -p data
-chmod 755 data
+确认 `data` 目录可写，并重新运行：
+
+```bash
+npm run db:migrate
 ```
 
-### PostgreSQL 连接超时
-```bash
-# 检查连接字符串格式
-echo $DATABASE_URL
+### Turso/libSQL 连接失败
 
-# 测试连接
-npx pg-test $DATABASE_URL
-```
+确认 URL 以 `libsql://` 开头，并同时设置 `TURSO_AUTH_TOKEN`。PostgreSQL URL 会被明确拒绝，而不是被当作 SQLite 处理。
 
-### D1 数据库未找到
+### D1 找不到绑定
+
+确认 `wrangler.jsonc` 中的 binding 名为 `DB`，并检查：
+
 ```bash
-# 检查绑定配置
-wrangler pages project list
 wrangler d1 list
-
-# 确保已运行迁移
-wrangler d1 execute typos-db --file=./migrations/0001_init.sql
+npm run db:migrations:apply
 ```
 
----
+## 迁移边界
 
-## 数据迁移
+`content/` 下的 Markdown 文件可以用于导入和示例，但不是数据库不可用时的自动回退来源。项目没有 `npm run db:migrate:pg`，也没有 PostgreSQL 转换迁移路径。
 
-### 从文件系统迁移到数据库
-
-```bash
-# 扫描 content/ 目录并导入到数据库
-npm run db:import
-```
-
-### 从 D1 迁移到 PostgreSQL
-
-```bash
-# 1. 导出 D1 数据
-wrangler d1 export typos-db --output=backup.sql
-
-# 2. 转换为 PostgreSQL 格式（需要手动调整语法）
-# 3. 导入到 PostgreSQL
-psql $DATABASE_URL < backup-converted.sql
-```
-
----
-
-## 更多信息
+更多信息：
 
 - [Cloudflare D1 文档](https://developers.cloudflare.com/d1/)
-- [Neon 文档](https://neon.tech/docs)
 - [Turso 文档](https://docs.turso.tech/)
-- [Better-SQLite3 文档](https://github.com/WiseLibs/better-sqlite3)
+- [libSQL 客户端](https://github.com/tursodatabase/libsql-client-ts)

@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeSlug from 'rehype-slug';
 import rehypeKatex from 'rehype-katex';
 import rehypeShikiFromHighlighter from '@shikijs/rehype/core';
@@ -33,6 +34,14 @@ type HastNode = {
 
 const isElement = (node: HastNode, tag: string): boolean =>
   node.type === 'element' && node.tagName === tag;
+
+const markdownSanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    img: [...(defaultSchema.attributes?.img ?? []), 'loading'],
+  },
+};
 
 function classList(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((c): c is string => typeof c === 'string');
@@ -141,6 +150,7 @@ export async function renderArticle(content: string): Promise<{ html: string; to
     .use(remarkMath)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeSanitize, markdownSanitizeSchema)
     .use(rehypeSlug)
     .use(rehypeCollectHeadings, headings)
     .use(rehypeExternalLinks)

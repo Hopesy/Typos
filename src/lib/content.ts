@@ -1,4 +1,4 @@
-import { getDatabase } from "@/lib/database";
+import { getDatabase, type Database } from "@/lib/database";
 
 export type TocItem = { depth: number; text: string; id: string };
 
@@ -151,13 +151,11 @@ export async function getRenderedPost(
 // 优先采用客户端已渲染好的 HTML/TOC（方案 B 预览复用同一管线，零 Worker CPU）；
 // 缺省时回退为服务端渲染一次。任何失败都不抛出——读取路径仍可现场兜底。
 export async function warmPostRenderCache(
+  db: Database,
   slug: string,
   content: string,
   prerendered?: { html?: string; toc?: TocItem[] }
 ): Promise<void> {
-  const db = await getDatabase();
-  if (!db) return;
-
   try {
     let html = prerendered?.html;
     let toc = prerendered?.toc;

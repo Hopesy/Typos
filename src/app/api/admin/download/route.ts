@@ -1,9 +1,7 @@
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import matter from 'gray-matter';
 import { getDatabase } from '@/lib/database';
-
-const ADMIN_SESSION_KEY = 'typos_admin';
+import { requireAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -80,32 +78,9 @@ async function fromDatabase(type: AdminType, filename: string): Promise<Download
   return row ? { markdown: buildMarkdown('moment', row), title: str(row.title) } : null;
 }
 
-// 回退路径：基于文件的本地内容目录（content/<dir>/<filename>）。
-async function fromFileSystem(type: AdminType, filename: string): Promise<DownloadResult | null> {
-  try {
-    const [{ default: fs }, { default: path }] = await Promise.all([
-      import('node:fs/promises'),
-      import('node:path'),
-    ]);
-    const typeMap: Record<AdminType, string> = { post: 'posts', daily: 'daily', moment: 'moments' };
-    const contentRoot = path.join(process.cwd(), 'content');
-    const dirPath = path.normalize(path.join(contentRoot, typeMap[type]));
-    const filePath = path.normalize(path.join(dirPath, filename));
-    if (!filePath.startsWith(dirPath)) return null;
-    const markdown = await fs.readFile(filePath, 'utf-8');
-    return { markdown, title: str(matter(markdown).data.title) };
-  } catch {
-    return null;
-  }
-}
-
 export async function GET(request: Request) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get(ADMIN_SESSION_KEY);
-
-  if (!session?.value) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
 
   const url = new URL(request.url);
   const type = url.searchParams.get('type');
@@ -115,13 +90,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
   }
 
-  // 阻止路径穿越（用于文件系统回退）
+  // filename is a single database identifier, never a path.
   if (filename.includes('/') || filename.includes('\\') || filename.includes('..')) {
     return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
   }
 
   const adminType = type as AdminType;
-  const result = (await fromDatabase(adminType, filename)) ?? (await fromFileSystem(adminType, filename));
+  const result = await fromDatabase(adminType, filename);
 
   if (result == null) {
     return NextResponse.json({ error: 'File not found' }, { status: 404 });

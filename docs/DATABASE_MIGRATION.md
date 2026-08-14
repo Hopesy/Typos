@@ -1,113 +1,53 @@
-# 多数据库支持更新说明
+# 数据库迁移说明
 
-## 🎉 新功能
+Typos 只维护一套 SQLite/libSQL 方言迁移，适用于 Cloudflare D1、Turso/libSQL 和本地 libSQL 文件。不存在 PostgreSQL、Neon 或 Better-SQLite3 迁移脚本。
 
-Typos 现在支持多种数据库后端，不再局限于 Cloudflare D1！
-
-### 支持的数据库
-
-- ✅ **Cloudflare D1** - 生产环境推荐
-- ✅ **Better-SQLite3** - 本地开发推荐  
-- ✅ **PostgreSQL (Neon/Supabase)** - Vercel 部署推荐
-- ✅ **Turso** - 边缘 SQLite 推荐
-
----
-
-## 🚀 快速开始
-
-### 1. 本地开发（推荐）
-
-使用 Better-SQLite3，无需额外配置：
+## 本地或 Turso
 
 ```bash
-# 安装可选依赖
-npm install better-sqlite3
-
-# 初始化数据库
+# 本地：默认 ./data/typos.db
 npm run db:migrate
 
-# 启动开发服务器
-npm run dev
-```
-
-数据库会自动创建在 `./data/typos.db`
-
-### 2. Vercel 部署 + Neon PostgreSQL
-
-```bash
-# 1. 安装 PostgreSQL 客户端
-npm install @neondatabase/serverless
-
-# 2. 在 Neon 创建数据库并获取连接字符串
-
-# 3. 在 Vercel 设置环境变量
-# DATABASE_URL=postgres://...
-# ADMIN_PASSWORD=your_password
-
-# 4. 部署
-vercel --prod
-```
-
-### 3. 其他平台部署
-
-详见 [DATABASE.md](./docs/DATABASE.md)
-
----
-
-## 📝 环境变量
-
-```bash
-# 选择数据库（三选一）
-DATABASE_URL=postgres://...      # PostgreSQL/Neon
-DATABASE_URL=libsql://...        # Turso
-# 或使用 Cloudflare D1（无需配置）
-
-# Turso 认证（仅 Turso 需要）
-TURSO_AUTH_TOKEN=your_token
-
-# 管理员密码（必需）
-ADMIN_PASSWORD=your_password
-```
-
----
-
-## 🔧 迁移现有项目
-
-### 从 Cloudflare D1 迁移
-
-如果你已经在 Cloudflare 上运行，**无需任何改动**！代码会自动检测并使用 D1。
-
-### 添加本地开发支持
-
-```bash
-# 1. 安装 SQLite
-npm install better-sqlite3
-
-# 2. 运行迁移
+# Turso：先设置 DATABASE_URL 和 TURSO_AUTH_TOKEN
+$env:DATABASE_URL = "libsql://your-db.turso.io"
+$env:TURSO_AUTH_TOKEN = "your-token"
 npm run db:migrate
-
-# 3. 现在可以在本地开发了
-npm run dev
 ```
 
----
+脚本会：
 
-## 📚 更多信息
+1. 创建 `typos_migrations` 历史表。
+2. 按文件名排序读取 `migrations/*.sql`。
+3. 跳过已经记录的 migration。
+4. 对已有旧数据库登记 `0001_init.sql`；检查 `posts` 的真实列后决定是否登记或执行 `0002_render_cache.sql`；保守登记具有清空语义的 `0003_daily_fragments.sql`。
+5. 每个文件的所有语句成功后才记录该文件。
 
-- [完整数据库配置文档](./docs/DATABASE.md)
-- [迁移脚本说明](./scripts/migrate.js)
-- [数据库适配器源码](./src/lib/database.ts)
+## Cloudflare D1
 
----
+```bash
+npm run db:migrations:apply         # 远端生产数据库
+npm run db:migrations:apply:local   # Wrangler 本地 D1
+```
 
-## ⚠️ 注意事项
+部署时使用：
 
-1. **兼容性**：新的 `database.ts` 替代了 `cloudflare.ts` 中的数据库部分
-2. **迁移**：现有 D1 部署无需任何改动，自动向后兼容
-3. **依赖**：数据库客户端都是 **可选依赖**，只需安装你使用的那个
+```bash
+npm run build:worker
+npm run deploy:worker
+```
 
----
+`deploy:worker` 会先运行 `wrangler d1 migrations apply DB --remote`，再执行 `opennextjs-cloudflare deploy`。
 
-## 🐛 问题反馈
+## 新增 migration
 
-遇到问题？请查看 [DATABASE.md](./docs/DATABASE.md) 的故障排查部分。
+文件名必须使用递增编号，例如 `0005_example.sql`。SQL 使用 SQLite/D1 兼容语法；不要加入 PostgreSQL 专属类型、占位符或事务假设。提交前至少执行：
+
+```bash
+npm run db:migrate
+npm run lint
+npx tsc --noEmit
+```
+
+## 现有旧库
+
+旧库如果已经有 `posts` 表，迁移脚本会登记基础迁移并确保缺失的渲染缓存列得到补齐，但不会再次执行会清空 `daily` 的 `0003_daily_fragments.sql`。新库则从 `0001` 开始完整执行到当前版本。

@@ -1,146 +1,138 @@
 #!/usr/bin/env node
 
-/**
- * 数据库迁移脚本
- *
- * 用法：
- *   node scripts/migrate.js          # 运行所有迁移
- *   node scripts/migrate.js init     # 仅初始化表结构
- */
-
 const fs = require('fs');
 const path = require('path');
+const { fileURLToPath } = require('url');
+const { createClient } = require('@libsql/client');
 
-async function getDatabase() {
-  const databaseUrl = process.env.DATABASE_URL;
+const BASE_MIGRATION = '0001_init.sql';
+const RENDER_CACHE_MIGRATION = '0002_render_cache.sql';
+const DAILY_FRAGMENTS_MIGRATION = '0003_daily_fragments.sql';
 
-  if (!databaseUrl) {
-    // 使用本地 SQLite (libsql)
-    console.log('Using local SQLite database (libsql)...');
-    const { createClient } = require('@libsql/client');
-    const dbPath = path.join(process.cwd(), 'data', 'typos.db');
+function splitSqlStatements(sql) {
+  const statements = [];
+  let current = '';
+  let quote = null;
 
-    // 确保目录存在
-    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  for (let index = 0; index < sql.length; index += 1) {
+    const char = sql[index];
+    const next = sql[index + 1];
 
-    const client = createClient({
-      url: `file:${dbPath}`
-    });
+    if (quote && char === quote && next === quote) {
+      current += char + next;
+      index += 1;
+      continue;
+    }
 
-    return {
-      exec: async (sql) => {
-        // 分割并执行多条语句
-        // 更智能的分割：跳过字符串内的分号
-        const statements = [];
-        let current = '';
-        let inString = false;
-        let stringChar = null;
+    if (char === "'" || char === '"') {
+      quote = quote === char ? null : quote || char;
+    }
 
-        for (let i = 0; i < sql.length; i++) {
-          const char = sql[i];
-          const prevChar = i > 0 ? sql[i - 1] : '';
-
-          if ((char === "'" || char === '"') && prevChar !== '\\') {
-            if (!inString) {
-              inString = true;
-              stringChar = char;
-            } else if (char === stringChar) {
-              inString = false;
-              stringChar = null;
-            }
-          }
-
-          if (char === ';' && !inString) {
-            if (current.trim()) {
-              statements.push(current.trim());
-            }
-            current = '';
-          } else {
-            current += char;
-          }
-        }
-
-        // 添加最后一条语句
-        if (current.trim()) {
-          statements.push(current.trim());
-        }
-
-        // 执行所有语句
-        for (const statement of statements) {
-          if (statement) {
-            try {
-              await client.execute(statement);
-            } catch (error) {
-              // 容忍重复迁移：列/表已存在时跳过，保证脚本可重复运行
-              if (/duplicate column name|already exists/i.test(error.message || '')) {
-                continue;
-              }
-              console.error(`Error executing statement: ${statement.substring(0, 100)}...`);
-              throw error;
-            }
-          }
-        }
-      },
-      close: () => client.close(),
-    };
+    if (char === ';' && !quote) {
+      if (current.trim()) statements.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
   }
 
-  if (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('neon://')) {
-    // PostgreSQL
-    console.log('Using PostgreSQL database...');
-    const postgres = require('postgres');
-    const sql = postgres(databaseUrl);
+  if (current.trim()) statements.push(current.trim());
+  return statements;
+}
 
-    return {
-      exec: async (query) => {
-        await sql.unsafe(query);
-      },
-      close: () => sql.end(),
-    };
+async function createMigrationClient() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    const dbPath = path.join(process.cwd(), 'data', 'typos.db');
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    console.log(`Using local libSQL database: ${dbPath}`);
+    return createClient({ url: `file:${dbPath}` });
   }
 
   if (databaseUrl.startsWith('libsql://')) {
-    // Turso
-    console.log('Using Turso database...');
-    const { createClient } = require('@libsql/client');
-    const client = createClient({
-      url: databaseUrl,
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
-
-    return {
-      exec: async (query) => {
-        await client.execute(query);
-      },
-      close: () => client.close(),
-    };
+    if (!process.env.TURSO_AUTH_TOKEN) {
+      throw new Error('TURSO_AUTH_TOKEN is required for a libSQL database URL.');
+    }
+    console.log('Using remote libSQL database.');
+    return createClient({ url: databaseUrl, authToken: process.env.TURSO_AUTH_TOKEN });
   }
 
-  throw new Error('Unsupported DATABASE_URL format');
+  if (databaseUrl.startsWith('file:') || databaseUrl.endsWith('.db')) {
+    const url = databaseUrl.startsWith('file:') ? databaseUrl : `file:${databaseUrl}`;
+    const filePath = databaseUrl.startsWith('file://')
+      ? fileURLToPath(databaseUrl)
+      : databaseUrl.replace(/^file:/, '');
+    if (!filePath) throw new Error('Local database path is empty.');
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    console.log(`Using configured local libSQL database: ${filePath}`);
+    return createClient({ url });
+  }
+
+  throw new Error('Unsupported DATABASE_URL. Migrations support file:, local .db paths, and libsql:// only.');
+}
+
+async function initializeMigrationHistory(client) {
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS typos_migrations (
+      name TEXT PRIMARY KEY,
+      applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  const applied = await client.execute('SELECT name FROM typos_migrations');
+  if (applied.rows.length > 0) return;
+
+  const existingSchema = await client.execute(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'posts'",
+  );
+  if (existingSchema.rows.length === 0) return;
+
+  const historicalMigrations = [BASE_MIGRATION, DAILY_FRAGMENTS_MIGRATION];
+  const postColumns = await client.execute('PRAGMA table_info(posts)');
+  const columnNames = new Set(postColumns.rows.map((row) => String(row.name)));
+  if (['rendered_html', 'rendered_toc', 'render_hash'].every((name) => columnNames.has(name))) {
+    historicalMigrations.push(RENDER_CACHE_MIGRATION);
+  }
+
+  for (const name of historicalMigrations) {
+    await client.execute({
+      sql: 'INSERT OR IGNORE INTO typos_migrations (name) VALUES (?)',
+      args: [name],
+    });
+  }
+  console.log('Registered historical migrations for the existing database.');
 }
 
 async function runMigration() {
-  const db = await getDatabase();
+  const client = await createMigrationClient();
 
   try {
+    await initializeMigrationHistory(client);
     const migrationsDir = path.join(process.cwd(), 'migrations');
-    const files = fs
-      .readdirSync(migrationsDir)
-      .filter((f) => f.endsWith('.sql'))
-      .sort();
+    const files = fs.readdirSync(migrationsDir).filter((file) => file.endsWith('.sql')).sort();
+    const appliedResult = await client.execute('SELECT name FROM typos_migrations');
+    const applied = new Set(appliedResult.rows.map((row) => String(row.name)));
 
     for (const file of files) {
-      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+      if (applied.has(file)) {
+        console.log(`Skipping migration: ${file}`);
+        continue;
+      }
+
       console.log(`Running migration: ${file}`);
-      await db.exec(sql);
+      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+      const statements = splitSqlStatements(sql).map((statement) => ({ sql: statement, args: [] }));
+      statements.push({ sql: 'INSERT INTO typos_migrations (name) VALUES (?)', args: [file] });
+      await client.batch(statements, 'write');
     }
-    console.log('✓ Migrations completed successfully');
-  } catch (error) {
-    console.error('✗ Migration failed:', error.message);
-    process.exit(1);
+
+    console.log('Migrations completed successfully.');
   } finally {
-    await db.close();
+    client.close();
   }
 }
 
-runMigration();
+runMigration().catch((error) => {
+  console.error('Migration failed:', error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

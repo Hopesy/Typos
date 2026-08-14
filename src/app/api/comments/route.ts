@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase, getTyposEnv, readOptionalRuntimeEnv } from "@/lib/database";
 import { isAdminRequest } from "@/lib/admin-auth";
+import { consumeCommentRateLimit, getRequestAddress } from "@/lib/request-security";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,6 @@ type CommentRow = {
   id: string;
   nickname: string;
   content: string;
-  contact: string;
   created_at: string;
   is_admin: number;
   parent_id: string | null;
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   try {
     const { results } = await db
       .prepare(
-        "SELECT id, nickname, content, contact, created_at, is_admin, parent_id FROM comments WHERE slug = ? ORDER BY created_at ASC",
+        "SELECT id, nickname, content, created_at, is_admin, parent_id FROM comments WHERE slug = ? ORDER BY created_at ASC",
       )
       .bind(slug)
       .all<CommentRow>();
@@ -103,31 +103,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Comment too long" }, { status: 400 });
     }
 
+    const post = await db
+      .prepare("SELECT slug FROM posts WHERE slug = ?")
+      .bind(slug)
+      .first<{ slug: string }>();
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
     const isAdmin = await isAdminRequest(req);
 
     if (!isAdmin) {
-      const ip =
-        req.headers.get("cf-connecting-ip") ||
-        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        "unknown";
-      const now = Date.now();
-      const limitWindow = 60 * 1000;
-      const record = await db
-        .prepare("SELECT last_comment_at FROM rate_limits WHERE ip_address = ?")
-        .bind(ip)
-        .first<{ last_comment_at: number }>();
-
-      if (record && now - record.last_comment_at < limitWindow) {
-        const timeLeft = Math.ceil((limitWindow - (now - record.last_comment_at)) / 1000);
-        return NextResponse.json({ error: `Too many comments. Please wait ${timeLeft}s.` }, { status: 429 });
+      const limit = await consumeCommentRateLimit(db, getRequestAddress(req));
+      if (!limit.allowed) {
+        const response = NextResponse.json(
+          { error: `Too many comments. Please wait ${limit.retryAfterSeconds}s.` },
+          { status: 429 },
+        );
+        response.headers.set("Retry-After", String(limit.retryAfterSeconds));
+        return response;
       }
-
-      await db
-        .prepare(
-          "INSERT INTO rate_limits (ip_address, last_comment_at) VALUES (?, ?) ON CONFLICT(ip_address) DO UPDATE SET last_comment_at = ?",
-        )
-        .bind(ip, now, now)
-        .run();
     }
 
     if (parentId) {
