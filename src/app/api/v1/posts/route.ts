@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       return noStore(NextResponse.json({ error: "Post content is required." }, { status: 400 }));
     }
 
-    await saveAdminItem(db, "post", payload);
+    await saveAdminItem(db, "post", payload, { allowPostUpsert: true });
 
     return noStore(NextResponse.json({ success: true, slug: payload.slug }));
   } catch (error: unknown) {

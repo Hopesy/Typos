@@ -42,7 +42,8 @@ import { useTranslations } from "next-intl";
 import { DashboardView, type DashboardData } from '@/components/admin/dashboard-view';
 import { MarkdownTools, type MdTool } from '@/components/admin/markdown-tools';
 import { TokensView, type ApiToken } from '@/components/admin/tokens-view';
-import { buildPostDataFromMarkdown, downloadNameFromItem, type PostData } from '@/lib/admin-markdown';
+import { buildPostDataFromMarkdown, createPostDraft, createPostEditData, downloadNameFromItem, type PostData } from '@/lib/admin-markdown';
+import { currentPostDate } from '@/lib/post-payload';
 
 type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment' | 'tokens';
 
@@ -84,7 +85,8 @@ type AdminItem = {
     content?: string;
     slug?: string;
     imageUrl?: string;
-    category?: string;
+    category?: string | string[];
+    cover?: string;
     nickname?: string;
     contact?: string;
     articleTitle?: string;
@@ -112,10 +114,9 @@ export default function AdminPage() {
 
 
     // Form states
-    const today = new Date().toISOString().split('T')[0];
-    const defaultSlug = today.replace(/-/g, '').slice(2); // YYMMDD
+    const today = currentPostDate();
 
-    const [postData, setPostData] = useState<PostData>({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: ['随笔'], cover: '' });
+    const [postData, setPostData] = useState<PostData>({ title: '', date: today, description: '', content: '', slug: '', category: ['随笔'], cover: '' });
     const postHistoryRef = useRef<PostEditorHistory>({
         past: [],
         current: { content: '', selectionStart: 0, selectionEnd: 0 },
@@ -170,11 +171,6 @@ export default function AdminPage() {
     const [replyContent, setReplyContent] = useState('');
     const [replyModalOpen, setReplyModalOpen] = useState(false);
 
-
-    // Helper to format date to slug
-    const dateToSlug = (dateStr: string) => {
-        return dateStr.replace(/-/g, '').slice(2);
-    };
 
     // Handle Authentication
     const handleLogin = async (e: React.FormEvent) => {
@@ -617,27 +613,10 @@ export default function AdminPage() {
         if (type === 'comment' || type === 'dashboard') return;
 
         if (type === 'post') {
-            // Parse category: handle both string and array formats
-            let categories: string[] = ['随笔'];
-            if (item.category) {
-                if (typeof item.category === 'string') {
-                    categories = item.category.split(',').map(c => c.trim()).filter(Boolean);
-                } else if (Array.isArray(item.category)) {
-                    categories = item.category;
-                }
-            }
-
-            const nextPostData = {
-                title: item.title || '',
-                date: item.date,
-                description: item.description || '',
-                content: item.content || '',
-                slug: item.slug || defaultSlug,
-                category: categories.length > 0 ? categories : ['随笔'],
-                cover: ''
-            };
+            const nextPostData = createPostEditData(item, currentPostDate());
             setPostData(nextPostData);
             resetPostContentHistory(nextPostData.content);
+            setIsSlugModified(true);
         } else if (type === 'daily') {
             setDailyData({
                 title: item.title || '',
@@ -660,7 +639,7 @@ export default function AdminPage() {
     };
 
     const resetPostEditorState = () => {
-        setPostData({ title: '', date: today, description: '', content: '', slug: defaultSlug, category: ['随笔'], cover: '' });
+        setPostData(createPostDraft(currentPostDate()));
         resetPostContentHistory('');
         setIsSlugModified(false);
         setIsEditing(false);
@@ -1493,7 +1472,7 @@ export default function AdminPage() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Label htmlFor="post-date" className="shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{tr('form.date')}</Label>
-                                                <Input id="post-date" type="date" value={postData.date} onChange={(e) => { const val = e.target.value; setPostData(prev => ({ ...prev, date: val, slug: isSlugModified ? prev.slug : dateToSlug(val) })); }} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm text-white focus:bg-neutral-900 [&::-webkit-calendar-picker-indicator]:invert" />
+                                                <Input id="post-date" type="date" value={postData.date} onChange={(e) => { const val = e.target.value; setPostData(prev => ({ ...prev, date: val, slug: isSlugModified ? prev.slug : createPostDraft(val).slug })); }} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm text-white focus:bg-neutral-900 [&::-webkit-calendar-picker-indicator]:invert" />
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Label htmlFor="post-slug" className="shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{tr('form.slug')}</Label>

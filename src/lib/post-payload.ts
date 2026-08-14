@@ -32,11 +32,15 @@ export function normalizePostSlug(value: string) {
     .toLowerCase();
 }
 
+export function currentPostDate(now = new Date()) {
+  return now.toISOString().slice(0, 10);
+}
+
 export function derivePostSlug(explicit: string, date: string, uniqueValue = crypto.randomUUID()) {
   const explicitSlug = normalizePostSlug(explicit);
   if (explicitSlug) return explicitSlug;
 
-  const datePart = (date || new Date().toISOString().slice(0, 10)).replace(/-/g, "").slice(2);
+  const datePart = (date || currentPostDate()).replace(/-/g, "").slice(2);
   const uniquePart = normalizePostSlug(uniqueValue).replace(/-/g, "").slice(0, 8) || "post";
   return `${datePart || "post"}-${uniquePart}`;
 }
@@ -66,7 +70,7 @@ export function postPayloadFromJson(
   body: Record<string, unknown>,
   uniqueValue?: string,
 ): PostPayload {
-  const date = stringValue(body.date).split("T")[0] || new Date().toISOString().slice(0, 10);
+  const date = stringValue(body.date).split("T")[0] || currentPostDate();
   const content = stringValue(body.content);
   return {
     title: stringValue(body.title) || firstMarkdownHeading(content) || "Untitled",
@@ -83,7 +87,7 @@ export function postPayloadFromMarkdown(raw: string, uniqueValue?: string): Post
   const parsed = matter(raw);
   const data = parsed.data as Record<string, unknown>;
   const content = parsed.content;
-  const date = stringValue(data.date).split("T")[0] || new Date().toISOString().slice(0, 10);
+  const date = stringValue(data.date).split("T")[0] || currentPostDate();
   return {
     title: stringValue(data.title) || firstMarkdownHeading(content) || "Untitled",
     date,

@@ -1,8 +1,16 @@
 import type { D1DatabaseLike } from "@/lib/database";
 import { warmPostRenderCache, type TocItem } from "@/lib/content";
+import { currentPostDate } from "@/lib/post-payload";
 
 export type AdminContentType = "post" | "daily" | "moment" | "comment";
 export type AdminEditableType = Exclude<AdminContentType, "comment">;
+
+export class AdminContentConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AdminContentConflictError";
+  }
+}
 
 export type AdminItem = {
   filename: string;
@@ -184,7 +192,16 @@ export async function listAdminItems(db: D1DatabaseLike | null, type: AdminConte
   return listDatabaseItems(requireDatabase(db), type);
 }
 
-async function saveDatabaseItem(db: D1DatabaseLike, type: AdminEditableType, data: unknown) {
+export type SaveAdminItemOptions = {
+  allowPostUpsert?: boolean;
+};
+
+async function saveDatabaseItem(
+  db: D1DatabaseLike,
+  type: AdminEditableType,
+  data: unknown,
+  options: SaveAdminItemOptions = {},
+) {
   const payload = isRecord(data) ? data : {};
 
   if (type === "post") {
@@ -193,37 +210,62 @@ async function saveDatabaseItem(db: D1DatabaseLike, type: AdminEditableType, dat
 
     const content = stringValue(payload.content);
     const originalSlug = safeSegment(stringValue(payload.filename).replace(/\.md$/, ""), "");
-    if (originalSlug && originalSlug !== slug) {
-      const existingTarget = await db
-        .prepare("SELECT slug FROM posts WHERE slug = ?")
-        .bind(slug)
-        .first<{ slug: string }>();
-      if (existingTarget) throw new Error("The target post slug already exists.");
-    }
+    const originalPost = originalSlug
+      ? await db
+          .prepare("SELECT date FROM posts WHERE slug = ?")
+          .bind(originalSlug)
+          .first<{ date: string }>()
+      : null;
+    const submittedDate = normalizeDate(payload.date);
+    const originalDate = normalizeDate(originalPost?.date);
+    const postDate = originalPost && (!submittedDate || submittedDate === originalDate)
+      ? currentPostDate()
+      : submittedDate || currentPostDate();
 
-    await db
-      .prepare(
-        `INSERT INTO posts (slug, title, date, description, category, content, cover)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(slug) DO UPDATE SET
-           title = excluded.title,
-           date = excluded.date,
-           description = excluded.description,
-           category = excluded.category,
-           content = excluded.content,
-           cover = excluded.cover,
-           updated_at = datetime('now')`,
-      )
-      .bind(
-        slug,
-        stringValue(payload.title, slug),
-        normalizeDate(payload.date) || new Date().toISOString().slice(0, 10),
-        stringValue(payload.description),
-        categoryValue(payload.category),
-        content,
-        stringValue(payload.cover),
-      )
-      .run();
+    const values = [
+      slug,
+      stringValue(payload.title, slug),
+      postDate,
+      stringValue(payload.description),
+      categoryValue(payload.category),
+      content,
+      stringValue(payload.cover),
+    ];
+    const isNewAdminPost = !originalSlug && !options.allowPostUpsert;
+    const isSlugChange = Boolean(originalSlug && originalSlug !== slug);
+
+    if (isNewAdminPost || isSlugChange) {
+      const inserted = await db
+        .prepare(
+          `INSERT INTO posts (slug, title, date, description, category, content, cover)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(slug) DO NOTHING
+           RETURNING slug`,
+        )
+        .bind(...values)
+        .first<{ slug: string }>();
+      if (!inserted) {
+        throw new AdminContentConflictError(
+          isSlugChange ? "The target post slug already exists." : "The post slug already exists.",
+        );
+      }
+    } else {
+      await db
+        .prepare(
+          `INSERT INTO posts (slug, title, date, description, category, content, cover)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(slug) DO UPDATE SET
+             title = excluded.title,
+             date = excluded.date,
+             description = excluded.description,
+             category = excluded.category,
+             content = excluded.content,
+             cover = excluded.cover,
+             updated_at = datetime('now')`,
+        )
+        .bind(...values)
+        .run();
+    }
 
     if (originalSlug && originalSlug !== slug) {
       await db.prepare("UPDATE comments SET slug = ? WHERE slug = ?").bind(slug, originalSlug).run();
@@ -283,8 +325,13 @@ async function saveDatabaseItem(db: D1DatabaseLike, type: AdminEditableType, dat
     .run();
 }
 
-export async function saveAdminItem(db: D1DatabaseLike | null, type: AdminEditableType, data: unknown) {
-  await saveDatabaseItem(requireDatabase(db), type, data);
+export async function saveAdminItem(
+  db: D1DatabaseLike | null,
+  type: AdminEditableType,
+  data: unknown,
+  options?: SaveAdminItemOptions,
+) {
+  await saveDatabaseItem(requireDatabase(db), type, data, options);
 }
 
 async function deleteDatabaseItem(db: D1DatabaseLike, type: AdminContentType, filename: string) {

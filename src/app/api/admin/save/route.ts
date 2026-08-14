@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
 import { requireAdmin } from "@/lib/admin-auth";
-import { isAdminEditableType, saveAdminItem } from "@/lib/admin-content";
+import { AdminContentConflictError, isAdminEditableType, saveAdminItem } from "@/lib/admin-content";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +30,11 @@ export async function POST(request: Request) {
     response.headers.set("Cache-Control", "no-store");
     return response;
   } catch (error: unknown) {
-    console.error("Save error:", error);
+    const isConflict = error instanceof AdminContentConflictError;
+    if (!isConflict) console.error("Save error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    const response = NextResponse.json({ error: message }, { status: 500 });
+    const status = isConflict ? 409 : 500;
+    const response = NextResponse.json({ error: message }, { status });
     response.headers.set("Cache-Control", "no-store");
     return response;
   }

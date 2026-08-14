@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveAdminItem } from '@/lib/admin-content';
+import { currentPostDate } from '@/lib/post-payload';
 import { createTestDatabase } from '@/lib/test-database';
 
 vi.mock('@/lib/content', () => ({
@@ -69,6 +70,55 @@ describe('admin content persistence', () => {
     expect(await db.prepare('SELECT slug FROM posts WHERE slug = ?').bind('old-slug').first()).toBeNull();
     expect(await db.prepare('SELECT slug, title FROM posts WHERE slug = ?').bind('new-slug').first()).toEqual({ slug: 'new-slug', title: 'New title' });
     expect(await db.prepare('SELECT slug FROM comments WHERE id = ?').bind('comment-1').first()).toEqual({ slug: 'new-slug' });
+  });
+
+  it('refreshes the date when an existing post is saved with its original date', async () => {
+    await db.prepare("INSERT INTO posts (slug, title, date, content) VALUES (?, ?, ?, ?)")
+      .bind('dated-post', 'Before', '2000-01-01', 'Old content')
+      .run();
+
+    await saveAdminItem(db, 'post', {
+      filename: 'dated-post.md',
+      slug: 'dated-post',
+      title: 'After',
+      date: '2000-01-01',
+      content: 'New content',
+    });
+
+    expect(await db.prepare('SELECT date, title FROM posts WHERE slug = ?').bind('dated-post').first())
+      .toEqual({ date: currentPostDate(), title: 'After' });
+  });
+
+  it('rejects a duplicate slug for a new admin post without overwriting the existing post', async () => {
+    await db.prepare("INSERT INTO posts (slug, title, date, content) VALUES (?, ?, ?, ?)")
+      .bind('existing-post', 'Original', '2026-08-14', 'Original content')
+      .run();
+
+    await expect(saveAdminItem(db, 'post', {
+      slug: 'existing-post',
+      title: 'Replacement',
+      date: '2026-08-14',
+      content: 'Replacement content',
+    })).rejects.toThrow('The post slug already exists.');
+
+    expect(await db.prepare('SELECT title, content FROM posts WHERE slug = ?').bind('existing-post').first())
+      .toEqual({ title: 'Original', content: 'Original content' });
+  });
+
+  it('keeps explicit API slug uploads idempotent', async () => {
+    await db.prepare("INSERT INTO posts (slug, title, date, content) VALUES (?, ?, ?, ?)")
+      .bind('api-post', 'Before', '2026-08-14', 'Old content')
+      .run();
+
+    await saveAdminItem(db, 'post', {
+      slug: 'api-post',
+      title: 'After',
+      date: '2026-08-15',
+      content: 'New content',
+    }, { allowPostUpsert: true });
+
+    expect(await db.prepare('SELECT title, date, content FROM posts WHERE slug = ?').bind('api-post').first())
+      .toEqual({ title: 'After', date: '2026-08-15', content: 'New content' });
   });
 
   it('updates a Moment by its original filename instead of inserting a duplicate', async () => {
