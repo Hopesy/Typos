@@ -30,6 +30,7 @@ type DownloadableAdminItem = {
 
 type EditablePostItem = {
   filename: string;
+  date?: string;
   title?: string;
   description?: string;
   content?: string;
@@ -64,18 +65,19 @@ export function safeAdminSlug(value: string, fallback: string) {
 
 export function createPostEditData(
   item: EditablePostItem,
-  currentDate: string,
+  fallbackDate: string,
   uniqueValue?: string,
 ): PostData {
   const categories = categoryValues(item.category);
   const storedSlug = safeAdminSlug(item.slug || item.filename, '');
+  const date = stringValue(item.date).split('T')[0] || fallbackDate;
 
   return {
     title: item.title || '',
-    date: currentDate,
+    date,
     description: item.description || '',
     content: item.content || '',
-    slug: storedSlug || derivePostSlug('', currentDate, uniqueValue),
+    slug: storedSlug || derivePostSlug('', date, uniqueValue),
     category: categories.length > 0 ? categories : ['随笔'],
     cover: item.cover || '',
   };

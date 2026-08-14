@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { saveAdminItem } from '@/lib/admin-content';
-import { currentPostDate } from '@/lib/post-payload';
+import { listAdminItems, saveAdminItem } from '@/lib/admin-content';
 import { createTestDatabase } from '@/lib/test-database';
 
 vi.mock('@/lib/content', () => ({
@@ -72,9 +71,9 @@ describe('admin content persistence', () => {
     expect(await db.prepare('SELECT slug FROM comments WHERE id = ?').bind('comment-1').first()).toEqual({ slug: 'new-slug' });
   });
 
-  it('refreshes the date when an existing post is saved with its original date', async () => {
-    await db.prepare("INSERT INTO posts (slug, title, date, content) VALUES (?, ?, ?, ?)")
-      .bind('dated-post', 'Before', '2000-01-01', 'Old content')
+  it('preserves the publication date and refreshes updated_at when an existing post is saved', async () => {
+    await db.prepare("INSERT INTO posts (slug, title, date, content, updated_at) VALUES (?, ?, ?, ?, ?)")
+      .bind('dated-post', 'Before', '2000-01-01', 'Old content', '2000-01-01 00:00:00')
       .run();
 
     await saveAdminItem(db, 'post', {
@@ -85,8 +84,29 @@ describe('admin content persistence', () => {
       content: 'New content',
     });
 
-    expect(await db.prepare('SELECT date, title FROM posts WHERE slug = ?').bind('dated-post').first())
-      .toEqual({ date: currentPostDate(), title: 'After' });
+    const saved = await db
+      .prepare('SELECT date, title, updated_at FROM posts WHERE slug = ?')
+      .bind('dated-post')
+      .first<{ date: string; title: string; updated_at: string }>();
+
+    expect(saved).toMatchObject({ date: '2000-01-01', title: 'After' });
+    expect(saved?.updated_at).not.toBe('2000-01-01 00:00:00');
+  });
+
+  it('orders admin posts by modification time with stable tie breakers', async () => {
+    await db.prepare(
+      "INSERT INTO posts (slug, title, date, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).bind('older-update', 'Older update', '2026-08-14', 'Old', '2026-08-14 09:00:00', '2026-08-14 10:00:00').run();
+    await db.prepare(
+      "INSERT INTO posts (slug, title, date, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).bind('newer-created', 'Newer created', '2026-08-14', 'New', '2026-08-14 11:00:00', '2026-08-14 12:00:00').run();
+    await db.prepare(
+      "INSERT INTO posts (slug, title, date, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).bind('older-created', 'Older created', '2026-08-14', 'New', '2026-08-14 08:00:00', '2026-08-14 12:00:00').run();
+
+    const posts = await listAdminItems(db, 'post');
+
+    expect(posts.map((post) => post.slug)).toEqual(['newer-created', 'older-created', 'older-update']);
   });
 
   it('rejects a duplicate slug for a new admin post without overwriting the existing post', async () => {

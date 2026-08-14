@@ -81,6 +81,7 @@ migrations/0001_init.sql    基础表结构和初始内容
 migrations/0002_render_cache.sql    文章 HTML/TOC 渲染缓存字段
 migrations/0003_daily_fragments.sql    日常碎片数据迁移
 migrations/0004_admin_login_attempts.sql    管理员登录失败限流
+migrations/0005_posts_updated_at_index.sql    文章修改时间排序索引
 ```
 
 迁移是**自动执行**的。推荐配置的 Deploy command 使用 `npm run deploy:worker`，该命令先运行 `wrangler d1 migrations apply DB --remote`，再执行 OpenNext Worker 部署；Build command 使用 `npm run build:worker`，避免重复构建。兼容配置中的 `npm run deploy` 执行相同顺序，只会额外触发一次 Worker 构建。

@@ -32,10 +32,11 @@ describe('admin post defaults', () => {
     expect(first.slug).not.toBe(second.slug);
   });
 
-  it('prepares an existing post with the current date while preserving its slug and metadata', () => {
+  it('preserves an existing post publication date, slug, and metadata', () => {
     const post = createPostEditData({
       filename: 'stable-slug.md',
       slug: 'stable-slug',
+      date: '2000-01-01',
       title: 'Existing post',
       description: 'Description',
       content: 'Body',
@@ -45,7 +46,7 @@ describe('admin post defaults', () => {
 
     expect(post).toEqual({
       title: 'Existing post',
-      date: '2026-08-15',
+      date: '2000-01-01',
       description: 'Description',
       content: 'Body',
       slug: 'stable-slug',

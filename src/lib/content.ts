@@ -43,7 +43,9 @@ export async function getAllPosts(): Promise<PostListItem[]> {
     throw new Error('Database not available');
   }
   const { results } = await db
-    .prepare("SELECT slug, title, date, description, category, cover FROM posts ORDER BY date DESC")
+    .prepare(
+      "SELECT slug, title, date, description, category, cover FROM posts ORDER BY updated_at DESC, created_at DESC, slug DESC",
+    )
     .all<PostListItem>();
   return results;
 }

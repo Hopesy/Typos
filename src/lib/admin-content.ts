@@ -140,7 +140,9 @@ export function isAdminEditableType(value: string): value is AdminEditableType {
 async function listDatabaseItems(db: D1DatabaseLike, type: AdminContentType): Promise<AdminItem[]> {
   if (type === "post") {
     const { results } = await db
-      .prepare("SELECT slug, title, date, description, category, content, cover FROM posts ORDER BY date DESC")
+      .prepare(
+        "SELECT slug, title, date, description, category, content, cover FROM posts ORDER BY updated_at DESC, created_at DESC, slug DESC",
+      )
       .all<PostRow>();
     return results.map((row) => ({ ...row, cover: row.cover || "", filename: `${row.slug}.md` }));
   }
@@ -234,9 +236,7 @@ async function saveDatabaseItem(
       : null;
     const submittedDate = normalizeDate(payload.date);
     const originalDate = normalizeDate(originalPost?.date);
-    const postDate = originalPost && (!submittedDate || submittedDate === originalDate)
-      ? currentPostDate()
-      : submittedDate || currentPostDate();
+    const postDate = submittedDate || originalDate || currentPostDate();
 
     const values = [
       slug,
@@ -253,8 +253,8 @@ async function saveDatabaseItem(
     if (isNewAdminPost || isSlugChange) {
       const inserted = await db
         .prepare(
-          `INSERT INTO posts (slug, title, date, description, category, content, cover)
-           VALUES (?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO posts (slug, title, date, description, category, content, cover, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
            ON CONFLICT(slug) DO NOTHING
            RETURNING slug`,
         )
@@ -268,8 +268,8 @@ async function saveDatabaseItem(
     } else {
       await db
         .prepare(
-          `INSERT INTO posts (slug, title, date, description, category, content, cover)
-           VALUES (?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO posts (slug, title, date, description, category, content, cover, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
            ON CONFLICT(slug) DO UPDATE SET
              title = excluded.title,
              date = excluded.date,
@@ -277,7 +277,7 @@ async function saveDatabaseItem(
              category = excluded.category,
              content = excluded.content,
              cover = excluded.cover,
-             updated_at = datetime('now')`,
+             updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')`,
         )
         .bind(...values)
         .run();
