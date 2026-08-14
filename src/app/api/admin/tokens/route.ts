@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createApiToken, deleteApiToken, listApiTokens } from "@/lib/api-tokens";
+import { adminApiError } from "@/lib/admin-api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -21,15 +22,15 @@ export async function GET(request: Request) {
 
   const db = await getDatabase();
   if (!db) {
-    return noStore(NextResponse.json({ error: "API tokens require a configured database." }, { status: 503 }));
+    return noStore(NextResponse.json(adminApiError("TOKEN_DATABASE_UNAVAILABLE"), { status: 503 }));
   }
 
   try {
     const tokens = await listApiTokens(db);
     return noStore(NextResponse.json({ tokens }));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return noStore(NextResponse.json({ error: message }, { status: 500 }));
+    console.error("List API tokens error:", error);
+    return noStore(NextResponse.json(adminApiError("TOKEN_LIST_FAILED"), { status: 500 }));
   }
 }
 
@@ -39,14 +40,14 @@ export async function POST(request: Request) {
 
   const db = await getDatabase();
   if (!db) {
-    return noStore(NextResponse.json({ error: "API tokens require a configured database." }, { status: 503 }));
+    return noStore(NextResponse.json(adminApiError("TOKEN_DATABASE_UNAVAILABLE"), { status: 503 }));
   }
 
   try {
     const body = asRecord(await request.json());
     const name = typeof body.name === "string" ? body.name : "";
     if (!name.trim()) {
-      return noStore(NextResponse.json({ error: "Token name is required." }, { status: 400 }));
+      return noStore(NextResponse.json(adminApiError("TOKEN_NAME_REQUIRED"), { status: 400 }));
     }
 
     const expiresInDays = typeof body.expiresInDays === "number" ? body.expiresInDays : null;
@@ -54,8 +55,8 @@ export async function POST(request: Request) {
 
     return noStore(NextResponse.json({ success: true, token, id: record.id }));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return noStore(NextResponse.json({ error: message }, { status: 500 }));
+    console.error("Create API token error:", error);
+    return noStore(NextResponse.json(adminApiError("TOKEN_CREATE_FAILED"), { status: 500 }));
   }
 }
 
@@ -65,20 +66,20 @@ export async function DELETE(request: Request) {
 
   const db = await getDatabase();
   if (!db) {
-    return noStore(NextResponse.json({ error: "API tokens require a configured database." }, { status: 503 }));
+    return noStore(NextResponse.json(adminApiError("TOKEN_DATABASE_UNAVAILABLE"), { status: 503 }));
   }
 
   try {
     const body = asRecord(await request.json());
     const id = typeof body.id === "string" ? body.id : "";
     if (!id) {
-      return noStore(NextResponse.json({ error: "Token id is required." }, { status: 400 }));
+      return noStore(NextResponse.json(adminApiError("TOKEN_ID_REQUIRED"), { status: 400 }));
     }
 
     await deleteApiToken(db, id);
     return noStore(NextResponse.json({ success: true }));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return noStore(NextResponse.json({ error: message }, { status: 500 }));
+    console.error("Delete API token error:", error);
+    return noStore(NextResponse.json(adminApiError("TOKEN_DELETE_FAILED"), { status: 500 }));
   }
 }

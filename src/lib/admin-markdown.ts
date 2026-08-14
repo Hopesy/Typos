@@ -111,8 +111,6 @@ export function buildPostDataFromMarkdown(
   const parsed = matter(raw.replace(/^\uFEFF/, ''));
   const data = parsed.data as Record<string, unknown>;
   const content = parsed.content;
-  const fallbackSlug = derivePostSlug('', fallbackDate, uniqueValue);
-  const fileSlug = safeAdminSlug(filename, fallbackSlug);
   const categories = categoryValues(data.category ?? data.categories);
   const date = stringValue(data.date).split('T')[0] || fallbackDate;
 
@@ -121,7 +119,8 @@ export function buildPostDataFromMarkdown(
     date,
     description: stringValue(data.description),
     content: content.trimStart(),
-    slug: safeAdminSlug(stringValue(data.slug) || fileSlug, fallbackSlug),
+    // 后台导入始终创建新文章，不能复用文件中的旧 slug 或文件名。
+    slug: derivePostSlug('', date, uniqueValue),
     category: categories.length > 0 ? categories : ['随笔'],
     cover: stringValue(data.cover),
   };

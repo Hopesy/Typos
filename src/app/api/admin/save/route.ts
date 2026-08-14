@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
 import { requireAdmin } from "@/lib/admin-auth";
-import { AdminContentConflictError, isAdminEditableType, saveAdminItem } from "@/lib/admin-content";
+import { AdminContentError, isAdminEditableType, saveAdminItem } from "@/lib/admin-content";
+import { adminApiError } from "@/lib/admin-api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
     const type = typeof body.type === "string" && isAdminEditableType(body.type) ? body.type : null;
 
     if (!type) {
-      const response = NextResponse.json({ error: "Invalid content type" }, { status: 400 });
+      const response = NextResponse.json(adminApiError("INVALID_CONTENT_TYPE"), { status: 400 });
       response.headers.set("Cache-Control", "no-store");
       return response;
     }
@@ -30,11 +31,12 @@ export async function POST(request: Request) {
     response.headers.set("Cache-Control", "no-store");
     return response;
   } catch (error: unknown) {
-    const isConflict = error instanceof AdminContentConflictError;
-    if (!isConflict) console.error("Save error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    const status = isConflict ? 409 : 500;
-    const response = NextResponse.json({ error: message }, { status });
+    const knownError = error instanceof AdminContentError;
+    if (!knownError) console.error("Save error:", error);
+    const response = NextResponse.json(
+      knownError ? adminApiError(error.code) : adminApiError("SAVE_FAILED"),
+      { status: knownError ? error.status : 500 },
+    );
     response.headers.set("Cache-Control", "no-store");
     return response;
   }

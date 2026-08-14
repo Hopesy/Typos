@@ -1,13 +1,29 @@
 import type { D1DatabaseLike } from "@/lib/database";
 import { warmPostRenderCache, type TocItem } from "@/lib/content";
 import { currentPostDate } from "@/lib/post-payload";
+import { ADMIN_API_ERROR_MESSAGES, type AdminApiErrorCode } from "@/lib/admin-api-errors";
 
 export type AdminContentType = "post" | "daily" | "moment" | "comment";
 export type AdminEditableType = Exclude<AdminContentType, "comment">;
 
-export class AdminContentConflictError extends Error {
-  constructor(message: string) {
-    super(message);
+type AdminContentErrorCode = Extract<
+  AdminApiErrorCode,
+  "DATABASE_UNAVAILABLE" | "POST_SLUG_REQUIRED" | "POST_SLUG_EXISTS" | "POST_TARGET_SLUG_EXISTS"
+>;
+
+export class AdminContentError extends Error {
+  constructor(
+    readonly code: AdminContentErrorCode,
+    readonly status: 400 | 409 | 503,
+  ) {
+    super(ADMIN_API_ERROR_MESSAGES[code]);
+    this.name = "AdminContentError";
+  }
+}
+
+export class AdminContentConflictError extends AdminContentError {
+  constructor(code: "POST_SLUG_EXISTS" | "POST_TARGET_SLUG_EXISTS") {
+    super(code, 409);
     this.name = "AdminContentConflictError";
   }
 }
@@ -109,7 +125,7 @@ function safeMarkdownFilename(filename: string) {
 }
 
 function requireDatabase(db: D1DatabaseLike | null): D1DatabaseLike {
-  if (!db) throw new Error("A D1 or libSQL database is required.");
+  if (!db) throw new AdminContentError("DATABASE_UNAVAILABLE", 503);
   return db;
 }
 
@@ -206,7 +222,7 @@ async function saveDatabaseItem(
 
   if (type === "post") {
     const slug = safeSegment(stringValue(payload.slug) || stringValue(payload.filename).replace(/\.md$/, ""), "");
-    if (!slug) throw new Error("Post slug is required.");
+    if (!slug) throw new AdminContentError("POST_SLUG_REQUIRED", 400);
 
     const content = stringValue(payload.content);
     const originalSlug = safeSegment(stringValue(payload.filename).replace(/\.md$/, ""), "");
@@ -246,7 +262,7 @@ async function saveDatabaseItem(
         .first<{ slug: string }>();
       if (!inserted) {
         throw new AdminContentConflictError(
-          isSlugChange ? "The target post slug already exists." : "The post slug already exists.",
+          isSlugChange ? "POST_TARGET_SLUG_EXISTS" : "POST_SLUG_EXISTS",
         );
       }
     } else {

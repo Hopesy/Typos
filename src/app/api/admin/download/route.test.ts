@@ -12,6 +12,9 @@ describe('admin download authentication', () => {
 
     const response = await GET(request);
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' });
+    await expect(response.json()).resolves.toEqual({
+      code: 'SESSION_EXPIRED',
+      error: '登录状态已失效，请重新登录。',
+    });
   });
 });

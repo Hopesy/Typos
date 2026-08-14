@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
 import { requireAdmin } from "@/lib/admin-auth";
 import { deleteAdminItem, isAdminContentType } from "@/lib/admin-content";
+import { adminApiError } from "@/lib/admin-api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function DELETE(request: Request) {
     const filename = typeof body.filename === "string" ? body.filename : "";
 
     if (!type || !filename) {
-      const response = NextResponse.json({ error: "Missing type or filename" }, { status: 400 });
+      const response = NextResponse.json(adminApiError("DELETE_TARGET_REQUIRED"), { status: 400 });
       response.headers.set("Cache-Control", "no-store");
       return response;
     }
@@ -32,8 +33,7 @@ export async function DELETE(request: Request) {
     return response;
   } catch (error: unknown) {
     console.error("Delete error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    const response = NextResponse.json({ error: message }, { status: 500 });
+    const response = NextResponse.json(adminApiError("DELETE_FAILED"), { status: 500 });
     response.headers.set("Cache-Control", "no-store");
     return response;
   }

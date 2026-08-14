@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import matter from 'gray-matter';
 import { getDatabase } from '@/lib/database';
 import { requireAdmin } from '@/lib/admin-auth';
+import { adminApiError, type AdminApiErrorCode } from '@/lib/admin-api-errors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,13 @@ type AdminType = 'post' | 'daily' | 'moment';
 type DownloadResult = { markdown: string; title: string };
 
 const str = (value: unknown) => (typeof value === 'string' ? value : value == null ? '' : String(value));
+
+function errorResponse(code: AdminApiErrorCode, status: number) {
+  return NextResponse.json(adminApiError(code), {
+    status,
+    headers: { 'Cache-Control': 'no-store' },
+  });
+}
 
 // 由标题构造下载文件名，清洗文件系统非法字符（保留中文），回退到原 filename。
 function downloadFilename(title: string, fallback: string): string {
@@ -87,28 +95,33 @@ export async function GET(request: Request) {
   const filename = url.searchParams.get('filename');
 
   if (!type || !filename || !['post', 'daily', 'moment'].includes(type)) {
-    return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
+    return errorResponse('INVALID_DOWNLOAD_REQUEST', 400);
   }
 
   // filename is a single database identifier, never a path.
   if (filename.includes('/') || filename.includes('\\') || filename.includes('..')) {
-    return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
+    return errorResponse('INVALID_FILENAME', 400);
   }
 
-  const adminType = type as AdminType;
-  const result = await fromDatabase(adminType, filename);
+  try {
+    const adminType = type as AdminType;
+    const result = await fromDatabase(adminType, filename);
 
-  if (result == null) {
-    return NextResponse.json({ error: 'File not found' }, { status: 404 });
+    if (result == null) {
+      return errorResponse('CONTENT_NOT_FOUND', 404);
+    }
+
+    const downloadName = downloadFilename(result.title, filename);
+
+    return new NextResponse(result.markdown, {
+      headers: {
+        'Content-Type': 'text/markdown; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(downloadName)}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (error) {
+    console.error('Download error:', error);
+    return errorResponse('DOWNLOAD_FAILED', 500);
   }
-
-  const downloadName = downloadFilename(result.title, filename);
-
-  return new NextResponse(result.markdown, {
-    headers: {
-      'Content-Type': 'text/markdown; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(downloadName)}"`,
-      'Cache-Control': 'no-store',
-    },
-  });
 }

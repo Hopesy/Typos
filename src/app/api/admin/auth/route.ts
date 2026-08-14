@@ -13,6 +13,7 @@ import {
   getRequestAddress,
   recordAdminLoginFailure,
 } from "@/lib/request-security";
+import { adminApiError } from "@/lib/admin-api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ function noStore(response: NextResponse) {
 }
 
 function rateLimited(retryAfterSeconds: number) {
-  const response = NextResponse.json({ error: "Too many login attempts" }, { status: 429 });
+  const response = NextResponse.json(adminApiError("AUTH_RATE_LIMITED"), { status: 429 });
   response.headers.set("Retry-After", String(retryAfterSeconds));
   return noStore(response);
 }
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   try {
     const db = await getDatabase();
     if (!db) {
-      return noStore(NextResponse.json({ error: "Database is not configured" }, { status: 503 }));
+      return noStore(NextResponse.json(adminApiError("DATABASE_UNAVAILABLE"), { status: 503 }));
     }
 
     const address = getRequestAddress(request);
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch {
-      return noStore(NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }));
+      return noStore(NextResponse.json(adminApiError("INVALID_JSON"), { status: 400 }));
     }
 
     const password = getPassword(body);
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     if (!(await verifyAdminPassword(password))) {
       const failure = await recordAdminLoginFailure(db, address);
       if (failure.blocked) return rateLimited(failure.retryAfterSeconds);
-      return noStore(NextResponse.json({ error: "Invalid security key" }, { status: 401 }));
+      return noStore(NextResponse.json(adminApiError("INVALID_SECURITY_KEY"), { status: 401 }));
     }
 
     await clearAdminLoginFailures(db, address);
@@ -69,8 +70,8 @@ export async function POST(request: Request) {
     setAdminCookie(response, token, request);
     return noStore(response);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return noStore(NextResponse.json({ error: message }, { status: 500 }));
+    console.error("Admin auth error:", error);
+    return noStore(NextResponse.json(adminApiError("AUTH_FAILED"), { status: 500 }));
   }
 }
 

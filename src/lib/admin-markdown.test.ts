@@ -11,10 +11,25 @@ describe('admin post defaults', () => {
     expect(first.slug).not.toBe(second.slug);
   });
 
-  it('uses a unique dated fallback when an imported Markdown filename has no usable slug', () => {
-    const post = buildPostDataFromMarkdown('# Imported', '', '2026-08-14', 'upload-value');
+  it('generates a new slug instead of reusing imported frontmatter or the filename', () => {
+    const post = buildPostDataFromMarkdown(
+      '---\nslug: old-slug\ndate: 2026-08-14\n---\n# Imported',
+      'old-slug.md',
+      '2026-08-15',
+      'upload-value',
+    );
 
     expect(post.slug).toBe('260814-uploadva');
+    expect(post.date).toBe('2026-08-14');
+  });
+
+  it('generates distinct slugs for multiple Markdown uploads on the same date', () => {
+    const first = buildPostDataFromMarkdown('# First', 'post.md', '2026-08-14', 'first-value');
+    const second = buildPostDataFromMarkdown('# Second', 'post.md', '2026-08-14', 'second-value');
+
+    expect(first.slug).toBe('260814-firstval');
+    expect(second.slug).toBe('260814-secondva');
+    expect(first.slug).not.toBe(second.slug);
   });
 
   it('prepares an existing post with the current date while preserving its slug and metadata', () => {

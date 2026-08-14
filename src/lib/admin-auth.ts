@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getTyposEnv, readRuntimeEnv } from "@/lib/database";
+import { adminApiError } from "@/lib/admin-api-errors";
 
 const SESSION_COOKIE = "typos_admin";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
@@ -108,7 +109,7 @@ export async function isAdminRequest(request: Request) {
 
 export async function requireAdmin(request: Request) {
   if (await isAdminRequest(request)) return null;
-  const res = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const res = NextResponse.json(adminApiError("SESSION_EXPIRED"), { status: 401 });
   res.headers.set("Cache-Control", "no-store");
   return res;
 }

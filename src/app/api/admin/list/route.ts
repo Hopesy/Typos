@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
 import { requireAdmin } from "@/lib/admin-auth";
 import { isAdminContentType, listAdminItems } from "@/lib/admin-content";
+import { adminApiError } from "@/lib/admin-api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,8 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error: unknown) {
     console.error("List error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const response = NextResponse.json(adminApiError("LIST_FAILED"), { status: 500 });
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   }
 }

@@ -97,6 +97,45 @@ type AdminItem = {
 
 type StatusMessage = { text: string; isError: boolean };
 
+type AdminApiErrorPayload = {
+    code?: string;
+};
+
+const ADMIN_ERROR_MESSAGE_KEYS: Record<string, string> = {
+    SESSION_EXPIRED: 'message.sessionExpired',
+    AUTH_RATE_LIMITED: 'login.rateLimited',
+    DATABASE_UNAVAILABLE: 'message.databaseUnavailable',
+    INVALID_JSON: 'login.invalidRequest',
+    INVALID_SECURITY_KEY: 'login.invalidKey',
+    AUTH_FAILED: 'login.failed',
+    INVALID_CONTENT_TYPE: 'message.invalidContentType',
+    POST_SLUG_REQUIRED: 'message.postSlugRequired',
+    POST_SLUG_EXISTS: 'message.postSlugExists',
+    POST_TARGET_SLUG_EXISTS: 'message.postTargetSlugExists',
+    SAVE_FAILED: 'message.saveFailed',
+    DELETE_TARGET_REQUIRED: 'message.deleteTargetRequired',
+    DELETE_FAILED: 'message.deleteFailed',
+    INVALID_DOWNLOAD_REQUEST: 'message.invalidDownloadRequest',
+    INVALID_FILENAME: 'message.invalidFilename',
+    CONTENT_NOT_FOUND: 'message.contentNotFound',
+    DOWNLOAD_FAILED: 'message.downloadFailed',
+    TOKEN_DATABASE_UNAVAILABLE: 'message.databaseUnavailable',
+    TOKEN_NAME_REQUIRED: 'message.tokenNameRequired',
+    TOKEN_ID_REQUIRED: 'message.tokenDeleteFailed',
+    TOKEN_LIST_FAILED: 'message.tokenLoadFailed',
+    TOKEN_CREATE_FAILED: 'message.tokenCreateFailed',
+    TOKEN_DELETE_FAILED: 'message.tokenDeleteFailed',
+    LIST_FAILED: 'message.listFailed',
+};
+
+async function readAdminApiError(response: Response): Promise<AdminApiErrorPayload> {
+    try {
+        return await response.json() as AdminApiErrorPayload;
+    } catch {
+        return {};
+    }
+}
+
 const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white [&>svg]:shrink-0";
 
 export default function AdminPage() {
@@ -105,7 +144,7 @@ export default function AdminPage() {
     const tr = useTranslations('admin');
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [password, setPassword] = useState('');
-    const [authError, setAuthError] = useState(false);
+    const [authError, setAuthError] = useState<string | null>(null);
     const [checkingAuth, setCheckingAuth] = useState(true);
     const [type, setType] = useState<AdminType>('dashboard');
     const [loading, setLoading] = useState(false);
@@ -171,12 +210,20 @@ export default function AdminPage() {
     const [replyContent, setReplyContent] = useState('');
     const [replyModalOpen, setReplyModalOpen] = useState(false);
 
+    const messageForApiError = useCallback((payload: AdminApiErrorPayload, fallbackKey: string) => {
+        return tr(ADMIN_ERROR_MESSAGE_KEYS[payload.code || ''] || fallbackKey);
+    }, [tr]);
+
+    const expireSession = useCallback(() => {
+        setIsAuthorized(false);
+        setAuthError(tr('message.sessionExpired'));
+    }, [tr]);
 
     // Handle Authentication
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setAuthError(false);
+        setAuthError(null);
 
         try {
             const res = await fetch('/api/admin/auth', {
@@ -189,11 +236,12 @@ export default function AdminPage() {
                 setIsAuthorized(true);
                 setPassword('');
             } else {
-                setAuthError(true);
+                const error = await readAdminApiError(res);
+                setAuthError(messageForApiError(error, 'login.failed'));
                 setPassword('');
             }
         } catch {
-            setAuthError(true);
+            setAuthError(tr('login.networkError'));
         } finally {
             setLoading(false);
         }
@@ -209,7 +257,12 @@ export default function AdminPage() {
             );
 
             if ([postsRes, dailyRes, momentsRes].some((res) => res.status === 401)) {
-                setIsAuthorized(false);
+                expireSession();
+                return;
+            }
+
+            if ([postsRes, dailyRes, momentsRes].some((res) => !res.ok)) {
+                setMessage({ text: tr('message.listFailed'), isError: true });
                 return;
             }
 
@@ -226,10 +279,11 @@ export default function AdminPage() {
             });
         } catch (error) {
             console.error('Failed to fetch dashboard data', error);
+            setMessage({ text: tr('message.networkError'), isError: true });
         } finally {
             setDashboardLoading(false);
         }
-    }, []);
+    }, [expireSession, tr]);
 
     const fetchPosts = useCallback(async () => {
         if (type === 'dashboard') {
@@ -243,16 +297,20 @@ export default function AdminPage() {
             if (res.ok) {
                 const data = await res.json() as { items: AdminItem[] };
                 setExistingPosts(data.items || []);
+            } else if (res.status === 401) {
+                expireSession();
             } else {
-                if (res.status === 401) setIsAuthorized(false);
+                const error = await readAdminApiError(res);
+                setMessage({ text: messageForApiError(error, 'message.listFailed'), isError: true });
             }
         } catch (error) {
             console.error('Failed to fetch posts', error);
+            setMessage({ text: tr('message.networkError'), isError: true });
         } finally {
             setListLoading(false);
         }
 
-    }, [fetchDashboardData, type]);
+    }, [expireSession, fetchDashboardData, messageForApiError, tr, type]);
 
     const fetchTokens = useCallback(async () => {
         try {
@@ -263,20 +321,27 @@ export default function AdminPage() {
                 const data = await res.json() as { tokens: ApiToken[] };
                 setApiTokens(data.tokens || []);
             } else if (res.status === 401) {
-                setIsAuthorized(false);
+                expireSession();
             } else if (res.status === 503) {
                 setTokensDbUnavailable(true);
                 setApiTokens([]);
+            } else {
+                const error = await readAdminApiError(res);
+                setMessage({ text: messageForApiError(error, 'message.tokenLoadFailed'), isError: true });
             }
         } catch (error) {
             console.error('Failed to fetch tokens', error);
+            setMessage({ text: tr('message.networkError'), isError: true });
         } finally {
             setTokensLoading(false);
         }
-    }, []);
+    }, [expireSession, messageForApiError, tr]);
 
     const handleCreateToken = async () => {
-        if (!newTokenName.trim()) return;
+        if (!newTokenName.trim()) {
+            setMessage({ text: tr('message.tokenNameRequired'), isError: true });
+            return;
+        }
         const expiryMap: Record<typeof newTokenExpiry, number | null> = {
             never: null,
             '30d': 30,
@@ -299,14 +364,16 @@ export default function AdminPage() {
                 setNewTokenName('');
                 setNewTokenExpiry('never');
                 await fetchTokens();
+                setMessage({ text: tr('message.tokenCreated'), isError: false });
             } else if (res.status === 401) {
-                setIsAuthorized(false);
+                expireSession();
             } else {
-                const err = await res.json() as { error?: string };
-                setMessage({ text: `ERROR: ${err.error || 'Failed to create token'}`, isError: true });
+                const error = await readAdminApiError(res);
+                setMessage({ text: messageForApiError(error, 'message.tokenCreateFailed'), isError: true });
             }
         } catch (error) {
             console.error('Create token error:', error);
+            setMessage({ text: tr('message.networkError'), isError: true });
         } finally {
             setLoading(false);
         }
@@ -324,11 +391,16 @@ export default function AdminPage() {
             if (res.ok) {
                 setApiTokens(prev => prev.filter(t => t.id !== id));
                 setDeleteTokenId(null);
+                setMessage({ text: tr('message.tokenDeleted'), isError: false });
             } else if (res.status === 401) {
-                setIsAuthorized(false);
+                expireSession();
+            } else {
+                const error = await readAdminApiError(res);
+                setMessage({ text: messageForApiError(error, 'message.tokenDeleteFailed'), isError: true });
             }
         } catch (error) {
             console.error('Delete token error:', error);
+            setMessage({ text: tr('message.networkError'), isError: true });
         } finally {
             setLoading(false);
         }
@@ -338,9 +410,10 @@ export default function AdminPage() {
         try {
             await navigator.clipboard.writeText(token);
             setTokenCopied(true);
+            setMessage({ text: tr('message.tokenCopied'), isError: false });
             setTimeout(() => setTokenCopied(false), 2000);
         } catch {
-            // Clipboard API may be unavailable; ignore silently
+            setMessage({ text: tr('message.tokenCopyFailed'), isError: true });
         }
     };
 
@@ -355,7 +428,10 @@ export default function AdminPage() {
                 if (!alive) return;
                 setIsAuthorized(Boolean(res.ok && data.authorized));
             } catch {
-                if (alive) setIsAuthorized(false);
+                if (alive) {
+                    setIsAuthorized(false);
+                    setAuthError(tr('login.networkError'));
+                }
             } finally {
                 if (alive) setCheckingAuth(false);
             }
@@ -365,7 +441,7 @@ export default function AdminPage() {
         return () => {
             alive = false;
         };
-    }, []);
+    }, [tr]);
 
     useEffect(() => {
         if (viewMode === 'list' && isAuthorized) {
@@ -768,14 +844,14 @@ export default function AdminPage() {
             });
 
             if (res.status === 401) {
-                setIsAuthorized(false);
-                setMessage({ text: 'PERMISSION_DENIED: AUTH_EXPIRED', isError: true });
+                expireSession();
                 return;
             }
 
-            const result = await res.json() as { success?: boolean; error?: string };
-            if (result.success) {
-                setMessage({ text: `SUCCESS: ${type.toUpperCase()} SAVED`, isError: false });
+            const result = await res.json() as { success?: boolean; code?: string };
+            if (res.ok && result.success) {
+                const typeName = type === 'post' ? tr('type.post') : type === 'daily' ? tr('type.daily') : tr('type.moment');
+                setMessage({ text: tr('message.saveSuccess', { type: typeName }), isError: false });
                 if (type === 'post') {
                     resetPostEditorState();
                 } else if (type === 'daily') {
@@ -788,13 +864,11 @@ export default function AdminPage() {
                 setIsEditing(false);
                 await fetchPosts();
                 setViewMode('list');
-
-                setTimeout(() => setMessage(null), 3000);
             } else {
-                setMessage({ text: `ERROR: ${result.error}`, isError: true });
+                setMessage({ text: messageForApiError(result, 'message.saveFailed'), isError: true });
             }
         } catch {
-            setMessage({ text: 'NETWORK ERROR: CONNECTION LOST', isError: true });
+            setMessage({ text: tr('message.networkError'), isError: true });
         } finally {
             setLoading(false);
         }
@@ -811,23 +885,22 @@ export default function AdminPage() {
 
         try {
             if (!file.name.toLowerCase().endsWith('.md')) {
-                setMessage({ text: 'ERROR: SELECT_A_MARKDOWN_FILE', isError: true });
+                setMessage({ text: tr('message.markdownOnly'), isError: true });
                 return;
             }
 
             const raw = await file.text();
-            const importedPost = buildPostDataFromMarkdown(raw, file.name, today);
+            const importedPost = buildPostDataFromMarkdown(raw, file.name, currentPostDate());
             setType('post');
             setPostData(importedPost);
             resetPostContentHistory(importedPost.content);
-            setIsSlugModified(true);
+            setIsSlugModified(false);
             setIsEditing(false);
             setCurrentFilename(null);
             setViewMode('edit');
-            setMessage({ text: `MARKDOWN_LOADED: ${file.name}`, isError: false });
-            setTimeout(() => setMessage(null), 3000);
+            setMessage({ text: tr('message.markdownLoaded', { filename: file.name }), isError: false });
         } catch {
-            setMessage({ text: 'ERROR: MARKDOWN_FILE_READ_FAILED', isError: true });
+            setMessage({ text: tr('message.markdownReadFailed'), isError: true });
         }
     };
 
@@ -841,7 +914,7 @@ export default function AdminPage() {
     const submitAdminReply = async () => {
         if (!replyTarget || !replyContent.trim()) return;
         if (!replyTarget.id || !replyTarget.slug) {
-            setMessage({ text: 'ERROR: INVALID_COMMENT_TARGET', isError: true });
+            setMessage({ text: tr('message.invalidCommentTarget'), isError: true });
             return;
         }
 
@@ -859,16 +932,17 @@ export default function AdminPage() {
                 }),
             });
             if (res.ok) {
-                setMessage({ text: 'SUCCESS: REPLY_SENT', isError: false });
+                setMessage({ text: tr('message.replySuccess'), isError: false });
                 setReplyModalOpen(false);
                 setReplyTarget(null);
                 setReplyContent('');
-                fetchPosts();
+                void fetchPosts();
             } else {
-                setMessage({ text: 'ERROR: FAILED_TO_REPLY', isError: true });
+                setMessage({ text: tr('message.replyFailed'), isError: true });
             }
         } catch (error) {
             console.error('Reply error:', error);
+            setMessage({ text: tr('message.networkError'), isError: true });
         } finally {
             setLoading(false);
         }
@@ -897,17 +971,17 @@ export default function AdminPage() {
 
             if (res.ok) {
                 setExistingPosts(prev => prev.filter(p => p.filename !== filename));
-                setMessage({ text: 'SUCCESS: ITEM_DELETED', isError: false });
+                setMessage({ text: tr('message.deleteSuccess'), isError: false });
                 setDeleteTargetId(null);
             } else if (res.status === 401) {
-                setIsAuthorized(false);
-                setMessage({ text: 'PERMISSION_DENIED: AUTH_EXPIRED', isError: true });
+                expireSession();
             } else {
-                const err = await res.json() as { error?: string };
-                setMessage({ text: `ERROR: ${err.error || 'Failed to delete'}`, isError: true });
+                const error = await readAdminApiError(res);
+                setMessage({ text: messageForApiError(error, 'message.deleteFailed'), isError: true });
             }
         } catch (error) {
             console.error('Delete error:', error);
+            setMessage({ text: tr('message.networkError'), isError: true });
         } finally {
             setLoading(false);
         }
@@ -922,10 +996,11 @@ export default function AdminPage() {
             setExistingPosts([]);
             setDashboardData({ posts: [], daily: [], moments: [] });
             setPassword('');
+            setAuthError(null);
         }
     };
 
-    const downloadMarkdown = async (item: AdminItem) => {
+    const downloadMarkdown = async (item: AdminItem, showResult = true): Promise<'success' | 'failed' | 'unauthorized'> => {
         try {
             const res = await fetch(`/api/admin/download?type=${type}&filename=${encodeURIComponent(item.filename)}`, {
                 credentials: 'same-origin'
@@ -940,14 +1015,26 @@ export default function AdminPage() {
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                if (showResult) {
+                    setMessage({ text: tr('message.downloadSuccess', { filename: downloadNameFromItem(item) }), isError: false });
+                }
+                return 'success';
             } else if (res.status === 401) {
-                setIsAuthorized(false);
+                expireSession();
+                return 'unauthorized';
             } else {
-                setMessage({ text: 'ERROR: DOWNLOAD_FAILED', isError: true });
+                const error = await readAdminApiError(res);
+                if (showResult) {
+                    setMessage({ text: messageForApiError(error, 'message.downloadFailed'), isError: true });
+                }
+                return 'failed';
             }
         } catch (error) {
             console.error('Download error:', error);
-            setMessage({ text: 'ERROR: DOWNLOAD_FAILED', isError: true });
+            if (showResult) {
+                setMessage({ text: tr('message.networkError'), isError: true });
+            }
+            return 'failed';
         }
     };
 
@@ -956,15 +1043,25 @@ export default function AdminPage() {
 
         setLoading(true);
         try {
+            let successCount = 0;
+            let failedCount = 0;
             for (const post of existingPosts) {
-                await downloadMarkdown(post);
+                const result = await downloadMarkdown(post, false);
+                if (result === 'unauthorized') return;
+                if (result === 'success') successCount += 1;
+                else failedCount += 1;
                 // 添加小延迟避免浏览器阻止多个下载
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
-            setMessage({ text: `SUCCESS: ${existingPosts.length} FILES DOWNLOADED`, isError: false });
-            setTimeout(() => setMessage(null), 3000);
+            setMessage({
+                text: failedCount === 0
+                    ? tr('message.downloadAllSuccess', { count: successCount })
+                    : tr('message.downloadAllPartial', { success: successCount, failed: failedCount }),
+                isError: failedCount > 0,
+            });
         } catch (error) {
             console.error('Bulk download error:', error);
+            setMessage({ text: tr('message.downloadFailed'), isError: true });
         } finally {
             setLoading(false);
         }
@@ -1017,7 +1114,7 @@ export default function AdminPage() {
                                 {authError && (
                                     <p className="text-[10px] text-red-500 font-mono flex items-center justify-center gap-1 mt-1.5 uppercase tracking-normal">
                                         <FiAlertTriangle className="w-2.5 h-2.5" />
-                                        {tr('login.denied')}
+                                        {authError}
                                     </p>
                                 )}
                             </div>

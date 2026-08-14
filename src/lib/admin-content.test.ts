@@ -99,10 +99,36 @@ describe('admin content persistence', () => {
       title: 'Replacement',
       date: '2026-08-14',
       content: 'Replacement content',
-    })).rejects.toThrow('The post slug already exists.');
+    })).rejects.toMatchObject({
+      code: 'POST_SLUG_EXISTS',
+      message: '该文章别名已存在，请更换别名后再发布。',
+    });
 
     expect(await db.prepare('SELECT title, content FROM posts WHERE slug = ?').bind('existing-post').first())
       .toEqual({ title: 'Original', content: 'Original content' });
+  });
+
+  it('returns a distinct error code when an edited post changes to an occupied slug', async () => {
+    await db.prepare("INSERT INTO posts (slug, title, date, content) VALUES (?, ?, ?, ?)")
+      .bind('source-post', 'Source', '2026-08-14', 'Source content')
+      .run();
+    await db.prepare("INSERT INTO posts (slug, title, date, content) VALUES (?, ?, ?, ?)")
+      .bind('occupied-post', 'Occupied', '2026-08-14', 'Occupied content')
+      .run();
+
+    await expect(saveAdminItem(db, 'post', {
+      filename: 'source-post.md',
+      slug: 'occupied-post',
+      title: 'Renamed',
+      date: '2026-08-14',
+      content: 'Renamed content',
+    })).rejects.toMatchObject({
+      code: 'POST_TARGET_SLUG_EXISTS',
+      message: '修改后的文章别名已被其他文章占用，请更换后再保存。',
+    });
+
+    expect(await db.prepare('SELECT title, content FROM posts WHERE slug = ?').bind('source-post').first())
+      .toEqual({ title: 'Source', content: 'Source content' });
   });
 
   it('keeps explicit API slug uploads idempotent', async () => {
