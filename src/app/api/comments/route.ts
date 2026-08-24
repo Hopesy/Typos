@@ -41,6 +41,14 @@ function escapeTelegramHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
+function isMissingAdminOnlyColumnError(error: unknown) {
+  return error instanceof Error && /(?:no such column:\s*admin_only|no column named admin_only)/i.test(error.message);
+}
+
+function isMissingPostsTableError(error: unknown) {
+  return error instanceof Error && /no such table:\s*posts/i.test(error.message);
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("slug")?.trim();
@@ -56,6 +64,27 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    let post: { slug: string } | null = null;
+    let postTableAvailable = true;
+    try {
+      post = await db
+        .prepare("SELECT slug FROM posts WHERE slug = ? AND admin_only = 0")
+        .bind(slug)
+        .first<{ slug: string }>();
+    } catch (error) {
+      if (!isMissingAdminOnlyColumnError(error) && !isMissingPostsTableError(error)) throw error;
+      try {
+        post = await db
+          .prepare("SELECT slug FROM posts WHERE slug = ?")
+          .bind(slug)
+          .first<{ slug: string }>();
+      } catch (error) {
+        if (!isMissingAdminOnlyColumnError(error) && !isMissingPostsTableError(error)) throw error;
+        postTableAvailable = false;
+      }
+    }
+    if (postTableAvailable && !post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+
     const { results } = await db
       .prepare(
         "SELECT id, nickname, content, created_at, is_admin, parent_id FROM comments WHERE slug = ? ORDER BY created_at ASC",
@@ -103,10 +132,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Comment too long" }, { status: 400 });
     }
 
-    const post = await db
-      .prepare("SELECT slug FROM posts WHERE slug = ?")
-      .bind(slug)
-      .first<{ slug: string }>();
+    let post: { slug: string } | null;
+    try {
+      post = await db
+        .prepare("SELECT slug FROM posts WHERE slug = ? AND admin_only = 0")
+        .bind(slug)
+        .first<{ slug: string }>();
+    } catch (error) {
+      if (!isMissingAdminOnlyColumnError(error)) throw error;
+      post = await db
+        .prepare("SELECT slug FROM posts WHERE slug = ?")
+        .bind(slug)
+        .first<{ slug: string }>();
+    }
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }

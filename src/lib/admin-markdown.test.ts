@@ -52,6 +52,7 @@ describe('admin post defaults', () => {
       slug: 'stable-slug',
       category: ['随笔', '技术'],
       cover: '/cover.png',
+      adminOnly: false,
     });
   });
 });

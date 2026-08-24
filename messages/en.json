@@ -210,7 +210,9 @@
       "caption": "Caption",
       "imageUrl": "Image URL",
       "imageUrlOptional": "Image URL (Optional)",
-      "cover": "Cover"
+      "cover": "Cover",
+      "adminOnly": "Admin only",
+      "adminOnlyHint": "Published, but hidden from the public site"
     },
     "editing": "Editing:",
     "close": "Close",

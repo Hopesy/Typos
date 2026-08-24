@@ -47,4 +47,18 @@ describe('public post ordering', () => {
 
     expect(posts.map((post) => post.slug)).toEqual(['newer-created', 'older-created', 'older-update']);
   });
+
+  it('hides admin-only posts from the public list after migration', async () => {
+    await db.prepare('ALTER TABLE posts ADD COLUMN admin_only INTEGER NOT NULL DEFAULT 0').run();
+    await db.prepare(
+      "INSERT INTO posts (slug, title, date, admin_only, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).bind('public-post', 'Public', '2026-08-14', 0, '2026-08-14 10:00:00', '2026-08-14 10:00:00').run();
+    await db.prepare(
+      "INSERT INTO posts (slug, title, date, admin_only, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).bind('admin-post', 'Admin only', '2026-08-14', 1, '2026-08-14 11:00:00', '2026-08-14 11:00:00').run();
+
+    const posts = await getAllPosts();
+
+    expect(posts.map((post) => post.slug)).toEqual(['public-post']);
+  });
 });

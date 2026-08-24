@@ -39,6 +39,7 @@ export type AdminItem = {
   imageUrl?: string;
   category?: string;
   cover?: string;
+  adminOnly?: boolean | number;
   nickname?: string;
   contact?: string;
   articleTitle?: string;
@@ -55,6 +56,7 @@ type PostRow = {
   category: string;
   content: string;
   cover?: string;
+  admin_only?: number;
 };
 
 type DailyRow = {
@@ -129,6 +131,10 @@ function requireDatabase(db: D1DatabaseLike | null): D1DatabaseLike {
   return db;
 }
 
+function isMissingAdminOnlyColumnError(error: unknown) {
+  return error instanceof Error && /(?:no such column:\s*admin_only|no column named admin_only)/i.test(error.message);
+}
+
 export function isAdminContentType(value: string): value is AdminContentType {
   return value === "post" || value === "daily" || value === "moment" || value === "comment";
 }
@@ -139,12 +145,27 @@ export function isAdminEditableType(value: string): value is AdminEditableType {
 
 async function listDatabaseItems(db: D1DatabaseLike, type: AdminContentType): Promise<AdminItem[]> {
   if (type === "post") {
-    const { results } = await db
-      .prepare(
-        "SELECT slug, title, date, description, category, content, cover FROM posts ORDER BY updated_at DESC, created_at DESC, slug DESC",
-      )
-      .all<PostRow>();
-    return results.map((row) => ({ ...row, cover: row.cover || "", filename: `${row.slug}.md` }));
+    let results: PostRow[];
+    try {
+      ({ results } = await db
+        .prepare(
+          "SELECT slug, title, date, description, category, content, cover, admin_only FROM posts ORDER BY updated_at DESC, created_at DESC, slug DESC",
+        )
+        .all<PostRow>());
+    } catch (error) {
+      if (!isMissingAdminOnlyColumnError(error)) throw error;
+      ({ results } = await db
+        .prepare(
+          "SELECT slug, title, date, description, category, content, cover FROM posts ORDER BY updated_at DESC, created_at DESC, slug DESC",
+        )
+        .all<PostRow>());
+    }
+    return results.map((row) => ({
+      ...row,
+      cover: row.cover || "",
+      adminOnly: row.admin_only ? 1 : 0,
+      filename: `${row.slug}.md`,
+    }));
   }
 
   if (type === "daily") {
@@ -246,41 +267,76 @@ async function saveDatabaseItem(
       categoryValue(payload.category),
       content,
       stringValue(payload.cover),
+      payload.adminOnly === true || payload.adminOnly === 1 || stringValue(payload.adminOnly).toLowerCase() === "true" ? 1 : 0,
     ];
     const isNewAdminPost = !originalSlug && !options.allowPostUpsert;
     const isSlugChange = Boolean(originalSlug && originalSlug !== slug);
 
     if (isNewAdminPost || isSlugChange) {
-      const inserted = await db
-        .prepare(
-          `INSERT INTO posts (slug, title, date, description, category, content, cover, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
-           ON CONFLICT(slug) DO NOTHING
-           RETURNING slug`,
-        )
-        .bind(...values)
-        .first<{ slug: string }>();
+      let inserted: { slug: string } | null;
+      try {
+        inserted = await db
+          .prepare(
+            `INSERT INTO posts (slug, title, date, description, category, content, cover, admin_only, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
+             ON CONFLICT(slug) DO NOTHING
+             RETURNING slug`,
+          )
+          .bind(...values)
+          .first<{ slug: string }>();
+      } catch (error) {
+        if (!isMissingAdminOnlyColumnError(error)) throw error;
+        inserted = await db
+          .prepare(
+            `INSERT INTO posts (slug, title, date, description, category, content, cover, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
+             ON CONFLICT(slug) DO NOTHING
+             RETURNING slug`,
+          )
+          .bind(...values.slice(0, 7))
+          .first<{ slug: string }>();
+      }
       if (!inserted) {
         throw new AdminContentConflictError(
           isSlugChange ? "POST_TARGET_SLUG_EXISTS" : "POST_SLUG_EXISTS",
         );
       }
     } else {
-      await db
-        .prepare(
-          `INSERT INTO posts (slug, title, date, description, category, content, cover, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
-           ON CONFLICT(slug) DO UPDATE SET
-             title = excluded.title,
-             date = excluded.date,
-             description = excluded.description,
-             category = excluded.category,
-             content = excluded.content,
-             cover = excluded.cover,
-             updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')`,
-        )
-        .bind(...values)
-        .run();
+      try {
+        await db
+          .prepare(
+            `INSERT INTO posts (slug, title, date, description, category, content, cover, admin_only, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
+             ON CONFLICT(slug) DO UPDATE SET
+               title = excluded.title,
+               date = excluded.date,
+               description = excluded.description,
+               category = excluded.category,
+               content = excluded.content,
+               cover = excluded.cover,
+               admin_only = excluded.admin_only,
+               updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')`,
+          )
+          .bind(...values)
+          .run();
+      } catch (error) {
+        if (!isMissingAdminOnlyColumnError(error)) throw error;
+        await db
+          .prepare(
+            `INSERT INTO posts (slug, title, date, description, category, content, cover, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
+             ON CONFLICT(slug) DO UPDATE SET
+               title = excluded.title,
+               date = excluded.date,
+               description = excluded.description,
+               category = excluded.category,
+               content = excluded.content,
+               cover = excluded.cover,
+               updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')`,
+          )
+          .bind(...values.slice(0, 7))
+          .run();
+      }
     }
 
     if (originalSlug && originalSlug !== slug) {

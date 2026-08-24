@@ -210,7 +210,9 @@
       "caption": "说明",
       "imageUrl": "图片地址",
       "imageUrlOptional": "图片地址（选填）",
-      "cover": "封面"
+      "cover": "封面",
+      "adminOnly": "仅后台可见",
+      "adminOnlyHint": "已发布但不会出现在公开站点"
     },
     "editing": "正在编辑:",
     "close": "关闭",

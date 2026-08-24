@@ -87,6 +87,7 @@ type AdminItem = {
     imageUrl?: string;
     category?: string | string[];
     cover?: string;
+    adminOnly?: boolean | number;
     nickname?: string;
     contact?: string;
     articleTitle?: string;
@@ -155,7 +156,7 @@ export default function AdminPage() {
     // Form states
     const today = currentPostDate();
 
-    const [postData, setPostData] = useState<PostData>({ title: '', date: today, description: '', content: '', slug: '', category: ['随笔'], cover: '' });
+    const [postData, setPostData] = useState<PostData>({ title: '', date: today, description: '', content: '', slug: '', category: ['随笔'], cover: '', adminOnly: false });
     const postHistoryRef = useRef<PostEditorHistory>({
         past: [],
         current: { content: '', selectionStart: 0, selectionEnd: 0 },
@@ -1480,6 +1481,11 @@ export default function AdminPage() {
                                                                 {tr('list.from', { title: post.articleTitle })}
                                                             </span>
                                                         )}
+                                                        {type === 'post' && (post.adminOnly === true || post.adminOnly === 1) && (
+                                                            <span className="text-[10px] font-mono text-amber-400/80 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/20 uppercase tracking-normal shrink-0">
+                                                                {tr('form.adminOnly')}
+                                                            </span>
+                                                        )}
 
 
                                                     </div>
@@ -1633,6 +1639,17 @@ export default function AdminPage() {
                                                 <Input id="post-cover" placeholder="https://..." value={postData.cover} onChange={(e) => setPostData({ ...postData, cover: e.target.value })} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm text-neutral-300 focus:bg-neutral-900 placeholder:text-neutral-700" />
                                             </div>
                                         </div>
+                                        <label htmlFor="post-admin-only" className="flex cursor-pointer items-center gap-2 px-1 text-[10px] font-mono uppercase tracking-[0.16em] text-neutral-500">
+                                            <input
+                                                id="post-admin-only"
+                                                type="checkbox"
+                                                checked={postData.adminOnly}
+                                                onChange={(e) => setPostData({ ...postData, adminOnly: e.target.checked })}
+                                                className="h-3.5 w-3.5 accent-amber-400"
+                                            />
+                                            <span>{tr('form.adminOnly')}</span>
+                                            <span className="normal-case tracking-normal text-neutral-600">{tr('form.adminOnlyHint')}</span>
+                                        </label>
                                         <div className="flex flex-1 flex-col min-h-0">
                                             <div className="flex flex-1 flex-col min-h-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950">
                                                 <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 px-2 py-1.5">

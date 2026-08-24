@@ -22,6 +22,10 @@ export type TimelineEntry = {
   content: string; // 原始 Markdown
 };
 
+function isMissingAdminOnlyColumnError(error: unknown) {
+  return error instanceof Error && /(?:no such column:\s*admin_only|no column named admin_only)/i.test(error.message);
+}
+
 // 日常碎片：每条独立成行，带唯一 id（= filename）与创建时间戳，支持单条编辑/删除与前台搜索。
 export type DailyFragment = TimelineEntry & {
   id: string;
@@ -33,7 +37,13 @@ export async function getPostSlugs() {
   if (!db) {
     throw new Error('Database not available');
   }
-  const { results } = await db.prepare("SELECT slug FROM posts").all<{ slug: string }>();
+  let results: { slug: string }[];
+  try {
+    ({ results } = await db.prepare("SELECT slug FROM posts WHERE admin_only = 0").all<{ slug: string }>());
+  } catch (error) {
+    if (!isMissingAdminOnlyColumnError(error)) throw error;
+    ({ results } = await db.prepare("SELECT slug FROM posts").all<{ slug: string }>());
+  }
   return results.map((post) => post.slug);
 }
 
@@ -42,11 +52,21 @@ export async function getAllPosts(): Promise<PostListItem[]> {
   if (!db) {
     throw new Error('Database not available');
   }
-  const { results } = await db
-    .prepare(
-      "SELECT slug, title, date, description, category, cover FROM posts ORDER BY updated_at DESC, created_at DESC, slug DESC",
-    )
-    .all<PostListItem>();
+  let results: PostListItem[];
+  try {
+    ({ results } = await db
+      .prepare(
+        "SELECT slug, title, date, description, category, cover FROM posts WHERE admin_only = 0 ORDER BY updated_at DESC, created_at DESC, slug DESC",
+      )
+      .all<PostListItem>());
+  } catch (error) {
+    if (!isMissingAdminOnlyColumnError(error)) throw error;
+    ({ results } = await db
+      .prepare(
+        "SELECT slug, title, date, description, category, cover FROM posts ORDER BY updated_at DESC, created_at DESC, slug DESC",
+      )
+      .all<PostListItem>());
+  }
   return results;
 }
 
@@ -56,10 +76,19 @@ export async function getPostBySlug(slug: string): Promise<PostDetail> {
     throw new Error('Database not available');
   }
 
-  const post = await db
-    .prepare("SELECT slug, title, date, description, category, cover, content FROM posts WHERE slug = ?")
-    .bind(slug)
-    .first<PostDetail>();
+  let post: PostDetail | null;
+  try {
+    post = await db
+      .prepare("SELECT slug, title, date, description, category, cover, content FROM posts WHERE slug = ? AND admin_only = 0")
+      .bind(slug)
+      .first<PostDetail>();
+  } catch (error) {
+    if (!isMissingAdminOnlyColumnError(error)) throw error;
+    post = await db
+      .prepare("SELECT slug, title, date, description, category, cover, content FROM posts WHERE slug = ?")
+      .bind(slug)
+      .first<PostDetail>();
+  }
 
   if (!post) {
     throw new Error("Post not found");
@@ -99,17 +128,26 @@ export async function getRenderedPost(
   try {
     row = await db
       .prepare(
-        "SELECT slug, title, date, description, category, cover, content, rendered_html, rendered_toc, render_hash FROM posts WHERE slug = ?"
+        "SELECT slug, title, date, description, category, cover, content, rendered_html, rendered_toc, render_hash FROM posts WHERE slug = ? AND admin_only = 0"
       )
       .bind(slug)
       .first<CachedPostRow>();
-  } catch {
+  } catch (error) {
+    if (!(error instanceof Error) || !/no such column:/i.test(error.message)) throw error;
     // 渲染缓存列不存在（迁移未执行）：回退到基础查询，本次照常渲染但不缓存。
     cacheColumnsExist = false;
-    row = await db
-      .prepare("SELECT slug, title, date, description, category, cover, content FROM posts WHERE slug = ?")
-      .bind(slug)
-      .first<CachedPostRow>();
+    try {
+      row = await db
+        .prepare("SELECT slug, title, date, description, category, cover, content FROM posts WHERE slug = ? AND admin_only = 0")
+        .bind(slug)
+        .first<CachedPostRow>();
+    } catch (error) {
+      if (!isMissingAdminOnlyColumnError(error)) throw error;
+      row = await db
+        .prepare("SELECT slug, title, date, description, category, cover, content FROM posts WHERE slug = ?")
+        .bind(slug)
+        .first<CachedPostRow>();
+    }
   }
 
   if (!row) {
@@ -234,7 +272,15 @@ export async function getActivityStats(): Promise<ActivityStats[]> {
   }
 
   // 从数据库获取活动统计
-  const postsQuery = await db.prepare("SELECT date, COUNT(*) as count FROM posts GROUP BY date").all<{ date: string; count: number }>();
+  let postsQuery: { results: { date: string; count: number }[] };
+  try {
+    postsQuery = await db
+      .prepare("SELECT date, COUNT(*) as count FROM posts WHERE admin_only = 0 GROUP BY date")
+      .all<{ date: string; count: number }>();
+  } catch (error) {
+    if (!isMissingAdminOnlyColumnError(error)) throw error;
+    postsQuery = await db.prepare("SELECT date, COUNT(*) as count FROM posts GROUP BY date").all<{ date: string; count: number }>();
+  }
   const dailyQuery = await db.prepare("SELECT date, COUNT(*) as count FROM daily GROUP BY date").all<{ date: string; count: number }>();
   const momentsQuery = await db.prepare("SELECT date, COUNT(*) as count FROM moments GROUP BY date").all<{ date: string; count: number }>();
 

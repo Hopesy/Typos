@@ -9,6 +9,7 @@ export type PostData = {
   slug: string;
   category: string[];
   cover: string;
+  adminOnly: boolean;
 };
 
 export function createPostDraft(date: string, uniqueValue?: string): PostData {
@@ -20,6 +21,7 @@ export function createPostDraft(date: string, uniqueValue?: string): PostData {
     slug: derivePostSlug('', date, uniqueValue),
     category: ['随笔'],
     cover: '',
+    adminOnly: false,
   };
 }
 
@@ -37,6 +39,7 @@ type EditablePostItem = {
   slug?: string;
   category?: string | string[];
   cover?: string;
+  adminOnly?: boolean | number;
 };
 
 function stringValue(value: unknown) {
@@ -80,6 +83,7 @@ export function createPostEditData(
     slug: storedSlug || derivePostSlug('', date, uniqueValue),
     category: categories.length > 0 ? categories : ['随笔'],
     cover: item.cover || '',
+    adminOnly: item.adminOnly === true || item.adminOnly === 1,
   };
 }
 
@@ -125,5 +129,6 @@ export function buildPostDataFromMarkdown(
     slug: derivePostSlug('', date, uniqueValue),
     category: categories.length > 0 ? categories : ['随笔'],
     cover: stringValue(data.cover),
+    adminOnly: data.adminOnly === true || data.adminOnly === 1 || data.admin_only === true || data.admin_only === 1 || stringValue(data.adminOnly ?? data.admin_only).toLowerCase() === 'true',
   };
 }

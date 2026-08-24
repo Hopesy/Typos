@@ -8,6 +8,7 @@ export type PostPayload = {
   slug: string;
   cover: string;
   content: string;
+  adminOnly: boolean;
 };
 
 function stringValue(value: unknown, fallback = "") {
@@ -22,6 +23,13 @@ function normalizeCategory(value: unknown): string {
     return value.map((item) => stringValue(item).trim()).filter(Boolean).join(", ");
   }
   return stringValue(value);
+}
+
+function booleanValue(value: unknown, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+  return fallback;
 }
 
 export function normalizePostSlug(value: string) {
@@ -80,6 +88,7 @@ export function postPayloadFromJson(
     slug: derivePostSlug(stringValue(body.slug), date, uniqueValue),
     cover: stringValue(body.cover),
     content,
+    adminOnly: booleanValue(body.adminOnly ?? body.admin_only),
   };
 }
 
@@ -96,5 +105,6 @@ export function postPayloadFromMarkdown(raw: string, uniqueValue?: string): Post
     slug: derivePostSlug(stringValue(data.slug), date, uniqueValue),
     cover: stringValue(data.cover),
     content,
+    adminOnly: booleanValue(data.adminOnly ?? data.admin_only),
   };
 }

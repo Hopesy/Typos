@@ -13,6 +13,10 @@ type DownloadResult = { markdown: string; title: string };
 
 const str = (value: unknown) => (typeof value === 'string' ? value : value == null ? '' : String(value));
 
+function isMissingAdminOnlyColumnError(error: unknown) {
+  return error instanceof Error && /(?:no such column:\s*admin_only|no column named admin_only)/i.test(error.message);
+}
+
 function errorResponse(code: AdminApiErrorCode, status: number) {
   return NextResponse.json(adminApiError(code), {
     status,
@@ -41,6 +45,7 @@ function buildMarkdown(type: AdminType, row: Record<string, unknown>): string {
       description: str(row.description),
       category: str(row.category),
       cover: str(row.cover),
+      adminOnly: Number(row.admin_only) === 1,
     });
   }
   if (type === 'daily') {
@@ -64,10 +69,19 @@ async function fromDatabase(type: AdminType, filename: string): Promise<Download
 
   if (type === 'post') {
     const slug = filename.replace(/\.md$/, '');
-    const row = await db
-      .prepare('SELECT slug, title, date, description, category, content, cover FROM posts WHERE slug = ?')
-      .bind(slug)
-      .first();
+    let row;
+    try {
+      row = await db
+        .prepare('SELECT slug, title, date, description, category, content, cover, admin_only FROM posts WHERE slug = ?')
+        .bind(slug)
+        .first();
+    } catch (error) {
+      if (!isMissingAdminOnlyColumnError(error)) throw error;
+      row = await db
+        .prepare('SELECT slug, title, date, description, category, content, cover FROM posts WHERE slug = ?')
+        .bind(slug)
+        .first();
+    }
     return row ? { markdown: buildMarkdown('post', row), title: str(row.title) } : null;
   }
 
