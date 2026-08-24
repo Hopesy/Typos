@@ -1190,6 +1190,21 @@ export default function AdminPage() {
                             >
                                 <span className="text-trim-caps">{tr('btn.clear')}</span>
                             </button>
+                            <label
+                                htmlFor="post-admin-only-immersive"
+                                title={tr('form.adminOnlyHint')}
+                                className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 font-mono text-[10px] uppercase leading-none tracking-[0.12em] transition-colors ${postData.adminOnly ? 'bg-amber-500/10 text-amber-300' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
+                            >
+                                <input
+                                    id="post-admin-only-immersive"
+                                    type="checkbox"
+                                    checked={postData.adminOnly}
+                                    onChange={(e) => setPostData({ ...postData, adminOnly: e.target.checked })}
+                                    className="h-3.5 w-3.5 accent-amber-400"
+                                />
+                                <FiLock className="h-3.5 w-3.5" />
+                                <span className="text-trim-caps">{tr('form.adminOnly')}</span>
+                            </label>
                             <button
                                 type="button"
                                 onClick={handleSubmit}
@@ -1639,17 +1654,6 @@ export default function AdminPage() {
                                                 <Input id="post-cover" placeholder="https://..." value={postData.cover} onChange={(e) => setPostData({ ...postData, cover: e.target.value })} className="h-9 flex-1 bg-neutral-900/50 border-neutral-800 text-sm text-neutral-300 focus:bg-neutral-900 placeholder:text-neutral-700" />
                                             </div>
                                         </div>
-                                        <label htmlFor="post-admin-only" className="flex cursor-pointer items-center gap-2 px-1 text-[10px] font-mono uppercase tracking-[0.16em] text-neutral-500">
-                                            <input
-                                                id="post-admin-only"
-                                                type="checkbox"
-                                                checked={postData.adminOnly}
-                                                onChange={(e) => setPostData({ ...postData, adminOnly: e.target.checked })}
-                                                className="h-3.5 w-3.5 accent-amber-400"
-                                            />
-                                            <span>{tr('form.adminOnly')}</span>
-                                            <span className="normal-case tracking-normal text-neutral-600">{tr('form.adminOnlyHint')}</span>
-                                        </label>
                                         <div className="flex flex-1 flex-col min-h-0">
                                             <div className="flex flex-1 flex-col min-h-0 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950">
                                                 <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-neutral-900 bg-neutral-900/40 px-2 py-1.5">
@@ -1687,6 +1691,21 @@ export default function AdminPage() {
                                                         >
                                                             <FiMaximize2 className="h-3.5 w-3.5" />
                                                         </button>
+                                                        <label
+                                                            htmlFor="post-admin-only"
+                                                            title={tr('form.adminOnlyHint')}
+                                                            className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 font-mono text-[10px] uppercase leading-none tracking-[0.12em] transition-colors ${postData.adminOnly ? 'bg-amber-500/10 text-amber-300' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
+                                                        >
+                                                            <input
+                                                                id="post-admin-only"
+                                                                type="checkbox"
+                                                                checked={postData.adminOnly}
+                                                                onChange={(e) => setPostData({ ...postData, adminOnly: e.target.checked })}
+                                                                className="h-3.5 w-3.5 accent-amber-400"
+                                                            />
+                                                            <FiLock className="h-3.5 w-3.5" />
+                                                            <span className="text-trim-caps">{tr('form.adminOnly')}</span>
+                                                        </label>
                                                         <button
                                                             type="button"
                                                             onClick={handleSubmit}
