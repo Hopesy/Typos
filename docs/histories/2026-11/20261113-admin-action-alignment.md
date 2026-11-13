@@ -60,4 +60,15 @@
 
 初次通用 node 包安装曾因嵌套安装 `EALLOWSCRIPTS` 失败，随后使用用户授权的 Windows 预编译包成功，不修改脚本权限规则。
 
-本次未提交、推送或部署。任务状态见[主计划 U01](../../exec-plans/active/2026-11-13-project-hardening.md)。
+## 提交与发布验证
+
+用户后续明确要求“提交并部署”，并确认沿用仓库最近提交的作者身份，仅用于本次提交，不修改全局 Git 配置。
+
+- 修复及文档整合提交：`a328f3386ddf34758b6b5c4bb8781a05caaf5520`；在独立修复分支提交，再快进 main，已成功推送 origin/main。
+- 发布沿用 Cloudflare Git Integration；没有在 Windows 本机执行生产 deploy，也没有新增或手动执行生产 migration。
+- 2026-11-13 09:18:29 UTC，线上 `/` 与 `/admin` 均返回 HTTP 200；`/admin` 引用的 `/_next/static/chunks/0mylz1n_681ja.js` 已包含本次唯一新增标签类 `hidden text-trim-caps sm:block`，确认实际服务的应用资源已更新。
+- 对应脚本 SHA-256：`6c1f873c8e6082946f6d3ed610050cf135246e8cb25073a7f971126c99d2268b`。检查只读取公开登录页和静态资源，没有访问已登录后台或发布生产文章。
+- GitHub CLI 未登录、Wrangler 缺少 Cloudflare API token，未读取远端 CI/部署控制台日志；不把线上资源校验表述为所有远端检查已通过。
+- `.claude/settings.json` 含本机绝对路径，保留在本地、未提交或推送；临时口令、数据库和截图也未进入 Git。
+
+任务状态见[主计划 U01](../../exec-plans/active/2026-11-13-project-hardening.md)。
