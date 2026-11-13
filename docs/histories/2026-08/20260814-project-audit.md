@@ -1,5 +1,7 @@
 # Typos 修复时间线
 
+> 2026-11-13 整合说明：以下保留原始历史结果和当时的测试数量，未在本轮重新执行，不能视为当前 HEAD 或线上环境的验证。现行规则见[架构总览](../../ARCHITECTURE.md)，后续任务见[当前计划](../../exec-plans/active/2026-11-13-project-hardening.md)。
+
 本文记录 2026-08-14 项目审计后的问题、原因、修复顺序、实际改动和验证证据。修复按风险从安全到数据、架构和工程保障依次推进；第 6 阶段按当前个人站点的使用规模明确暂缓。
 
 上一轮修复已由提交 `2f240c6c9e0bd24e3d83ef9c64c887934f199fc1` 推送并部署到 Cloudflare；本次补充修复基于该线上版本继续处理文章编辑日期和别名唯一性问题。
@@ -105,7 +107,7 @@
 - 保存文章时把当前数据库实例传给 `warmPostRenderCache`，避免重复创建适配器。
 - 本地/Turso 迁移增加 `typos_migrations` 历史表、已执行跳过和单文件原子 batch。
 - 旧库根据真实 `posts` 列决定登记还是补跑 `0002_render_cache.sql`；具有清空语义的 `0003_daily_fragments.sql` 保守登记为已执行，避免历史数据再次被删除。
-- README、`.env.example`、`DEPLOY.md`、数据库、部署和 API 文档全部同步；Cloudflare 配置文件统一为 `wrangler.jsonc`。
+- README、`.env.example`、部署操作说明、数据库、部署和 API 文档全部同步；Cloudflare 配置文件统一为 `wrangler.jsonc`。现行内容已整合到 [design 专题](../../ARCHITECTURE.md)。
 
 ### 验证
 

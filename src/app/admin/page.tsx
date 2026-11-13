@@ -137,7 +137,8 @@ async function readAdminApiError(response: Response): Promise<AdminApiErrorPaylo
     }
 }
 
-const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white [&>svg]:shrink-0";
+const adminActionButtonClass = "h-8 items-center justify-center gap-1.5 border-neutral-800 bg-neutral-900 px-3 font-mono text-[10px] leading-none uppercase tracking-[0.18em] text-neutral-400 hover:bg-neutral-800 hover:text-white [&>svg]:shrink-0";
+const adminActionLabelClass = "hidden text-trim-caps sm:block";
 
 export default function AdminPage() {
     const postContentRef = useRef<HTMLTextAreaElement | null>(null);
@@ -180,7 +181,7 @@ export default function AdminPage() {
     const [isImmersiveMode, setIsImmersiveMode] = useState(false);
 
     // 文章预览：在浏览器内复用文章页同一套渲染管线（renderArticle），
-    // CPU 花在本机而非 Worker，规避 Cloudflare Free 套餐的 1102（见 docs/CLOUDFLARE_CPU_LIMITS.md）。
+    // CPU 花在本机而非 Worker，规避 Cloudflare Free 套餐的 1102（见 docs/design/rendering.md）。
     const [previewHtml, setPreviewHtml] = useState('');
     const [previewToc, setPreviewToc] = useState<{ depth: number; text: string; id: string }[]>([]);
     const [previewLoading, setPreviewLoading] = useState(false);
@@ -1389,7 +1390,7 @@ export default function AdminPage() {
                                     disabled={tokensDbUnavailable}
                                 >
                                     <FiPlus className="h-3 w-3" />
-                                    <span className="hidden sm:inline">{tr('tokens.newToken')}</span>
+                                    <span className={adminActionLabelClass}>{tr('tokens.newToken')}</span>
                                 </Button>
                             )}
                             {type !== 'comment' && type !== 'dashboard' && type !== 'tokens' && (
@@ -1412,7 +1413,7 @@ export default function AdminPage() {
                                             disabled={loading}
                                         >
                                             <FiDownload className="h-3 w-3" />
-                                            <span className="hidden sm:inline">{tr('action.downloadAll')}</span>
+                                            <span className={adminActionLabelClass}>{tr('action.downloadAll')}</span>
                                         </Button>
                                     )}
                                     {type === 'post' && (
@@ -1423,7 +1424,7 @@ export default function AdminPage() {
                                             className={adminActionButtonClass}
                                         >
                                             <FiUpload className="h-3 w-3" />
-                                            <span className="hidden sm:inline">{tr('action.uploadMd')}</span>
+                                            <span className={adminActionLabelClass}>{tr('action.uploadMd')}</span>
                                         </Button>
                                     )}
                                     <Button
@@ -1433,7 +1434,7 @@ export default function AdminPage() {
                                         className={adminActionButtonClass}
                                     >
                                         {viewMode === 'edit' ? <FiList className="h-3 w-3" /> : <FiPlus className="h-3 w-3" />}
-                                        <span className="hidden sm:inline">
+                                        <span className={adminActionLabelClass}>
                                             {viewMode === 'edit' ? tr('action.library') : tr('title.newTyped', { name: tr(`type.${type}`) })}
                                         </span>
                                     </Button>

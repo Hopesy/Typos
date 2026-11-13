@@ -15,7 +15,17 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js、React�
 | D1 数据库 | `typos-db` |
 | D1 binding | `DB` |
 
-部署、更新、发布文章的操作步骤见 [DEPLOY.md](./DEPLOY.md)。
+部署、更新、发布文章的操作步骤见 [部署专题](docs/design/deployment.md)。
+
+## 文档与接续入口
+
+- [AGENTS.md](AGENTS.md)：项目协作导航与记录约定。
+- [架构总览](docs/ARCHITECTURE.md)：模块、数据流和运行边界。
+- [详细 TODO / 当前计划](docs/exec-plans/active/2026-11-13-project-hardening.md)：优先级、任务依赖、验收标准与接续摘要。
+- [数据库与迁移](docs/design/database.md)、[API 与 Token](docs/design/api.md)、[渲染与 CPU](docs/design/rendering.md)、[后台编辑器](docs/design/editor.md)：现行专题。
+- [历史修复记录](docs/histories/2026-08/20260814-project-audit.md)：既有变更与当时的验证依据，不代表当前版本已重新验证。
+
+应用源码、资源、迁移与构建目录维持原布局；TODO 和进度只维护在当前计划，不另设重复清单。
 
 ## 功能
 
@@ -52,10 +62,10 @@ Typos 是一个极简 HUD 风格的个人发布系统，基于 Next.js、React�
 
 ## 本地开发
 
-安装依赖：
+使用 Node.js 22、npm 10，按锁文件安装依赖：
 
 ```bash
-npm install
+npm ci
 npm run db:migrate
 ```
 
@@ -85,6 +95,7 @@ http://localhost:3000
 | `npm run dev` | 本地开发 |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | TypeScript 类型检查 |
+| `npm test` | Vitest 回归测试 |
 | `npm run build` | Next.js 构建 |
 | `npm run build:worker` | OpenNext Cloudflare Worker 构建（Linux/CI） |
 | `npm run preview` | OpenNext Workers runtime 预览 |
@@ -126,6 +137,9 @@ http://localhost:3000
 | `src/lib/admin-content.ts` | 后台内容读写 |
 | `wrangler.jsonc` | Cloudflare Worker 和 D1 配置 |
 | `migrations/` | D1 migration |
+| `docs/ARCHITECTURE.md` | 架构和专题导航 |
+| `docs/exec-plans/` | TODO、里程碑与接续 |
+| `docs/histories/` | 已交付变更和验证摘要 |
 
 ## 注意
 

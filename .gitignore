@@ -44,3 +44,13 @@ data/*.db
 .wrangler
 .open-next
 .dev.vars
+
+# local collaboration state (keep project settings.json tracked)
+.claude/settings.local.json
+.claude/worktrees/
+
+# local verification artifacts
+coverage/
+playwright-report/
+test-results/
+tmp/

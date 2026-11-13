@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import type { DailyFragment } from '@/lib/content';
 
 // 单条碎片正文：在浏览器内复用文章页同一套渲染管线（renderArticle），
-// CPU 花在本机而非 Worker，规避 Cloudflare Free 套餐 1102（见 docs/CLOUDFLARE_CPU_LIMITS.md）。
+// CPU 花在本机而非 Worker，规避 Cloudflare Free 套餐 1102（见 docs/design/rendering.md）。
 function FragmentBody({ content, className = '' }: { content: string; className?: string }) {
   const [html, setHtml] = useState('');
 

@@ -21,6 +21,8 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     "out/**",
     "build/**",
+    // Local browser checks and scratch scripts are not application source.
+    "tmp/**",
     "next-env.d.ts",
   ]),
 ]);

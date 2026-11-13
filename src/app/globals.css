@@ -250,7 +250,7 @@
 
   @supports not (text-box-trim: trim-both) {
     .text-trim-caps {
-      display: inline-block;
+      /* 标签作为 flex 子项已是块级盒；不要覆盖响应式 hidden 的 display。 */
       transform: translateY(0.5px);
     }
   }
