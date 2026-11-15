@@ -1,17 +1,21 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+import { HOME_MUSIC, musicUrl } from "./src/lib/home-music";
 
 initOpenNextCloudflareForDev();
 
 const withNextIntl = createNextIntlPlugin();
 const isDevelopment = process.env.NODE_ENV === "development";
+const musicSource = musicUrl(HOME_MUSIC.src);
+const musicOrigin = musicSource && /^https?:\/\//i.test(musicSource) ? new URL(musicSource).origin : '';
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
+  `media-src 'self'${musicOrigin ? ` ${musicOrigin}` : ''}`,
   `connect-src 'self'${isDevelopment ? " ws: wss:" : ""}`,
   "worker-src 'self' blob:",
   "object-src 'none'",

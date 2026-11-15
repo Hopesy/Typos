@@ -1,17 +1,14 @@
 'use client';
 
 import { HeroTitle, HeroSubtitle } from "@/components/hero-title";
-import { FiFileText, FiLayers, FiRefreshCw, FiMapPin, FiMusic, FiBookOpen, FiVideo } from "react-icons/fi";
-import dynamic from "next/dynamic";
+import { FiFileText, FiLayers, FiRefreshCw, FiMapPin, FiBookOpen, FiVideo } from "react-icons/fi";
+import HomeBackground from "@/components/home-background";
+import { HomeMusicPlayer } from "@/components/home-music-player";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { ActivityHeatmap } from "@/components/activity-heatmap";
 import { useEffect, useState } from "react";
 import type { ActivityStats } from "@/lib/content";
-
-// 纯 WebGL 背景，仅客户端渲染：用 dynamic(ssr:false) 把 three.js/postprocessing
-// 从服务端 bundle 中剔除，避免 Worker 体积超限。
-const Dither = dynamic(() => import("@/components/dither/Dither"), { ssr: false });
 
 const tools = [
   {
@@ -70,16 +67,7 @@ export default function Home() {
   return (
     <div className="container mx-auto max-w-5xl px-4">
       <div className="dither-background-wrapper">
-        <Dither
-          waveColor={[0.5, 0.5, 0.5]}
-          disableAnimation={false}
-          enableMouseInteraction={true}
-          mouseRadius={0.3}
-          colorNum={4}
-          waveAmplitude={0.3}
-          waveFrequency={3}
-          waveSpeed={0.05}
-        />
+        <HomeBackground />
       </div>
       {/* Hero Section */}
       <section className="mb-8 flex min-h-[40vh] flex-col items-center justify-center px-2 text-center sm:px-0">
@@ -90,23 +78,20 @@ export default function Home() {
       </section>
 
       {/* 方案1: Status/Now 极简状态栏 */}
-      <section className="mb-16 flex justify-center">
+      <section className="relative z-20 mb-16 flex justify-center">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 py-2 rounded-full border border-hud-line bg-hud-panel backdrop-blur-md text-[11px] uppercase tracking-[0.16em] text-hud font-mono">
-          <div className="flex items-center gap-2">
+          <div className="flex h-[1.5em] items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            STATUS: CODING
+            <span className="text-trim-caps">STATUS: CODING</span>
           </div>
-          <div className="flex items-center gap-2 text-hud">
+          <div className="flex h-[1.5em] items-center gap-2 text-hud">
             <FiMapPin className="w-3 h-3 text-hud-muted" />
-            GUANG ZHOU
+            <span className="text-trim-caps">GUANG ZHOU</span>
           </div>
-          <div className="flex items-center gap-2 text-hud">
-            <FiMusic className="w-3 h-3 text-hud-muted" />
-            月亮之矢
-          </div>
+          <HomeMusicPlayer />
         </div>
       </section>
 

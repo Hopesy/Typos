@@ -6,6 +6,25 @@
     "daily": "日常",
     "about": "关于"
   },
+  "music": {
+    "play": "播放",
+    "pause": "暂停",
+    "retry": "重试播放",
+    "expand": "展开音乐播放器",
+    "collapse": "收起音乐播放器",
+    "source": "来源",
+    "recordingCredit": "录音来源：{name}",
+    "seek": "播放进度",
+    "volume": "音量",
+    "unconfiguredShort": "未配置",
+    "unconfigured": "尚未配置音源。配置音频地址后即可播放。",
+    "paused": "已暂停",
+    "loading": "加载中",
+    "playing": "播放中",
+    "error": "播放失败",
+    "errorDetail": "无法播放音频，请检查音源后重试。",
+    "ended": "播放结束"
+  },
   "home": {
     "section": {
       "footprint": "足迹",

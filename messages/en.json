@@ -6,6 +6,25 @@
     "daily": "Daily",
     "about": "About"
   },
+  "music": {
+    "play": "Play",
+    "pause": "Pause",
+    "retry": "Retry playback",
+    "expand": "Expand music player",
+    "collapse": "Collapse music player",
+    "source": "Source",
+    "recordingCredit": "Recording courtesy of {name}",
+    "seek": "Playback position",
+    "volume": "Volume",
+    "unconfiguredShort": "Not configured",
+    "unconfigured": "No audio source configured. Add an audio URL to enable playback.",
+    "paused": "Paused",
+    "loading": "Loading",
+    "playing": "Playing",
+    "error": "Playback failed",
+    "errorDetail": "Unable to play the audio. Check the source and try again.",
+    "ended": "Playback ended"
+  },
   "home": {
     "section": {
       "footprint": "Footprint",

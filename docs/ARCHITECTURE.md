@@ -60,6 +60,7 @@ Typos 是从 MiniLoad 整理、改名并适配 Cloudflare 的个人发布系统�
 - [部署、运行与质量门禁](design/deployment.md)
 - [API 与 Token 契约](design/api.md)
 - [Markdown 渲染与 Workers CPU](design/rendering.md)
+- [首页、音乐与动效](design/homepage.md)
 - [后台编辑器与沉浸模式](design/editor.md)
 - [详细 TODO 与接续摘要](exec-plans/active/2026-11-13-project-hardening.md)
 - [历史修复依据](histories/2026-08/20260814-project-audit.md)
