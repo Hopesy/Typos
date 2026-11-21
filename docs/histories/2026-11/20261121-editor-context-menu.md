@@ -50,4 +50,15 @@
 
 ## 接续
 
-2026-11-21 用户确认“提交 git 并 push，开始更新”，授权发布当前完整工作区。版本沿用已准备的 1.1.0；CHANGELOG 整理为当日发布条目，提交 `main` 并推送版本 tag，触发现有 Cloudflare Git Integration。新增 0007 迁移只含建表、索引与幂等配置插入。此前本地验证通过，远端提交、CI 和部署结果以 Git 及服务实际反馈为准，沿同一[活动计划](../../exec-plans/active/2026-11-13-project-hardening.md)接续。
+2026-11-21 用户确认“提交 git 并 push，开始更新”，授权发布当前完整工作区。版本沿用已准备的 1.1.0；CHANGELOG 整理为当日发布条目，提交 `main` 并推送版本 tag，触发现有 Cloudflare Git Integration。新增 0007 迁移只含建表、索引与幂等配置插入。
+
+## 发布结果
+
+- 功能提交：[c20ede2](https://github.com/Hopesy/Typos/commit/c20ede292105974523bc4a50d2757ac94c2d6ef8)，`feat: 发布 v1.1.0，完善首页管理与文章编辑体验`；包含当前已确认的 41 个文件变更。
+- `main` 与 annotated tag `v1.1.0` 原子推送成功；`git ls-remote` 核对 tag 解引用指向同一功能提交。测试数据库、凭据、脚本与截图保持忽略状态。
+- 本机缺少默认 Git 作者配置；沿用仓库连续六次提交一致的作者身份，通过单次 `git -c` 完成提交和 tag，未改全局设置。
+- [GitHub CI #10](https://github.com/Hopesy/Typos/actions/runs/44888371133) 成功，耗时 3m31s；`verify` 作业 2m19s，包含 lint、类型、测试、Next 和 Linux Cloudflare Worker 构建。
+- 生产首页实际返回 `v1.1.0` 与 `c20ede2`，确认服务已切到该功能提交。首页、后台入口、文章列表、日常、相册及关于页的公开响应核验保留在 `.Typos-temp/editor-menu/release-public-checks.json`。
+- 生产更新由原 Git Integration 完成，本轮未手工执行远端 D1 命令、登录生产后台或写入线上内容；迁移详细日志未单独读取。
+
+发布核验记录作为文档收尾提交，后续仍沿同一[活动计划](../../exec-plans/active/2026-11-13-project-hardening.md)接续。
