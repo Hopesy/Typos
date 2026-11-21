@@ -24,6 +24,17 @@ npm run dev
 
 本地默认数据库为 `./data/typos.db`。迁移脚本不自动加载 `.env.local`；自定义数据库的迁移环境按[数据库专题](database.md)设置。
 
+## 版本管理（SemVer）
+
+应用版本遵循 [Semantic Versioning](https://semver.org/)（`MAJOR.MINOR.PATCH`），以仓库根目录 `package.json` 的 `version` 为唯一事实源，与 `package-lock.json` 保持严格同步：
+
+- **构建期注入**：`next.config.ts` 在构建时读取 `package.json` 的 `version` 注入 `NEXT_PUBLIC_APP_VERSION`，并按 `WORKERS_CI_COMMIT_SHA` → `CF_PAGES_COMMIT_SHA` → `GITHUB_SHA` → 本地 `git rev-parse --short=7 HEAD` 顺序注入 7 位提交号 `NEXT_PUBLIC_APP_COMMIT`（不将完整 `package.json` 打入客户端 bundle）。
+- **运行期读取**：前台页脚（`src/components/footer.tsx`）与后台登录页、侧栏品牌区（`src/app/admin/page.tsx`）统一从 `src/lib/app-version.ts` 读取版本号，hover 提示显示 `vX.Y.Z (<sha>)`；`src/lib/app-version.test.ts` 回归检查 `package.json` 与 `package-lock.json` 版本一致。
+- **标准发版流程**（待用户授权提交/推送时执行）：
+  1. 在 `CHANGELOG.md` 将 `[Unreleased]` 整理到新版本条目。
+  2. 执行 `npm version patch`（修复）/ `npm version minor`（兼容新功能）/ `npm version major`（破坏性变更），自动同步 `package.json`、`package-lock.json` 并生成提交与 `vX.Y.Z` Git tag。
+  3. 推送代码与标签：`git push --follow-tags`。
+
 ## 质量门禁
 
 ```bash

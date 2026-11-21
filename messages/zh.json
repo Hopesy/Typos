@@ -34,6 +34,17 @@
     "signalDesc": "把折腾过的东西、偶尔的日常、喜欢的瞬间都放在这里。保持轻量，慢慢更新。",
     "toolSample": "示例项目",
     "launchModule": "启动模块",
+    "browseNotes": "阅读合集",
+    "tools": {
+      "eidos": "生图工作台",
+      "revitclaw": "Revit Agent 插件",
+      "markdview": "MD 渲染器",
+      "minolink": "飞书远控终端"
+    },
+    "books": {
+      "reading": "在读",
+      "finished": "读完"
+    },
     "footprint": {
       "totalActivities": "总活动数",
       "past52Weeks": "过去52周",
@@ -162,10 +173,11 @@
       "failed": "登录失败，请稍后重试。",
       "networkError": "无法连接到服务器，请检查网络后重试。",
       "enter": "进入",
-      "version": "管理后台 V.2.1"
+      "version": "管理后台 {version}"
     },
     "nav": {
       "dashboard": "仪表盘",
+      "home": "首页管理",
       "post": "文章",
       "daily": "日常",
       "moment": "瞬间",
@@ -200,6 +212,7 @@
     },
     "title": {
       "dashboard": "仪表盘",
+      "home": "首页管理",
       "editPost": "编辑文章",
       "commentMgmt": "评论管理",
       "libraryTyped": "{name}库",
@@ -208,6 +221,7 @@
     },
     "sub": {
       "overview": "概览",
+      "home": "首页展示",
       "library": "库",
       "editor": "编辑器",
       "tokens": "访问凭证"
@@ -241,6 +255,27 @@
       "preview": "渲染预览",
       "sourcePreview": "源码 / 预览"
     },
+    "editorMenu": {
+      "menuLabel": "编辑器快捷菜单",
+      "copyPasteAs": "复制 / 粘贴为…",
+      "copyPlainText": "复制为纯文本",
+      "pasteQuote": "粘贴为引用",
+      "bold": "加粗",
+      "italic": "斜体",
+      "inlineCode": "行内代码",
+      "link": "插入链接",
+      "quote": "引用块",
+      "orderedList": "有序列表",
+      "bulletList": "无序列表",
+      "taskList": "任务列表",
+      "cut": "剪切",
+      "copy": "复制",
+      "paste": "粘贴",
+      "delete": "删除选中内容",
+      "copyDenied": "复制失败，正文已保留。请使用 Ctrl+C / Cmd+C 重试。",
+      "contentChanged": "正文已变化，请重新选择内容后重试。",
+      "pasteDenied": "浏览器未授予剪贴板读取权限，请使用 Ctrl+V / Cmd+V 粘贴。"
+    },
     "list": {
       "empty": "空记录",
       "reply": "回复",
@@ -264,7 +299,9 @@
       "redo": "重做",
       "immersiveMode": "沉浸模式",
       "exitImmersive": "退出沉浸",
-      "syncScroll": "同步滚动"
+      "syncScroll": "同步滚动",
+      "viewPost": "查看文章",
+      "backToLibrary": "返回文章库"
     },
     "reply": {
       "channel": "回复通道: [管理员]",
@@ -309,7 +346,74 @@
       "tokenDeleted": "API 密钥已删除。",
       "tokenDeleteFailed": "API 密钥删除失败，请稍后重试。",
       "tokenCopied": "API 密钥已复制到剪贴板。",
-      "tokenCopyFailed": "无法复制 API 密钥，请手动选择并复制。"
+      "tokenCopyFailed": "无法复制 API 密钥，请手动选择并复制。",
+      "homeSchemaMissing": "首页管理数据表尚未初始化，请先执行数据库迁移（0007_home_manage.sql）。",
+      "homeLoadFailed": "首页管理数据加载失败，请稍后重试。",
+      "homeStatusSaved": "首页状态栏已保存。",
+      "homeToolSaved": "工具已保存。",
+      "homeBookSaved": "阅读条目已保存。",
+      "homeOrderSaved": "展示顺序已更新。",
+      "homeDeleted": "已删除。",
+      "homeSaveFailed": "首页配置保存失败，请稍后重试。",
+      "homeDeleteFailed": "删除失败，请稍后重试。",
+      "homeStatusInvalid": "状态词和地点不能为空。",
+      "homeToolInvalid": "请输入工具名称。",
+      "homeBookInvalid": "请输入书名。",
+      "homeUrlInvalid": "链接或封面地址格式无效，仅支持 http(s):// 或以 / 开头的站内路径。"
+    },
+    "home": {
+      "tabs": {
+        "status": "状态栏",
+        "tools": "工具",
+        "books": "阅读"
+      },
+      "schemaMissingTitle": "需要应用数据库迁移",
+      "schemaMissingHint": "尚未检测到首页管理表（0007_home_manage.sql）。本地请运行 npm run db:migrate，线上请通过部署流程应用 D1 迁移。",
+      "preview": "实时预览",
+      "statusLabel": "当前状态",
+      "statusPlaceholder": "例如：CODING",
+      "presets": "快捷状态",
+      "locationLabel": "所在地点",
+      "locationPlaceholder": "例如：GUANG ZHOU",
+      "saveStatus": "保存状态栏",
+      "addTool": "新增工具",
+      "editTool": "编辑工具",
+      "emptyTools": "暂无工具条目",
+      "toolName": "名称",
+      "toolNamePlaceholder": "例如：Eidos",
+      "toolDescZh": "中文简介",
+      "toolDescZhPlaceholder": "一句话介绍这个工具",
+      "toolDescEn": "英文简介（选填）",
+      "toolDescEnPlaceholder": "留空时英文界面自动显示中文简介",
+      "toolLink": "项目链接",
+      "toolLinkPlaceholder": "https://github.com/...",
+      "toolIcon": "图标",
+      "addBook": "新增阅读",
+      "editBook": "编辑阅读",
+      "emptyBooks": "暂无阅读条目（首页书架保持隐藏）",
+      "bookTitle": "书名",
+      "bookTitlePlaceholder": "例如：设计心理学",
+      "bookAuthor": "作者（选填）",
+      "bookAuthorPlaceholder": "例如：唐纳德·诺曼",
+      "bookCover": "封面图片地址（选填）",
+      "bookCoverPlaceholder": "https://... 或 /covers/...",
+      "bookNote": "悬浮简评（选填）",
+      "bookNotePlaceholder": "首页悬停在封面上时展示的简短笔记或评价",
+      "bookLink": "关联链接（选填）",
+      "bookLinkPlaceholder": "/posts/book-note 或 https://...",
+      "bookStatus": "阅读状态",
+      "statusReading": "在读",
+      "statusFinished": "读完",
+      "visible": "首页显示",
+      "hidden": "已隐藏",
+      "show": "设为显示",
+      "hide": "设为隐藏",
+      "moveUp": "上移",
+      "moveDown": "下移",
+      "edit": "编辑",
+      "save": "保存",
+      "cancel": "取消",
+      "confirmDelete": "确认删除该条目？"
     },
     "tokens": {
       "newToken": "新建密钥",

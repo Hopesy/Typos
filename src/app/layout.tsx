@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
-import Script from "next/script";
+import { cookies } from "next/headers";
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import { Header } from "@/components/header";
@@ -81,9 +81,12 @@ const themeScript = `
 (() => {
   try {
     const stored = localStorage.getItem('typos-theme');
-    const theme = stored === 'light' ? 'light' : 'dark';
+    const theme = stored === 'light' || stored === 'dark'
+      ? stored
+      : (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.dataset.theme = theme;
+    document.cookie = 'typos-theme=' + theme + '; path=/; max-age=31536000; samesite=lax';
   } catch {
     document.documentElement.classList.add('dark');
     document.documentElement.dataset.theme = 'dark';
@@ -96,18 +99,25 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
+  const [locale, cookieStore] = await Promise.all([getLocale(), cookies()]);
+  const initialTheme = cookieStore.get('typos-theme')?.value === 'light' ? 'light' : 'dark';
 
   return (
-    <html lang={locale === 'en' ? 'en' : 'zh-CN'} suppressHydrationWarning>
+    <html
+      lang={locale === 'en' ? 'en' : 'zh-CN'}
+      className={initialTheme === 'dark' ? 'dark' : undefined}
+      data-theme={initialTheme}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          id="typos-theme-script"
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} antialiased min-h-screen flex flex-col relative bg-background`}
       >
-        <Script
-          id="typos-theme-script"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: themeScript }}
-        />
         <NextIntlClientProvider>
           <Header />
           <main className="flex-1 relative z-10">{children}</main>

@@ -53,12 +53,12 @@ void main() {
   float warp = fbm(p + vec2(drift, -drift * 0.7));
   float n = fbm(p + vec2(warp, -warp) * waveAmplitude * 4.0 - drift);
   float influence = 1.0 - smoothstep(0.0, max(mouseRadius, 0.001), length(uv - mouse));
-  float field = clamp((n - 0.18) * 2.4 - influence * mouseStrength * 0.24, 0.0, 1.0);
+  float field = clamp((n - 0.24) * 1.95 - influence * mouseStrength * 0.24, 0.0, 0.84);
   // Ordered 4x4 dithering keeps the original pixel-grain identity in a single pass.
   float threshold = (4.0 * bayer2(mod(cell, 2.0)) + bayer2(floor(mod(cell, 4.0) / 2.0)) + 0.5) / 16.0;
   float levels = max(colorNum - 1.0, 1.0);
   float value = floor(clamp(field + (threshold - 0.5) / levels, 0.0, 1.0) * levels + 0.5) / levels;
-  gl_FragColor = vec4(waveColor, value * 0.85);
+  gl_FragColor = vec4(waveColor, value * 0.82);
 }
 `;
 
@@ -78,7 +78,7 @@ export default function Dither({
   waveSpeed = 0.05,
   waveFrequency = 3,
   waveAmplitude = 0.3,
-  waveColor = [0.72, 0.72, 0.72],
+  waveColor = [0.64, 0.64, 0.64],
   colorNum = 4,
   pixelSize = 2,
   disableAnimation = false,

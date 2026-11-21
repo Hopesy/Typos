@@ -55,7 +55,15 @@ describe('database migration runner', () => {
     const databaseUrl = createTemporaryDatabaseUrl();
     const firstOutput = runMigrations(databaseUrl);
     const secondOutput = runMigrations(databaseUrl);
-    const inspection = runDatabaseScript<{ migrations: string[]; adminTable: string | null; postsUpdatedIndex: string | null; adminOnlyColumn: string | null; adminOnlyIndex: string | null }>(databaseUrl, `
+    const inspection = runDatabaseScript<{
+      migrations: string[];
+      adminTable: string | null;
+      postsUpdatedIndex: string | null;
+      adminOnlyColumn: string | null;
+      adminOnlyIndex: string | null;
+      homeToolsCount: number;
+      homeBooksTable: string | null;
+    }>(databaseUrl, `
       const { createClient } = require('@libsql/client');
       const client = createClient({ url: process.argv[1] });
       Promise.all([
@@ -64,13 +72,17 @@ describe('database migration runner', () => {
         client.execute("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_posts_updated_at'"),
         client.execute("SELECT name FROM pragma_table_info('posts') WHERE name = 'admin_only'"),
         client.execute("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_posts_admin_only_updated_at'"),
-      ]).then(([migrations, adminTable, postsUpdatedIndex, adminOnlyColumn, adminOnlyIndex]) => {
+        client.execute('SELECT COUNT(*) AS count FROM home_tools'),
+        client.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'home_books'"),
+      ]).then(([migrations, adminTable, postsUpdatedIndex, adminOnlyColumn, adminOnlyIndex, homeToolsCount, homeBooksTable]) => {
         console.log(JSON.stringify({
           migrations: migrations.rows.map((row) => String(row.name)),
           adminTable: adminTable.rows[0]?.name ?? null,
           postsUpdatedIndex: postsUpdatedIndex.rows[0]?.name ?? null,
           adminOnlyColumn: adminOnlyColumn.rows[0]?.name ?? null,
           adminOnlyIndex: adminOnlyIndex.rows[0]?.name ?? null,
+          homeToolsCount: Number(homeToolsCount.rows[0]?.count ?? 0),
+          homeBooksTable: homeBooksTable.rows[0]?.name ?? null,
         }));
         client.close();
       }).catch((error) => { console.error(error); process.exit(1); });
@@ -79,7 +91,8 @@ describe('database migration runner', () => {
     expect(firstOutput).toContain('Running migration: 0004_admin_login_attempts.sql');
     expect(firstOutput).toContain('Running migration: 0005_posts_updated_at_index.sql');
     expect(firstOutput).toContain('Running migration: 0006_posts_admin_only.sql');
-    expect(secondOutput).toContain('Skipping migration: 0006_posts_admin_only.sql');
+    expect(firstOutput).toContain('Running migration: 0007_home_manage.sql');
+    expect(secondOutput).toContain('Skipping migration: 0007_home_manage.sql');
     expect(inspection.migrations).toEqual([
       '0001_init.sql',
       '0002_render_cache.sql',
@@ -87,11 +100,14 @@ describe('database migration runner', () => {
       '0004_admin_login_attempts.sql',
       '0005_posts_updated_at_index.sql',
       '0006_posts_admin_only.sql',
+      '0007_home_manage.sql',
     ]);
     expect(inspection.adminTable).toBe('admin_login_attempts');
     expect(inspection.postsUpdatedIndex).toBe('idx_posts_updated_at');
     expect(inspection.adminOnlyColumn).toBe('admin_only');
     expect(inspection.adminOnlyIndex).toBe('idx_posts_admin_only_updated_at');
+    expect(inspection.homeToolsCount).toBe(4);
+    expect(inspection.homeBooksTable).toBe('home_books');
   });
 
   it('registers historical migrations for an existing database without deleting daily data', async () => {
@@ -129,7 +145,8 @@ describe('database migration runner', () => {
     expect(firstOutput).toContain('Running migration: 0004_admin_login_attempts.sql');
     expect(firstOutput).toContain('Running migration: 0005_posts_updated_at_index.sql');
     expect(firstOutput).toContain('Running migration: 0006_posts_admin_only.sql');
-    expect(secondOutput).toContain('Skipping migration: 0006_posts_admin_only.sql');
+    expect(firstOutput).toContain('Running migration: 0007_home_manage.sql');
+    expect(secondOutput).toContain('Skipping migration: 0007_home_manage.sql');
     expect(inspection.migrations).toEqual([
       '0001_init.sql',
       '0002_render_cache.sql',
@@ -137,6 +154,7 @@ describe('database migration runner', () => {
       '0004_admin_login_attempts.sql',
       '0005_posts_updated_at_index.sql',
       '0006_posts_admin_only.sql',
+      '0007_home_manage.sql',
     ]);
     expect(inspection.daily).toEqual([{ filename: 'keep.md', content: 'preserve' }]);
   });

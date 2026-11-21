@@ -16,15 +16,15 @@
     pointer-events: none;
     /* A quiet static texture remains visible before JS and if WebGL fails. */
     background:
-        radial-gradient(ellipse at 50% 35%, rgba(180, 180, 180, 0.16), transparent 67%),
-        radial-gradient(rgba(220, 220, 220, 0.22) 0.6px, transparent 0.8px);
+        radial-gradient(ellipse at 50% 35%, rgba(160, 160, 160, 0.08), transparent 65%),
+        radial-gradient(rgba(220, 220, 220, 0.14) 0.6px, transparent 0.8px);
     background-size: 100% 100%, 4px 4px;
 }
 
 html:not(.dark) .home-background {
     background:
-        radial-gradient(ellipse at 50% 35%, rgba(65, 65, 65, 0.12), transparent 67%),
-        radial-gradient(rgba(40, 40, 40, 0.2) 0.6px, transparent 0.8px);
+        radial-gradient(ellipse at 50% 35%, rgba(65, 65, 65, 0.08), transparent 65%),
+        radial-gradient(rgba(40, 40, 40, 0.16) 0.6px, transparent 0.8px);
     background-size: 100% 100%, 4px 4px;
 }
 
@@ -33,18 +33,38 @@ html:not(.dark) .home-background {
     inset: 0;
     width: 100%;
     height: 100%;
-    opacity: 0.8;
+    opacity: 0.78;
 }
 
 html:not(.dark) .dither-container {
     filter: invert(1);
     mix-blend-mode: multiply;
-    opacity: 0.45;
+    opacity: 0.42;
 }
 
 .home-background::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, transparent 20%, var(--background) 100%);
+    background:
+        radial-gradient(circle at 50% 34%,
+            transparent 0%,
+            rgba(0, 0, 0, 0.14) 58%,
+            rgba(0, 0, 0, 0.48) 100%),
+        linear-gradient(to bottom,
+            transparent 24%,
+            rgba(15, 15, 15, 0.48) 72%,
+            var(--background) 100%);
+}
+
+html:not(.dark) .home-background::after {
+    background:
+        radial-gradient(circle at 50% 34%,
+            transparent 0%,
+            rgba(247, 246, 241, 0.16) 58%,
+            rgba(247, 246, 241, 0.52) 100%),
+        linear-gradient(to bottom,
+            transparent 24%,
+            rgba(247, 246, 241, 0.5) 72%,
+            var(--background) 100%);
 }

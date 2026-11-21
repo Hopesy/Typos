@@ -33,7 +33,7 @@ Typos 是从 MiniLoad 整理、改名并适配 Cloudflare 的个人发布系统�
 
 - `/`、`/about`、`/admin` 以客户端组件实现主要交互；根 layout 读取语言并提供全站 Provider、导航、页脚和图片灯箱。
 - `/posts`、`/posts/[slug]`、`/daily`、`/moments` 通过服务端页面读取内容，再由客户端组件完成搜索、切换、目录、复制、评论等交互。
-- 主题由 localStorage 与根节点样式控制；语言使用 cookie，因此不能直接假设公共 HTML 可跨用户、跨语言共享缓存。
+- 主题由 cookie、localStorage 与根节点样式同步控制（SSR 首字节即输出对应主题 class）；语言使用 cookie，因此不能直接假设公共 HTML 可跨用户、跨语言共享缓存。
 - 日常正文和后台预览在浏览器运行共享 Markdown 管线；文章详情优先读取数据库里的渲染结果。
 
 ## 关键数据流

@@ -25,7 +25,8 @@ import {
     FiKey,
     FiCopy,
     FiDownload,
-    FiMenu
+    FiMenu,
+    FiSliders
 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
@@ -40,12 +41,24 @@ import TocRail from "@/components/toc-rail";
 import { Bold, Italic, Heading2, Heading3, Quote, Link2, Image as ImageIcon, Code, List, SquareCode, ArrowDownUp, Undo2, Redo2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DashboardView, type DashboardData } from '@/components/admin/dashboard-view';
+import { EditorContextMenu, type EditorContextAction, type EditorContextMenuState } from '@/components/admin/editor-context-menu';
+import { HomeManageView } from '@/components/admin/home-manage-view';
 import { MarkdownTools, type MdTool } from '@/components/admin/markdown-tools';
 import { TokensView, type ApiToken } from '@/components/admin/tokens-view';
 import { buildPostDataFromMarkdown, createPostDraft, createPostEditData, downloadNameFromItem, type PostData } from '@/lib/admin-markdown';
+import { APP_BUILD_INFO, APP_VERSION_LABEL } from '@/lib/app-version';
+import {
+    applyBlockPrefix,
+    insertBlockSnippet,
+    insertTemplate,
+    replaceSelection,
+    markdownToPlainText,
+    toggleInlineWrap,
+    type EditorEditResult,
+} from '@/lib/editor-actions';
 import { currentPostDate } from '@/lib/post-payload';
 
-type AdminType = 'dashboard' | 'post' | 'daily' | 'moment' | 'comment' | 'tokens';
+type AdminType = 'dashboard' | 'home' | 'post' | 'daily' | 'moment' | 'comment' | 'tokens';
 
 type PostEditorSnapshot = {
     content: string;
@@ -96,7 +109,12 @@ type AdminItem = {
     is_admin?: number;
 };
 
-type StatusMessage = { text: string; isError: boolean };
+type StatusMessage = {
+    text: string;
+    isError: boolean;
+    viewPostHref?: string;
+    showBackToLibrary?: boolean;
+};
 
 type AdminApiErrorPayload = {
     code?: string;
@@ -191,6 +209,7 @@ export default function AdminPage() {
     const [scrollSync, setScrollSync] = useState(false);
     const previewScrollRef = useRef<HTMLDivElement | null>(null);
     const scrollSyncLock = useRef(false);
+    const [editorMenu, setEditorMenu] = useState<EditorContextMenuState | null>(null);
 
     // API Token state
     const [apiTokens, setApiTokens] = useState<ApiToken[]>([]);
@@ -287,9 +306,20 @@ export default function AdminPage() {
         }
     }, [expireSession, tr]);
 
+    const notifyAdmin = useCallback((text: string, isError = false) => {
+        setMessage({ text, isError });
+    }, []);
+
+    const closeEditorMenu = useCallback(() => {
+        setEditorMenu(null);
+    }, []);
+
     const fetchPosts = useCallback(async () => {
         if (type === 'dashboard') {
             await fetchDashboardData();
+            return;
+        }
+        if (type === 'home' || type === 'tokens') {
             return;
         }
 
@@ -503,7 +533,7 @@ export default function AdminPage() {
     // ESC key handler for immersive mode
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isImmersiveMode) {
+            if (e.key === 'Escape' && isImmersiveMode && !editorMenu) {
                 setIsImmersiveMode(false);
             }
         };
@@ -512,12 +542,13 @@ export default function AdminPage() {
             window.addEventListener('keydown', handleEscape);
             return () => window.removeEventListener('keydown', handleEscape);
         }
-    }, [isImmersiveMode]);
+    }, [isImmersiveMode, editorMenu]);
 
-    // 通知统一以 toast 形式呈现，3.2s 后自动消失。
+    // 通知统一以 toast 形式呈现；带快捷操作按钮时延长停留时间方便点击。
     useEffect(() => {
         if (!message) return;
-        const timer = window.setTimeout(() => setMessage(null), 3200);
+        const duration = message.viewPostHref || message.showBackToLibrary ? 6000 : 3200;
+        const timer = window.setTimeout(() => setMessage(null), duration);
         return () => window.clearTimeout(timer);
     }, [message]);
 
@@ -569,11 +600,17 @@ export default function AdminPage() {
     };
 
     const focusPostEditorAt = (snapshot: PostEditorSnapshot) => {
+        const textarea = postContentRef.current;
+        if (!textarea) return;
+        const { scrollTop, scrollLeft } = textarea;
         requestAnimationFrame(() => {
-            const textarea = postContentRef.current;
-            if (!textarea) return;
-            textarea.focus();
+            if (postContentRef.current !== textarea) return;
+            // Updating a controlled textarea moves its temporary caret to the end.
+            // Restore the intended selection before focusing, without revealing that caret.
             textarea.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
+            textarea.focus({ preventScroll: true });
+            textarea.scrollTop = scrollTop;
+            textarea.scrollLeft = scrollLeft;
         });
     };
 
@@ -673,9 +710,110 @@ export default function AdminPage() {
         );
     };
 
+    const applyPostEditorResult = (result: EditorEditResult) => {
+        updatePostContent(result.content, result.selectionStart, result.selectionEnd, 'command');
+        focusPostEditorAt(result);
+    };
+
+    const handlePostEditorContextMenu = (event: React.MouseEvent<HTMLTextAreaElement>) => {
+        if (event.shiftKey) return;
+        event.preventDefault();
+        const textarea = event.currentTarget;
+        setEditorMenu({
+            x: event.clientX,
+            y: event.clientY,
+            selectionStart: textarea.selectionStart,
+            selectionEnd: textarea.selectionEnd,
+        });
+    };
+
+    const handleEditorContextAction = async (
+        action: EditorContextAction,
+        selectionStart: number,
+        selectionEnd: number,
+    ) => {
+        const current = postData.content;
+        const textarea = postContentRef.current;
+        const selection = { content: current, selectionStart, selectionEnd };
+        // Clipboard access can await a permission prompt while the user keeps editing.
+        const selectionIsCurrent = () => textarea === postContentRef.current && textarea?.value === current;
+        const applyClipboardResult = (result: EditorEditResult) => {
+            if (selectionIsCurrent()) applyPostEditorResult(result);
+            else setMessage({ text: tr('editorMenu.contentChanged'), isError: true });
+        };
+
+        switch (action) {
+            case 'bold':
+                applyPostEditorResult(toggleInlineWrap(current, selectionStart, selectionEnd, '**', 'bold text'));
+                return;
+            case 'italic':
+                applyPostEditorResult(toggleInlineWrap(current, selectionStart, selectionEnd, '*', 'italic text'));
+                return;
+            case 'inlineCode':
+                applyPostEditorResult(toggleInlineWrap(current, selectionStart, selectionEnd, '`', 'code'));
+                return;
+            case 'link':
+                applyPostEditorResult(insertTemplate(current, selectionStart, selectionEnd, '[', '](https://)', 'link text'));
+                return;
+            case 'quote':
+                applyPostEditorResult(applyBlockPrefix(current, selectionStart, selectionEnd, '> ', tr('md.quote')));
+                return;
+            case 'orderedList':
+                applyPostEditorResult(applyBlockPrefix(current, selectionStart, selectionEnd, '1. ', 'list item'));
+                return;
+            case 'bulletList':
+                applyPostEditorResult(applyBlockPrefix(current, selectionStart, selectionEnd, '- ', 'list item'));
+                return;
+            case 'taskList':
+                applyPostEditorResult(applyBlockPrefix(current, selectionStart, selectionEnd, '- [ ] ', 'task item'));
+                return;
+            case 'delete':
+                if (selectionEnd > selectionStart) {
+                    applyPostEditorResult(replaceSelection(current, selectionStart, selectionEnd, ''));
+                }
+                return;
+            case 'copy':
+            case 'copyPlainText':
+            case 'cut': {
+                if (selectionEnd <= selectionStart) return;
+                try {
+                    const selected = current.slice(selectionStart, selectionEnd);
+                    const text = action === 'copyPlainText' ? await markdownToPlainText(selected) : selected;
+                    await navigator.clipboard.writeText(text);
+                } catch {
+                    setMessage({ text: tr('editorMenu.copyDenied'), isError: true });
+                    if (selectionIsCurrent()) focusPostEditorAt(selection);
+                    return;
+                }
+                if (action === 'cut') applyClipboardResult(replaceSelection(current, selectionStart, selectionEnd, ''));
+                else if (selectionIsCurrent()) focusPostEditorAt(selection);
+                return;
+            }
+            case 'paste':
+            case 'pasteQuote': {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    if (!text) {
+                        if (selectionIsCurrent()) focusPostEditorAt(selection);
+                        return;
+                    }
+                    const result = action === 'pasteQuote'
+                        ? insertBlockSnippet(current, selectionStart, selectionEnd, text.replace(/\r\n?/g, '\n').split('\n').map((line) => `> ${line}`).join('\n'))
+                        : replaceSelection(current, selectionStart, selectionEnd, text);
+                    applyClipboardResult(result);
+                } catch {
+                    setMessage({ text: tr('editorMenu.pasteDenied'), isError: true });
+                    if (selectionIsCurrent()) focusPostEditorAt(selection);
+                }
+                return;
+            }
+        }
+    };
+
     const handlePostEditorKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
         const key = event.key.toLowerCase();
+        const textarea = event.currentTarget;
 
         if (key === 'z') {
             event.preventDefault();
@@ -684,6 +822,18 @@ export default function AdminPage() {
         } else if (key === 'y') {
             event.preventDefault();
             redoPostContent();
+        } else if (key === 'b' && !event.shiftKey) {
+            event.preventDefault();
+            void handleEditorContextAction('bold', textarea.selectionStart, textarea.selectionEnd);
+        } else if (key === 'i' && !event.shiftKey) {
+            event.preventDefault();
+            void handleEditorContextAction('italic', textarea.selectionStart, textarea.selectionEnd);
+        } else if (key === 'k' && !event.shiftKey) {
+            event.preventDefault();
+            void handleEditorContextAction('link', textarea.selectionStart, textarea.selectionEnd);
+        } else if (key === 'e' && !event.shiftKey) {
+            event.preventDefault();
+            void handleEditorContextAction('inlineCode', textarea.selectionStart, textarea.selectionEnd);
         }
     };
 
@@ -853,19 +1003,32 @@ export default function AdminPage() {
             const result = await res.json() as { success?: boolean; code?: string };
             if (res.ok && result.success) {
                 const typeName = type === 'post' ? tr('type.post') : type === 'daily' ? tr('type.daily') : tr('type.moment');
-                setMessage({ text: tr('message.saveSuccess', { type: typeName }), isError: false });
                 if (type === 'post') {
-                    resetPostEditorState();
-                } else if (type === 'daily') {
-                    setDailyData({ title: '', date: today, imageUrl: '', content: '' });
-                } else if (type === 'moment') {
-                    setMomentData({ title: '', date: today, imageUrl: '', content: '' });
+                    // 文章保存/发布后保留当前编辑器内容与预览，避免整页瞬间变空；
+                    // 同步切换为编辑当前 slug 状态，并在提示条提供“查看文章 / 返回文章库”快捷入口。
+                    const savedSlug = (postData.slug || currentFilename?.replace(/\.md$/, '') || '').trim();
+                    if (savedSlug) {
+                        setCurrentFilename(`${savedSlug}.md`);
+                        setIsSlugModified(true);
+                    }
+                    setIsEditing(true);
+                    setMessage({
+                        text: tr('message.saveSuccess', { type: typeName }),
+                        isError: false,
+                        viewPostHref: !postData.adminOnly && savedSlug ? `/posts/${encodeURIComponent(savedSlug)}` : undefined,
+                        showBackToLibrary: true,
+                    });
+                } else {
+                    setMessage({ text: tr('message.saveSuccess', { type: typeName }), isError: false });
+                    if (type === 'daily') {
+                        setDailyData({ title: '', date: today, imageUrl: '', content: '' });
+                    } else if (type === 'moment') {
+                        setMomentData({ title: '', date: today, imageUrl: '', content: '' });
+                    }
+                    setCurrentFilename(null);
+                    setIsEditing(false);
+                    setViewMode('list');
                 }
-                // 发布/更新成功后统一刷新列表并回到列表视图（post/daily/moment 一致）。
-                setCurrentFilename(null);
-                setIsEditing(false);
-                await fetchPosts();
-                setViewMode('list');
             } else {
                 setMessage({ text: messageForApiError(result, 'message.saveFailed'), isError: true });
             }
@@ -1130,8 +1293,8 @@ export default function AdminPage() {
                         </form>
                     </CardContent>
                     <CardFooter className="flex justify-center border-t border-neutral-800/50 py-3">
-                        <p className="text-[10px] text-neutral-600 font-mono uppercase tracking-[0.2em]">
-                            {tr('login.version')}
+                        <p title={APP_BUILD_INFO} className="text-[10px] text-neutral-600 font-mono uppercase tracking-[0.2em]">
+                            {tr('login.version', { version: APP_VERSION_LABEL })}
                         </p>
                     </CardFooter>
                 </Card>
@@ -1140,17 +1303,50 @@ export default function AdminPage() {
     }
 
 
-    // 全局通知 toast：终端风格，半透明配色在明暗主题下均可读。
+    // 全局通知 toast：终端风格，半透明配色在明暗主题下均可读；文章保存后附带查看与返回文章库入口。
     const messageToast = message ? (
         <div className="fixed bottom-6 right-6 z-[100] animate-in fade-in slide-in-from-bottom-3 duration-300">
-            <div className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 font-mono text-[11px] leading-tight shadow-2xl backdrop-blur-sm ${message.isError ? 'border-red-500/30 bg-red-500/10 text-red-400' : 'border-green-500/30 bg-green-500/10 text-green-400'}`}>
+            <div className={`flex flex-wrap items-center gap-2.5 rounded-lg border px-4 py-3 font-mono text-[11px] leading-tight shadow-2xl backdrop-blur-md ${message.isError ? 'border-red-500/30 bg-neutral-950/90 text-red-400' : 'border-green-500/30 bg-neutral-950/90 text-green-400'}`}>
                 <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${message.isError ? 'bg-red-500' : 'bg-green-500'} animate-pulse`} />
-                {message.text}
+                <span>{message.text}</span>
+                {message.viewPostHref && (
+                    <a
+                        href={message.viewPostHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-1 inline-flex items-center gap-1 rounded border border-green-500/30 bg-green-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-green-300 transition-colors hover:border-green-400/60 hover:bg-green-500/20"
+                    >
+                        <span>{tr('btn.viewPost')}</span>
+                        <span aria-hidden="true">↗</span>
+                    </a>
+                )}
+                {message.showBackToLibrary && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsImmersiveMode(false);
+                            setEditorMenu(null);
+                            setMessage(null);
+                            setViewMode('list');
+                        }}
+                        className="cursor-pointer rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-neutral-200 transition-colors hover:border-neutral-500 hover:text-white"
+                    >
+                        {tr('btn.backToLibrary')}
+                    </button>
+                )}
             </div>
         </div>
     ) : null;
 
     // 文章编辑视图：整页填满视口、不产生外层滚动，仅源码/预览面板内部滚动。
+    const editorContextMenu = (
+        <EditorContextMenu
+            menu={editorMenu}
+            onAction={(action, start, end) => { void handleEditorContextAction(action, start, end); }}
+            onClose={closeEditorMenu}
+        />
+    );
+
     const isPostEditor = viewMode === 'edit' && type === 'post';
 
     // Immersive mode full-screen editor
@@ -1227,6 +1423,8 @@ export default function AdminPage() {
                                 value={postData.content}
                                 onChange={handlePostContentChange}
                                 onKeyDown={handlePostEditorKeyDown}
+                                onContextMenu={handlePostEditorContextMenu}
+                                onScroll={() => { if (editorMenu) setEditorMenu(null); }}
                                 className="block h-full w-full resize-none select-text overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                             />
                         </div>
@@ -1249,6 +1447,7 @@ export default function AdminPage() {
                         </div>
                     </div>
                 </div>
+                {editorContextMenu}
                 {messageToast}
             </div>
         );
@@ -1272,7 +1471,12 @@ export default function AdminPage() {
                 {/* Brand Area */}
                 <div className="p-4 border-b border-neutral-900 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                     {!isSidebarCollapsed && (
-                        <span className="font-bold text-lg text-neutral-200 tracking-tight animate-in fade-in duration-300">Typos</span>
+                        <div className="flex items-baseline gap-2 animate-in fade-in duration-300">
+                            <span className="font-bold text-lg text-neutral-200 tracking-tight">Typos</span>
+                            <span title={APP_BUILD_INFO} className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                                {APP_VERSION_LABEL}
+                            </span>
+                        </div>
                     )}
                     {/* Mobile close button */}
                     <button
@@ -1287,13 +1491,15 @@ export default function AdminPage() {
 
                 <div className="p-4" onClick={(e) => e.stopPropagation()}>
                     <nav className="space-y-1">
-                        {(['dashboard', 'post', 'daily', 'moment', 'comment', 'tokens'] as const).map((t) => (
+                        {(['dashboard', 'home', 'post', 'daily', 'moment', 'comment', 'tokens'] as const).map((t) => (
 
                             <button
                                 key={t}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setExistingPosts([]); // 立即清空，防止闪烁
+                                    setIsImmersiveMode(false);
+                                    setEditorMenu(null);
                                     setType(t);
                                     setViewMode('list');
                                     setIsMobileSidebarOpen(false);
@@ -1306,6 +1512,7 @@ export default function AdminPage() {
                             >
                                 <span className={`p-1 rounded text-[11px] shrink-0 ${type === t ? 'bg-neutral-950 text-white shadow-inner' : 'bg-transparent text-neutral-600'}`}>
                                     {t === 'dashboard' && <FiBarChart2 className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
+                                    {t === 'home' && <FiSliders className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
                                     {t === 'post' && <FiEdit3 className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
                                     {t === 'daily' && <FiTerminal className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
                                     {t === 'moment' && <FiImage className={isSidebarCollapsed ? "md:w-3 md:h-3 w-3.5 h-3.5" : "w-3.5 h-3.5"} />}
@@ -1361,6 +1568,8 @@ export default function AdminPage() {
                             <h1 className="text-base md:text-lg font-bold tracking-tight text-white mb-0 md:mb-1 capitalize flex items-center gap-2 min-w-0 truncate">
                                 {type === 'dashboard'
                                     ? tr('title.dashboard')
+                                    : type === 'home'
+                                    ? tr('title.home')
                                     : type === 'tokens'
                                     ? tr('title.tokens')
                                     : viewMode === 'list'
@@ -1371,6 +1580,8 @@ export default function AdminPage() {
                                 <span className="text-neutral-500 font-mono text-xs uppercase normal-case tracking-wider font-normal">
                                     {type === 'dashboard'
                                         ? tr('sub.overview')
+                                        : type === 'home'
+                                        ? tr('sub.home')
                                         : type === 'tokens'
                                         ? tr('sub.tokens')
                                         : (type === 'post' || type === 'daily' || type === 'moment') && viewMode === 'list' ? tr('sub.library') : (type === 'comment' ? tr('sub.library') : tr('sub.editor'))}
@@ -1393,7 +1604,7 @@ export default function AdminPage() {
                                     <span className={adminActionLabelClass}>{tr('tokens.newToken')}</span>
                                 </Button>
                             )}
-                            {type !== 'comment' && type !== 'dashboard' && type !== 'tokens' && (
+                            {type !== 'comment' && type !== 'dashboard' && type !== 'tokens' && type !== 'home' && (
                                 <>
                                     {type === 'post' && (
                                         <input
@@ -1428,7 +1639,15 @@ export default function AdminPage() {
                                         </Button>
                                     )}
                                     <Button
-                                        onClick={() => viewMode === 'edit' ? setViewMode('list') : handleNewItem()}
+                                        onClick={() => {
+                                            if (viewMode === 'edit') {
+                                                setIsImmersiveMode(false);
+                                                setEditorMenu(null);
+                                                setViewMode('list');
+                                            } else {
+                                                handleNewItem();
+                                            }
+                                        }}
                                         variant="outline"
                                         size="sm"
                                         className={adminActionButtonClass}
@@ -1448,6 +1667,8 @@ export default function AdminPage() {
                     <div className={`bg-neutral-950 ${isPostEditor ? 'flex flex-1 flex-col min-h-0 pb-6' : 'flex-1 overflow-y-auto pb-8'}`}>
                         {type === 'dashboard' ? (
                             <DashboardView data={dashboardData} loading={dashboardLoading} />
+                        ) : type === 'home' ? (
+                            <HomeManageView onNotify={notifyAdmin} onSessionExpired={expireSession} />
                         ) : type === 'tokens' ? (
                             <TokensView
                                 tokens={apiTokens}
@@ -1460,7 +1681,7 @@ export default function AdminPage() {
                         ) : viewMode === 'list' ? (
                             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <div className="grid grid-cols-1 gap-3">
-                                    {listLoading ? (
+                                    {listLoading && existingPosts.length === 0 ? (
                                         <div className="py-12 flex flex-col items-center gap-3 animate-pulse">
                                             <div className="h-4 w-48 bg-neutral-900 rounded" />
                                             <div className="h-3 w-32 bg-neutral-900 rounded" />
@@ -1725,6 +1946,8 @@ export default function AdminPage() {
                                                             value={postData.content}
                                                             onChange={handlePostContentChange}
                                                             onKeyDown={handlePostEditorKeyDown}
+                                                            onContextMenu={handlePostEditorContextMenu}
+                                                            onScroll={() => { if (editorMenu) setEditorMenu(null); }}
                                                             className="block w-full min-h-0 flex-1 resize-none select-text overflow-auto border-0 bg-neutral-950 p-4 font-mono text-sm leading-relaxed text-neutral-300 outline-none transition-colors placeholder:text-neutral-700 focus:bg-neutral-900/40"
                                                         />
                                                     </div>
@@ -1958,6 +2181,8 @@ export default function AdminPage() {
                     </div>
                 </div>
             )}
+
+            {editorContextMenu}
 
         </div>
     );

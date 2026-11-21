@@ -8,10 +8,15 @@ type Theme = 'dark' | 'light';
 
 const STORAGE_KEY = 'typos-theme';
 
+function persistThemeCookie(theme: Theme) {
+  document.cookie = `${STORAGE_KEY}=${theme}; path=/; max-age=31536000; samesite=lax`;
+}
+
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.toggle('dark', theme === 'dark');
   root.dataset.theme = theme;
+  persistThemeCookie(theme);
 }
 
 function readTheme(): Theme {

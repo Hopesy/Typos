@@ -22,6 +22,7 @@
 - `comments`：文章 slug、昵称、联系方式、正文、父评论、管理员标记；仅父评论有外键约束，文章关联由应用维护。
 - `rate_limits`：评论 IP 与最近时间；`admin_login_attempts`：登录失败窗口/封禁时间。
 - `api_tokens`：哈希、识别前缀、状态、创建/使用/过期时间，不存明文 Token。
+- `site_settings`、`home_tools`、`home_books`：首页状态词/地点配置、展示工具列表与阅读书架（含排序与显隐）。
 - `typos_migrations`：本地/Turso 迁移记录；D1 迁移由 Wrangler 管理，不等同此表。
 
 公开评论不返回 contact；联系方式仅供后台和配置的通知路径使用。参见 [API 契约](api.md)。
@@ -36,6 +37,7 @@
 | `0004_admin_login_attempts.sql` | 登录失败限流表 |
 | `0005_posts_updated_at_index.sql` | 文章修改时间稳定排序索引 |
 | `0006_posts_admin_only.sql` | 后台可见标记及公开列表组合索引 |
+| `0007_home_manage.sql` | 首页状态配置（`site_settings`）、工具（`home_tools`，幂等初始化现有 4 项）与阅读书架（`home_books`） |
 
 ### 本地 / Turso
 
@@ -67,7 +69,7 @@ npm run db:migrations:apply
 
 ### 新增迁移规则
 
-- 当前编号到 `0006`，新文件使用下一个未占用编号；不要修改已部署 migration 的语义。
+- 当前编号到 `0007`，新文件使用下一个未占用编号；不要修改已部署 migration 的语义。
 - 使用 SQLite/D1 兼容语法，分别验证 libSQL 与 Wrangler 本地 D1，不套用 PostgreSQL 事务假设。
 - 在临时库验证：新库、历史库、第二次运行、失败恢复和业务数据保留。
 - SQL 含 `DELETE`、DROP 或重建表时，明确数据去向、备份和回退步骤。

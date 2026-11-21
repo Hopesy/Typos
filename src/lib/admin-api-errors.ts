@@ -23,6 +23,15 @@ export const ADMIN_API_ERROR_MESSAGES = {
   TOKEN_CREATE_FAILED: "API 密钥创建失败，请稍后重试。",
   TOKEN_DELETE_FAILED: "API 密钥删除失败，请稍后重试。",
   LIST_FAILED: "内容列表加载失败，请稍后重试。",
+  HOME_SCHEMA_MISSING: "首页管理数据表尚未初始化，请先执行数据库迁移（0007_home_manage.sql）。",
+  HOME_STATUS_INVALID: "状态词和地点不能为空。",
+  HOME_TOOL_INVALID: "请输入工具名称。",
+  HOME_BOOK_INVALID: "请输入书名。",
+  HOME_URL_INVALID: "链接或封面地址格式无效，仅支持 http(s):// 或以 / 开头的站内路径。",
+  HOME_ID_REQUIRED: "缺少目标记录标识，请刷新页面后重试。",
+  HOME_LOAD_FAILED: "首页管理数据加载失败，请稍后重试。",
+  HOME_SAVE_FAILED: "首页配置保存失败，请稍后重试。",
+  HOME_DELETE_FAILED: "删除失败，请稍后重试。",
 } as const;
 
 export type AdminApiErrorCode = keyof typeof ADMIN_API_ERROR_MESSAGES;

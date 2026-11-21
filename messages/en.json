@@ -34,6 +34,17 @@
     "signalDesc": "A place for things I've tinkered with, everyday notes, and moments I like. Kept light, updated slowly.",
     "toolSample": "Sample project",
     "launchModule": "LAUNCH_MODULE",
+    "browseNotes": "Browse Notes",
+    "tools": {
+      "eidos": "Image generation studio",
+      "revitclaw": "Revit agent plugin",
+      "markdview": "Markdown renderer",
+      "minolink": "Feishu remote terminal"
+    },
+    "books": {
+      "reading": "Reading",
+      "finished": "Finished"
+    },
     "footprint": {
       "totalActivities": "Total Activities",
       "past52Weeks": "Past 52 Weeks",
@@ -162,10 +173,11 @@
       "failed": "Login failed. Please try again later.",
       "networkError": "Could not reach the server. Check your connection and try again.",
       "enter": "ENTER",
-      "version": "Admin_V.2.1"
+      "version": "Admin {version}"
     },
     "nav": {
       "dashboard": "Dashboard",
+      "home": "Home",
       "post": "Posts",
       "daily": "Daily",
       "moment": "Moments",
@@ -200,6 +212,7 @@
     },
     "title": {
       "dashboard": "Dashboard",
+      "home": "Home Manager",
       "editPost": "Edit Post",
       "commentMgmt": "Comment Management",
       "libraryTyped": "{name} Library",
@@ -208,6 +221,7 @@
     },
     "sub": {
       "overview": "Overview",
+      "home": "Home Showcase",
       "library": "Library",
       "editor": "Editor",
       "tokens": "Access Credentials"
@@ -241,6 +255,27 @@
       "preview": "Rendered_Preview",
       "sourcePreview": "Source / Preview"
     },
+    "editorMenu": {
+      "menuLabel": "Editor quick menu",
+      "copyPasteAs": "Copy / paste as…",
+      "copyPlainText": "Copy as plain text",
+      "pasteQuote": "Paste as quote",
+      "bold": "Bold",
+      "italic": "Italic",
+      "inlineCode": "Inline code",
+      "link": "Insert link",
+      "quote": "Blockquote",
+      "orderedList": "Numbered list",
+      "bulletList": "Bullet list",
+      "taskList": "Task list",
+      "cut": "Cut",
+      "copy": "Copy",
+      "paste": "Paste",
+      "delete": "Delete selection",
+      "copyDenied": "Copy failed. Your text is preserved. Try Ctrl+C / Cmd+C.",
+      "contentChanged": "The text has changed. Select it again and retry.",
+      "pasteDenied": "Clipboard read was blocked. Use Ctrl+V / Cmd+V to paste."
+    },
     "list": {
       "empty": "Empty_Registry",
       "reply": "Reply",
@@ -264,7 +299,9 @@
       "redo": "REDO",
       "immersiveMode": "IMMERSIVE",
       "exitImmersive": "EXIT",
-      "syncScroll": "SYNC SCROLL"
+      "syncScroll": "SYNC SCROLL",
+      "viewPost": "VIEW POST",
+      "backToLibrary": "LIBRARY"
     },
     "reply": {
       "channel": "Reply_Channel: [Admin]",
@@ -309,7 +346,74 @@
       "tokenDeleted": "API token deleted.",
       "tokenDeleteFailed": "The API token could not be deleted. Please try again later.",
       "tokenCopied": "API token copied to the clipboard.",
-      "tokenCopyFailed": "The API token could not be copied. Select and copy it manually."
+      "tokenCopyFailed": "The API token could not be copied. Select and copy it manually.",
+      "homeSchemaMissing": "Homepage management tables are not initialized. Run migration 0007_home_manage.sql first.",
+      "homeLoadFailed": "Failed to load homepage settings. Please try again.",
+      "homeStatusSaved": "Homepage status bar updated.",
+      "homeToolSaved": "Tool saved.",
+      "homeBookSaved": "Reading entry saved.",
+      "homeOrderSaved": "Display order updated.",
+      "homeDeleted": "Entry deleted.",
+      "homeSaveFailed": "Failed to save homepage settings. Please try again.",
+      "homeDeleteFailed": "Failed to delete entry. Please try again.",
+      "homeStatusInvalid": "Status text and location are required.",
+      "homeToolInvalid": "Tool name is required.",
+      "homeBookInvalid": "Book title is required.",
+      "homeUrlInvalid": "Invalid URL. Only http(s):// URLs or root-relative / paths are allowed."
+    },
+    "home": {
+      "tabs": {
+        "status": "Status Bar",
+        "tools": "Tools",
+        "books": "Reading"
+      },
+      "schemaMissingTitle": "Database migration required",
+      "schemaMissingHint": "Homepage management tables (0007_home_manage.sql) were not found. Run npm run db:migrate locally or apply D1 migrations before saving.",
+      "preview": "Live preview",
+      "statusLabel": "Current status",
+      "statusPlaceholder": "e.g. CODING",
+      "presets": "Quick presets",
+      "locationLabel": "Location",
+      "locationPlaceholder": "e.g. GUANG ZHOU",
+      "saveStatus": "Save status",
+      "addTool": "New Tool",
+      "editTool": "Edit Tool",
+      "emptyTools": "No tools configured",
+      "toolName": "Name",
+      "toolNamePlaceholder": "e.g. Eidos",
+      "toolDescZh": "Chinese description",
+      "toolDescZhPlaceholder": "Short Chinese summary",
+      "toolDescEn": "English description (optional)",
+      "toolDescEnPlaceholder": "Falls back to Chinese if left empty",
+      "toolLink": "Link URL",
+      "toolLinkPlaceholder": "https://github.com/...",
+      "toolIcon": "Icon",
+      "addBook": "New Book",
+      "editBook": "Edit Book",
+      "emptyBooks": "No reading items yet (bookshelf stays hidden on homepage)",
+      "bookTitle": "Title",
+      "bookTitlePlaceholder": "e.g. The Design of Everyday Things",
+      "bookAuthor": "Author (optional)",
+      "bookAuthorPlaceholder": "e.g. Don Norman",
+      "bookCover": "Cover URL (optional)",
+      "bookCoverPlaceholder": "https://... or /covers/...",
+      "bookNote": "Hover note (optional)",
+      "bookNotePlaceholder": "Short reflection shown on cover hover",
+      "bookLink": "Related link (optional)",
+      "bookLinkPlaceholder": "/posts/book-note or https://...",
+      "bookStatus": "Reading status",
+      "statusReading": "Reading",
+      "statusFinished": "Finished",
+      "visible": "Visible on home",
+      "hidden": "Hidden",
+      "show": "Show on home",
+      "hide": "Hide from home",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirmDelete": "Delete this entry?"
     },
     "tokens": {
       "newToken": "New Token",

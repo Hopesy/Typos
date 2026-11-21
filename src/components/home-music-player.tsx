@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, ChevronUp, ExternalLink, Music2, Pause, Play, RotateCcw } from 'lucide-react';
-import { formatMusicTime, HOME_MUSIC, musicUrl, type HomeMusicTrack } from '@/lib/home-music';
+import { Loader2, Pause, Play, RotateCcw } from 'lucide-react';
+import { HOME_MUSIC, musicUrl, type HomeMusicTrack } from '@/lib/home-music';
 
 type PlaybackState = 'paused' | 'loading' | 'playing' | 'error' | 'ended';
-
-const buttonClass = 'relative inline-flex h-4 w-6 shrink-0 items-center justify-center rounded-sm text-hud hover:text-hud-strong before:absolute before:inset-x-0 before:-inset-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong disabled:cursor-not-allowed disabled:opacity-40';
 
 export function HomeMusicPlayer({ track = HOME_MUSIC }: { track?: HomeMusicTrack }) {
   // A new source gets a fresh audio element and cancels the previous playback.
@@ -17,20 +15,13 @@ export function HomeMusicPlayer({ track = HOME_MUSIC }: { track?: HomeMusicTrack
 function MusicPlayer({ track }: { track: HomeMusicTrack }) {
   const t = useTranslations('music');
   const audioRef = useRef<HTMLAudioElement>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const expandRef = useRef<HTMLButtonElement>(null);
   const wantedRef = useRef(false);
   const requestRef = useRef(0);
   const pendingRef = useRef(false);
-  const panelId = useId();
-  const [expanded, setExpanded] = useState(false);
   const [state, setState] = useState<PlaybackState>('paused');
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
   const src = musicUrl(track.src);
-  const sourceUrl = musicUrl(track.sourceUrl);
-  const creditUrl = musicUrl(track.creditUrl);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -40,22 +31,6 @@ function MusicPlayer({ track }: { track: HomeMusicTrack }) {
       audio?.pause();
     };
   }, []);
-
-  useEffect(() => {
-    if (!expanded) return;
-    const onOutside = (event: PointerEvent) => {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setExpanded(false);
-    };
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setExpanded(false); expandRef.current?.focus(); }
-    };
-    document.addEventListener('pointerdown', onOutside);
-    document.addEventListener('keydown', onEscape);
-    return () => {
-      document.removeEventListener('pointerdown', onOutside);
-      document.removeEventListener('keydown', onEscape);
-    };
-  }, [expanded]);
 
   async function togglePlayback() {
     const audio = audioRef.current;
@@ -96,10 +71,16 @@ function MusicPlayer({ track }: { track: HomeMusicTrack }) {
   const active = state === 'playing' || state === 'loading';
   const status = !src ? t('unconfiguredShort') : t(state);
   const action = active ? t('pause') : state === 'error' ? t('retry') : t('play');
-  const ActionIcon = active ? Pause : state === 'error' ? RotateCcw : Play;
+  const progressPercent = duration > 0 ? Math.min(100, Math.max(0, (time / duration) * 100)) : 0;
+  const ringRadius = state === 'playing' ? 11.25 : 9.25;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringDashOffset = ringCircumference * (1 - progressPercent / 100);
+  const tooltip = !src
+    ? t('unconfigured')
+    : `${action} · ${track.title}${track.artist ? ` — ${track.artist}` : ''}${track.credit ? ` (${track.credit})` : ''}`;
 
   return (
-    <div ref={rootRef} className="relative min-w-0 max-w-full font-mono text-hud normal-case tracking-normal">
+    <div className="relative flex h-5 min-w-0 max-w-full items-center font-mono text-hud normal-case tracking-normal">
       <audio
         ref={audioRef}
         src={src}
@@ -129,56 +110,100 @@ function MusicPlayer({ track }: { track: HomeMusicTrack }) {
           setState('error');
         }}
       />
-      <div className="flex min-w-0 items-center gap-1">
-        <button type="button" className={buttonClass} onClick={togglePlayback} disabled={!src} aria-label={action} title={action}>
-          <ActionIcon aria-hidden="true" className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          ref={expandRef}
-          className="relative flex h-4 min-w-0 max-w-[12rem] items-center gap-1.5 rounded-sm text-left before:absolute before:inset-x-0 before:-inset-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong"
-          onClick={() => setExpanded((value) => !value)}
-          aria-expanded={expanded}
-          aria-controls={panelId}
-          aria-label={expanded ? t('collapse') : t('expand')}
+
+      <button
+        type="button"
+        onClick={togglePlayback}
+        disabled={!src}
+        aria-pressed={active}
+        aria-label={`${action}: ${track.title}`}
+        title={tooltip}
+        className={`group relative -my-0.5 inline-flex h-6 min-w-0 max-w-[14.5rem] items-center gap-2 rounded-[4px] pl-1 pr-2.5 text-left transition-colors duration-200 before:absolute before:inset-x-0 before:-inset-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong disabled:cursor-not-allowed disabled:opacity-45 cursor-pointer ${
+          state === 'playing'
+            ? 'bg-hud-soft/80 text-hud-strong'
+            : 'text-hud hover:bg-hud-soft/75 hover:text-hud-strong'
+        }`}
+      >
+        <span
+          aria-hidden="true"
+          className={`relative inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+            state === 'playing'
+              ? 'bg-hud-inverse text-hud-inverse-foreground shadow-[0_2px_8px_rgba(23,23,23,0.18)] dark:shadow-[0_0_12px_rgba(255,255,255,0.18)]'
+              : state === 'error'
+                ? 'bg-amber-500/12 text-amber-600 ring-1 ring-inset ring-amber-500/45 group-hover:ring-amber-500/75 dark:text-amber-400'
+                : 'bg-hud-soft/80 text-hud-strong ring-1 ring-inset ring-hud-line-strong/80 group-hover:bg-hud-panel-strong group-hover:ring-hud-strong/50'
+          }`}
         >
-          <Music2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-hud-muted" />
-          <span className="min-w-0 truncate text-[11px] text-hud">{track.title}</span>
-          <span className={state === 'loading' || state === 'error' ? 'shrink-0 text-[10px] text-hud-muted' : 'sr-only'}>{status}</span>
-          {expanded ? <ChevronUp aria-hidden="true" className="h-3.5 w-3.5 shrink-0" /> : <ChevronDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />}
-        </button>
-      </div>
-      <div id={panelId} hidden={!expanded} className="absolute left-1/2 top-[calc(100%+12px)] z-30 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-sm border border-hud-line bg-background/95 p-3 text-left shadow-lg backdrop-blur-xl">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="break-words text-sm text-hud-strong">{track.title}</p>
-            {track.artist && <p className="mt-1 break-words text-xs text-hud-muted">{track.artist}</p>}
-          </div>
-          {sourceUrl && <a href={sourceUrl} className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-sm px-2 text-xs text-hud underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong">{t('source')}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>}
-        </div>
-        {track.credit && creditUrl && <a href={creditUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-xs text-hud underline underline-offset-4">{t('recordingCredit', { name: track.credit })}</a>}
-        <p role="status" className="mt-2 text-xs text-hud-muted">{!src ? t('unconfigured') : state === 'error' ? t('errorDetail') : status}</p>
-        {src && <>
-          <div className="mt-2 flex items-center gap-2 text-[11px] tabular-nums text-hud-muted">
-            <span>{formatMusicTime(time)}</span>
-            <input
-              type="range" min="0" max={duration || 0} step="0.1" value={Math.min(time, duration)} disabled={!duration}
-              aria-label={t('seek')} aria-valuetext={`${formatMusicTime(time)} / ${formatMusicTime(duration)}`}
-              onChange={(event) => { const next = Number(event.target.value); if (audioRef.current) audioRef.current.currentTime = next; setTime(next); }}
-              className="h-11 min-w-0 flex-1 cursor-pointer accent-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong disabled:cursor-not-allowed"
-            />
-            <span>{formatMusicTime(duration)}</span>
-          </div>
-          <label className="flex items-center gap-3 text-xs text-hud-muted">
-            <span>{t('volume')}</span>
-            <input type="range" min="0" max="1" step="0.01" value={volume} aria-label={t('volume')}
-              onChange={(event) => { const next = Number(event.target.value); if (audioRef.current) audioRef.current.volume = next; setVolume(next); }}
-              className="h-11 min-w-0 flex-1 cursor-pointer accent-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong"
-            />
-            <span className="w-9 text-right tabular-nums">{Math.round(volume * 100)}%</span>
-          </label>
-        </>}
-      </div>
+          {progressPercent > 0 && (
+            <svg
+              viewBox={state === 'playing' ? '0 0 24 24' : '0 0 20 20'}
+              className={`pointer-events-none absolute -rotate-90 ${
+                state === 'playing' ? '-inset-[1.5px] h-[23px] w-[23px]' : 'inset-0 h-5 w-5'
+              }`}
+            >
+              {state === 'playing' && (
+                <circle
+                  cx="12"
+                  cy="12"
+                  r={ringRadius}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  className="text-hud-line"
+                />
+              )}
+              <circle
+                cx={state === 'playing' ? 12 : 10}
+                cy={state === 'playing' ? 12 : 10}
+                r={ringRadius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={state === 'playing' ? 1.25 : 1.5}
+                strokeLinecap="round"
+                strokeDasharray={ringCircumference}
+                strokeDashoffset={ringDashOffset}
+                className={`transition-[stroke-dashoffset] duration-200 ${
+                  state === 'playing' ? 'text-emerald-500' : 'text-hud-strong'
+                }`}
+              />
+            </svg>
+          )}
+          {state === 'loading' ? (
+            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+          ) : state === 'playing' ? (
+            <Pause className="h-2.5 w-2.5 fill-current" />
+          ) : state === 'error' ? (
+            <RotateCcw className="h-2.5 w-2.5" strokeWidth={2.2} />
+          ) : (
+            <Play className="h-2.5 w-2.5 translate-x-[0.5px] fill-current" />
+          )}
+        </span>
+
+        <span className="text-trim-caps min-w-0 truncate py-[3px] text-[11px] leading-none tracking-[0.03em]">
+          {track.title}
+        </span>
+
+        {state === 'playing' && (
+          <span aria-hidden="true" className="inline-flex h-2.5 shrink-0 items-end gap-[1.5px] text-emerald-500">
+            <span className="music-eq-bar" />
+            <span className="music-eq-bar" />
+            <span className="music-eq-bar" />
+          </span>
+        )}
+
+        <span
+          role="status"
+          className={
+            state === 'loading' || state === 'error'
+              ? `text-trim-caps shrink-0 py-[2px] text-[10px] leading-none ${
+                  state === 'error' ? 'text-amber-600 dark:text-amber-400' : 'text-hud-muted'
+                }`
+              : 'sr-only'
+          }
+        >
+          {status}
+        </span>
+      </button>
     </div>
   );
 }

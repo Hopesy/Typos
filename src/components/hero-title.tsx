@@ -1,32 +1,9 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 
 // gsap 文字动画，仅客户端渲染：dynamic(ssr:false) 让 gsap 不进服务端 bundle。
 const Shuffle = dynamic(() => import('./shuffle/Shuffle'), { ssr: false });
-
-function readTheme(): 'dark' | 'light' {
-  if (typeof document === 'undefined') return 'dark';
-  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-}
-
-function subscribe(onStoreChange: () => void) {
-  if (typeof window === 'undefined') return () => {};
-
-  const onStorage = (event: StorageEvent) => {
-    if (event.key !== 'typos-theme') return;
-    onStoreChange();
-  };
-
-  window.addEventListener('storage', onStorage);
-  window.addEventListener('typos-theme-change', onStoreChange);
-
-  return () => {
-    window.removeEventListener('storage', onStorage);
-    window.removeEventListener('typos-theme-change', onStoreChange);
-  };
-}
 
 export function HeroTitle() {
   return (
@@ -51,12 +28,9 @@ export function HeroTitle() {
 }
 
 export function HeroSubtitle() {
-  const theme = useSyncExternalStore(subscribe, readTheme, () => 'dark');
-  const text = theme === 'dark' ? 'The darkness is boundless' : 'The light is infinite';
-
   return (
     <Shuffle
-      text={text}
+      text="Anchor for code & notes"
       className="hero-subtitle-style"
       shuffleDirection="right"
       duration={0.35}

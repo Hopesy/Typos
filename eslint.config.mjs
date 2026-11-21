@@ -23,6 +23,7 @@ const eslintConfig = defineConfig([
     "build/**",
     // Local browser checks and scratch scripts are not application source.
     "tmp/**",
+    ".Typos-temp/**",
     "next-env.d.ts",
   ]),
 ]);
