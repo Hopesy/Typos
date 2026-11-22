@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-22
+
+### Changed
+- 品牌图标更新为圆角缺口 T，导航、相册页、后台侧栏及浏览器 favicon 共用新版素材。
+- 导航品牌名、手机顶栏/菜单、相册品牌名、后台展开侧栏与页脚使用完整 TYPOS 矢量字标，支持明暗主题；侧栏收起时显示单 T。
+- 首页 `Typos Blog` 继续使用原文字样式和 Shuffle 动画。
+
 ## [1.1.0] - 2026-11-21
 
 ### Added

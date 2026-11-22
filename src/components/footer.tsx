@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { APP_BUILD_INFO, APP_VERSION_LABEL } from "@/lib/app-version";
+import { BrandWordmark } from "@/components/brand-mark";
 
 export function Footer() {
   const pathname = usePathname();
@@ -16,8 +17,9 @@ export function Footer() {
     <footer className="mt-auto border-t border-hud-line-soft bg-background/50 backdrop-blur-md">
       <div className="container mx-auto max-w-5xl px-4 py-8">
         <div className="flex flex-col items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.15em] text-hud-muted sm:flex-row">
-          <span title={APP_BUILD_INFO}>
-            Typos {APP_VERSION_LABEL} © {new Date().getFullYear()}
+          <span title={APP_BUILD_INFO} className="inline-flex items-center gap-2">
+            <BrandWordmark className="w-14 opacity-70" />
+            <span>{APP_VERSION_LABEL} © {new Date().getFullYear()}</span>
           </span>
           <div className="flex items-center gap-3">
             <a

@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
+import { BrandMark, BrandWordmark } from "@/components/brand-mark";
 import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -115,10 +115,10 @@ export function Header() {
             <div className="flex h-14 shrink-0 items-center justify-between border-b border-hud-line-soft px-4">
               <Link
                 href="/"
-                className="font-press-start text-[10px] text-hud-strong"
+                className="inline-flex items-center text-hud-strong"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                TYPOS
+                <BrandWordmark className="w-24" />
               </Link>
               <button
                 type="button"
@@ -156,7 +156,7 @@ export function Header() {
                     >
                       {item.isIcon ? (
                         <span className="flex items-center gap-3">
-                          <Image src="/icon3.svg" alt={label} width={24} height={24} className="opacity-90 dark:invert" />
+                          <BrandMark size={24} alt={label} className="opacity-90" />
                         </span>
                       ) : (
                         <span>{label}</span>
@@ -170,7 +170,7 @@ export function Header() {
                   className="flex min-h-12 items-center justify-between border-b border-hud-line-soft px-3 font-mono text-base text-hud-muted transition-colors hover:text-hud-strong"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <span>Typos</span>
+                  <BrandWordmark className="w-20 opacity-80" />
                 </Link>
               </div>
             </nav>
@@ -192,10 +192,10 @@ export function Header() {
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full border border-hud-line flex items-center justify-center bg-hud-panel">
-                  <Image src="/icon3.svg" alt="Avatar" width={20} height={20} className="h-4 w-4 sm:h-5 sm:w-5 dark:invert dark:brightness-0" />
+                  <BrandMark size={20} alt="" className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-press-start text-[9px] sm:text-[10px] text-hud-strong">TYPOS</span>
+                  <BrandWordmark className="w-16 sm:w-[72px]" />
                   <span className="font-mono text-[9px] sm:text-[10px] text-hud-muted uppercase tracking-normal mt-0.5 sm:mt-1">
                     Views: {viewCount.toLocaleString()}
                   </span>
@@ -260,7 +260,7 @@ export function Header() {
                       >
                         {item.isIcon ? (
                           <div className="relative">
-                            <Image src="/icon3.svg" alt={label} width={42} height={42} className="opacity-90 dark:invert transition-transform group-hover:scale-110 duration-300" />
+                            <BrandMark size={42} alt={label} className="opacity-90 transition-transform group-hover:scale-110 duration-300" />
                             {/* Breathing glow for icon */}
                             <div className="absolute inset-0 rounded-full bg-hud-muted/20 blur-md animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                           </div>
@@ -280,7 +280,7 @@ export function Header() {
                   className="relative px-3 py-1.5 text-sm text-hud-muted hover:text-hud-strong transition-colors font-mono group"
                   title="Admin"
                 >
-                  <span className="relative z-10">Typos</span>
+                  <BrandWordmark className="relative z-10 w-[72px] opacity-70 transition-opacity group-hover:opacity-100" />
                   {/* Border glow effect on hover */}
                   <span className="absolute inset-0 rounded border border-hud-line opacity-0 group-hover:opacity-100 group-hover:shadow-[0_0_8px_rgba(23,23,23,0.3)] dark:group-hover:shadow-[0_0_8px_rgba(255,255,255,0.2)] transition-all duration-300" />
                 </Link>
@@ -303,8 +303,8 @@ export function Header() {
                 </button>
 
                 {/* Site Logo/Name */}
-                <Link href="/" className="font-press-start text-xs sm:text-[10px] text-hud-strong">
-                  TYPOS
+                <Link href="/" className="inline-flex items-center text-hud-strong">
+                  <BrandWordmark className="w-24" />
                 </Link>
 
                 {/* Right Controls */}

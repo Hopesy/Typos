@@ -30,6 +30,7 @@ import {
 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
+import { BrandMark, BrandWordmark } from "@/components/brand-mark";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -1470,14 +1471,18 @@ export default function AdminPage() {
             >
                 {/* Brand Area */}
                 <div className="p-4 border-b border-neutral-900 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
-                    {!isSidebarCollapsed && (
-                        <div className="flex items-baseline gap-2 animate-in fade-in duration-300">
-                            <span className="font-bold text-lg text-neutral-200 tracking-tight">Typos</span>
-                            <span title={APP_BUILD_INFO} className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-                                {APP_VERSION_LABEL}
-                            </span>
-                        </div>
-                    )}
+                    <div className="flex h-7 items-center gap-2">
+                        {isSidebarCollapsed ? (
+                            <BrandMark size={28} />
+                        ) : (
+                            <div className="flex items-center gap-2 animate-in fade-in duration-300">
+                                <BrandWordmark className="w-[108px]" />
+                                <span title={APP_BUILD_INFO} className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                                    {APP_VERSION_LABEL}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                     {/* Mobile close button */}
                     <button
                         type="button"

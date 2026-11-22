@@ -67,12 +67,12 @@ export const metadata: Metadata = {
   description: "A minimal HUD-styled personal publishing system",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml", sizes: "any" },
-      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/brand/typos/favicon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/brand/typos/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/brand/typos/typos-app-icon.png", type: "image/png", sizes: "512x512" },
     ],
     apple: [
-      { url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/typos/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
 };

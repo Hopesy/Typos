@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Dock from './dock/Dock';
 import { VscHome, VscArchive, VscNote, VscAccount } from 'react-icons/vsc';
-import Image from 'next/image';
+import { BrandMark } from '@/components/brand-mark';
 import { useTranslations } from 'next-intl';
 
 export function DockNav() {
@@ -25,7 +25,7 @@ export function DockNav() {
       active: pathname.startsWith('/posts')
     },
     {
-      icon: <Image src="/icon3.svg" alt={t('categoryAlt')} width={50} height={50} className="opacity-90 invert" />,
+      icon: <BrandMark size={50} alt={t('categoryAlt')} className="opacity-90 invert" />,
       label: t('moments'),
       onClick: () => window.open('/moments', '_blank'),
       active: pathname === '/moments'
