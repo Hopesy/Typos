@@ -7,15 +7,11 @@ export type HomeMusicTrack = {
   creditUrl?: string;
 };
 
-// Public-domain recording with attribution; see public/audio/LICENSE.md.
+// User-supplied recording; source details are recorded in public/audio/LICENSE.md.
 // Set src to '' to return to the explicit unconfigured state.
 export const HOME_MUSIC: HomeMusicTrack = {
-  title: 'Moonlight Sonata · I',
-  artist: 'Ludwig van Beethoven · Paul Pitman',
-  src: '/audio/moonlight-sonata-paul-pitman.mp3',
-  sourceUrl: 'https://commons.wikimedia.org/wiki/File:Ludwig_van_Beethoven_-_sonata_no._14_in_c_sharp_minor_%27moonlight%27,_op._27_no._2_-_i._adagio_sostenuto.ogg',
-  credit: 'Musopen',
-  creditUrl: 'https://musopen.org/',
+  title: '月亮之矢',
+  src: '/audio/yueliang-zhi-shi.mp3',
 };
 
 /** Accept only same-site relative URLs and explicit HTTP(S) URLs. */

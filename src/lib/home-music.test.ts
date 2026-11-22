@@ -2,12 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { formatMusicTime, HOME_MUSIC, musicUrl } from '@/lib/home-music';
 
 describe('home music configuration', () => {
-  it('uses the attributed, same-site recording and still supports an unconfigured source', () => {
-    expect(HOME_MUSIC.title).toBe('Moonlight Sonata · I');
-    expect(musicUrl(HOME_MUSIC.src)).toBe('/audio/moonlight-sonata-paul-pitman.mp3');
-    expect(HOME_MUSIC.artist).toContain('Paul Pitman');
-    expect(HOME_MUSIC.creditUrl).toBe('https://musopen.org/');
-    expect(HOME_MUSIC.sourceUrl).toContain('commons.wikimedia.org/wiki/File:');
+  it('uses the supplied same-site recording and still supports an unconfigured source', () => {
+    expect(HOME_MUSIC.title).toBe('月亮之矢');
+    expect(musicUrl(HOME_MUSIC.src)).toBe('/audio/yueliang-zhi-shi.mp3');
     expect(musicUrl('')).toBeUndefined();
   });
 

@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-11-22
+
+### Changed
+- 首页音乐替换为用户提供的《月亮之矢》，同步曲名与来源记录，音频文件约 3.75 MB。
+
+### Fixed
+- 音乐加载时只显示转圈图标，并为播放均衡条预留位置，保持暂停、加载、播放与缓冲切换时的按钮和状态栏宽度稳定。
+
 ## [1.1.3] - 2026-11-22
 
 ### Fixed

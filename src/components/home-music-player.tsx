@@ -183,21 +183,21 @@ function MusicPlayer({ track }: { track: HomeMusicTrack }) {
           {track.title}
         </span>
 
-        {state === 'playing' && (
-          <span aria-hidden="true" className="inline-flex h-2.5 shrink-0 items-end gap-[1.5px] text-emerald-500">
-            <span className="music-eq-bar" />
-            <span className="music-eq-bar" />
-            <span className="music-eq-bar" />
-          </span>
-        )}
+        <span aria-hidden="true" className="inline-flex h-2.5 w-[7.5px] shrink-0 items-end gap-[1.5px] text-emerald-500">
+          {state === 'playing' && (
+            <>
+              <span className="music-eq-bar" />
+              <span className="music-eq-bar" />
+              <span className="music-eq-bar" />
+            </>
+          )}
+        </span>
 
         <span
           role="status"
           className={
-            state === 'loading' || state === 'error'
-              ? `text-trim-caps shrink-0 py-[2px] text-[10px] leading-none ${
-                  state === 'error' ? 'text-amber-600 dark:text-amber-400' : 'text-hud-muted'
-                }`
+            state === 'error'
+              ? 'text-trim-caps shrink-0 py-[2px] text-[10px] leading-none text-amber-600 dark:text-amber-400'
               : 'sr-only'
           }
         >
