@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { FiEdit3, FiList, FiTerminal, FiTrendingUp } from 'react-icons/fi';
 
@@ -68,6 +68,7 @@ function TrendChart({
   latestKey: 'latestPeople' | 'latestTimes';
 }) {
   const t = useTranslations('admin.chart');
+  const gradientId = `trend-area-${useId()}`;
   const { line, area, points, max } = buildChartPath(values);
   const latest = values[values.length - 1] || 0;
   const previous = values[values.length - 2] || latest;
@@ -104,7 +105,7 @@ function TrendChart({
       </div>
       <svg viewBox="0 0 640 210" className="h-[180px] w-full overflow-visible md:h-[230px]" role="img" aria-label={title}>
         <defs>
-          <linearGradient id={`${title}-area`} x1="0" x2="0" y1="0" y2="1">
+          <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#75a7ff" stopOpacity="0.36" />
             <stop offset="100%" stopColor="#75a7ff" stopOpacity="0.04" />
           </linearGradient>
@@ -116,7 +117,7 @@ function TrendChart({
         <line x1="30" x2="610" y1="180" y2="180" stroke="var(--admin-line-strong)" strokeWidth="1" />
         <text x="8" y="35" className="fill-neutral-600 font-mono text-[10px]">{max}</text>
         <text x="14" y="184" className="fill-neutral-600 font-mono text-[10px]">0</text>
-        <path d={area} fill={`url(#${title}-area)`} />
+        <path d={area} fill={`url(#${gradientId})`} />
         <path d={line} fill="none" stroke="#75a7ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         {points.map(([x, y], index) => (
           <circle key={`${x}-${y}`} cx={x} cy={y} r={index === points.length - 1 ? 4 : 2.5} fill="#75a7ff" stroke="var(--admin-bg)" strokeWidth="2" />

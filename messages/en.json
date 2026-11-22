@@ -3,6 +3,8 @@
     "home": "Home",
     "posts": "Posts",
     "category": "Category",
+    "moments": "Moments",
+    "admin": "Admin",
     "daily": "Daily",
     "about": "About"
   },
@@ -140,6 +142,10 @@
     "categoryAlt": "Category"
   },
   "aria": {
+    "mainNavigation": "Main navigation",
+    "mobileNavigation": "Mobile navigation",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
     "themeToLight": "Switch to light theme",
     "themeToDark": "Switch to dark theme",
     "toc": "Table of contents",
@@ -227,7 +233,7 @@
       "tokens": "Access Credentials"
     },
     "action": {
-      "uploadMd": "Upload_MD",
+      "uploadMd": "Upload",
       "library": "Library",
       "downloadAll": "Download_All"
     },

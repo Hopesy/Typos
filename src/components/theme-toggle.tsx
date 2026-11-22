@@ -41,7 +41,8 @@ function subscribe(onStoreChange: () => void) {
   };
 }
 
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+export function ThemeToggle({ compact = false, appearance = 'panel' }: { compact?: boolean; appearance?: 'panel' | 'plain' }) {
+  const isPlain = appearance === 'plain';
   const theme = useSyncExternalStore(subscribe, readTheme, () => 'dark');
   const t = useTranslations('aria');
 
@@ -60,10 +61,9 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
       onClick={toggleTheme}
       aria-label={theme === 'dark' ? t('themeToLight') : t('themeToDark')}
       title={theme === 'dark' ? 'Light' : 'Dark'}
-      className={`inline-flex items-center justify-center rounded-md border border-hud-line bg-hud-panel text-hud-muted transition-colors hover:border-hud-line-strong hover:text-hud-strong ${compact ? 'h-7 w-7' : 'h-8 w-8'
-        }`}
+      className={`inline-flex shrink-0 items-center justify-center transition-colors hover:text-hud-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong ${isPlain ? 'h-9 w-9 rounded-lg text-hud hover:bg-hud-soft' : `rounded-md border border-hud-line bg-hud-panel text-hud-muted hover:border-hud-line-strong ${compact ? 'h-7 w-7' : 'h-8 w-8'}`}`}
     >
-      <Icon className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+      <Icon className={isPlain || !compact ? 'h-4 w-4' : 'h-3.5 w-3.5'} strokeWidth={isPlain ? 1.7 : 2} />
     </button>
   );
 }

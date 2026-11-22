@@ -47,11 +47,11 @@ function getWeeksData(activities: ActivityStats[]) {
 }
 
 function getIntensityClass(total: number): string {
-  // 亮色模式使用深色块，暗色模式使用浅色块
+  // 浅色使用实色分阶，保留陶土橙的饱和度；深色沿用灰阶。
   if (total === 0) return 'bg-black/[0.03] dark:bg-white/[0.03]';  // 无活动 - 几乎透明
-  if (total === 1) return 'bg-black/[0.15] dark:bg-white/10';      // 1条活动
-  if (total === 2) return 'bg-black/[0.25] dark:bg-white/20';      // 2条活动
-  if (total >= 3) return 'bg-black/[0.40] dark:bg-white/40';       // 3+条活动
+  if (total === 1) return 'bg-hud-accent dark:bg-white/10';      // 1条活动
+  if (total === 2) return 'bg-hud-link dark:bg-white/20';        // 2条活动
+  if (total >= 3) return 'bg-[color-mix(in_srgb,var(--hud-accent),var(--hud-strong)_35%)] dark:bg-white/40'; // 3+条活动
   return 'bg-black/[0.03] dark:bg-white/[0.03]';
 }
 
@@ -93,7 +93,7 @@ export function ActivityHeatmap({ activities, showPreviewInTitle = false }: Heat
       {showPreviewInTitle && activeCell && (
         <div
           role="status"
-          className="absolute -top-10 right-0 z-20 rounded-md border border-hud-line-strong/80 bg-[#fffef9]/96 px-2.5 py-1 text-[10px] font-mono shadow-sm backdrop-blur-md dark:bg-[#141414]/96"
+          className="absolute -top-10 right-0 z-20 rounded-md border border-hud-line-strong/80 bg-card/96 px-2.5 py-1 text-[10px] font-mono shadow-sm backdrop-blur-md"
         >
           <span className="text-hud-strong mr-2 tabular-nums">{activeCell.date}</span>
           {activeCell.activity ? (

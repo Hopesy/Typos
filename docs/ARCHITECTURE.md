@@ -25,7 +25,7 @@ Typos 是从 MiniLoad 整理、改名并适配 Cloudflare 的个人发布系统�
 | `migrations/`、`scripts/migrate.js` | SQLite/D1 方言迁移、本地/Turso 迁移历史 |
 | `public/` | 字体、图标等静态资源 |
 | `content/` | 示例与可导入 Markdown，非线上内容库 |
-| `src/**/*.test.ts`、`vitest.config.mts` | Vitest 与内存 libSQL 回归测试 |
+| `src/**/*.test.{ts,tsx}`、`vitest.config.mts` | Vitest、组件渲染与内存 libSQL 回归测试 |
 | `.github/workflows/ci.yml` | lint、类型、测试、Next 与 Linux Worker 构建 |
 | `docs/design/` | 现行专题；目标与验收进度见 `docs/exec-plans/` |
 

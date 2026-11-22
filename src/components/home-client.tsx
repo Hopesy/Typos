@@ -82,7 +82,7 @@ export function HomeClient({ initialData }: { initialData: HomeManageData }) {
 
       {/* 方案1: Status/Now 极简状态栏 */}
       <section className="relative z-20 mb-16 flex justify-center">
-        <div className="inline-flex max-w-full flex-col items-center justify-center gap-x-3 gap-y-1.5 rounded-md border border-hud-line bg-[#fffef9]/82 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.11em] text-hud shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_6px_22px_-6px_rgba(23,23,23,0.08)] backdrop-blur-xl transition-colors duration-200 hover:border-hud-line-strong dark:bg-[#121212]/72 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_28px_-6px_rgba(0,0,0,0.45)] sm:flex-row sm:gap-x-3.5 sm:pl-3.5 sm:pr-1 sm:tracking-[0.15em]">
+        <div className="inline-flex max-w-full flex-col items-center justify-center gap-x-3 gap-y-1.5 rounded-md border border-hud-line bg-card/82 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.11em] text-hud shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_6px_22px_-6px_rgba(48,47,43,0.06)] backdrop-blur-xl transition-colors duration-200 hover:border-hud-line-strong dark:bg-[#121212]/72 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_28px_-6px_rgba(0,0,0,0.45)] sm:flex-row sm:gap-x-3.5 sm:pl-3.5 sm:pr-1 sm:tracking-[0.15em]">
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <div className="flex h-5 items-center gap-2">
               <span className="relative flex h-2 w-2 shrink-0 items-center justify-center">
@@ -112,7 +112,7 @@ export function HomeClient({ initialData }: { initialData: HomeManageData }) {
             <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-hud">{t('home.section.footprint')}</h2>
             <Link
               href="/posts"
-              className="group/link inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-hud-muted transition-colors hover:text-hud-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong"
+              className="group/link inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-hud-link transition-opacity hover:opacity-80 dark:text-hud-muted dark:hover:text-hud-link dark:hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hud-strong"
             >
               <span>{t('home.browseNotes')}</span>
               <span aria-hidden="true" className="transition-transform duration-200 group-hover/link:translate-x-0.5">→</span>

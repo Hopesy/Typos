@@ -3,6 +3,8 @@
     "home": "首页",
     "posts": "合集",
     "category": "分类",
+    "moments": "瞬间",
+    "admin": "后台",
     "daily": "日常",
     "about": "关于"
   },
@@ -140,6 +142,10 @@
     "categoryAlt": "分类"
   },
   "aria": {
+    "mainNavigation": "主导航",
+    "mobileNavigation": "移动导航",
+    "openNavigation": "打开导航",
+    "closeNavigation": "关闭导航",
     "themeToLight": "切换到亮色主题",
     "themeToDark": "切换到暗色主题",
     "toc": "文章目录",
@@ -227,7 +233,7 @@
       "tokens": "访问凭证"
     },
     "action": {
-      "uploadMd": "上传_MD",
+      "uploadMd": "上传",
       "library": "库",
       "downloadAll": "全部下载"
     },

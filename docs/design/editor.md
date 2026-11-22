@@ -4,6 +4,8 @@
 
 页面状态与命令入口集中在 `src/app/admin/page.tsx`；顶部工具栏和右键菜单分别由 `src/components/admin/markdown-tools.tsx`、`editor-context-menu.tsx` 渲染。Markdown 导入位于 `src/lib/admin-markdown.ts`，选区与格式变换集中在 `src/lib/editor-actions.ts`。
 
+Markdown 导入按钮对外显示「上传 / Upload」，中英文共用既有 `admin.action.uploadMd` 文案键。
+
 - 普通文章编辑含标题、日期、slug、摘要、分类、封面、仅后台可见开关和正文。
 - Markdown 工具、源码/预览、目录、清除/保存、可选双向按比例滚动同步。
 - 正文编辑维护最多 100 个历史快照，含 Ctrl/Cmd+Z、Shift+Z、Ctrl+Y。
@@ -54,6 +56,8 @@
 ## 统计口径
 
 后台内容数量来自数据；“字数”当前是标题、摘要、正文拼接后的 JavaScript 字符串长度，不是中文词数或英文单词数。访客/浏览趋势与总访问量是写死的展示数据；相册 Views 是 localStorage 本地计数，不能当作全站访问分析。
+
+趋势图 SVG 渐变通过每个图表实例的 React `useId` 关联，标题只承担本地化展示及无障碍名称。切换语言保持所选周期、曲线路径、尺寸与渐变效果；渐变 ID 独立于标题文字，避免空格导致填充引用失效。
 
 ## 保留的可选需求
 

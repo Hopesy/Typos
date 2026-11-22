@@ -103,3 +103,4 @@
 - 提交前 fetch 确认本地与 `origin/main` 同基线；逐项核对应用、品牌资源、版本文件与文档，过程文件由 `.Typos-temp/` 忽略规则排除。
 - 最终源码重新完成全量 ESLint、TypeScript、15 文件/49 项 Vitest 和生产 Next build；构建日志留在 `.Typos-temp/brand/release-build.log`。首页标题源码及样式与 Git 基线一致。
 - 本次为品牌视觉更新，数据库迁移与依赖版本无变更。远端 CI（含 Linux Worker 构建）和自动部署的运行结果以该版本提交对应 GitHub Actions、生产版本及 `.Typos-temp/brand/release-remote-checks.json` 为准。
+- 后续核验：`9b0e71429beba89ef06e208f722c6dc91bccfb12` 与标签 `v1.1.1` 已推送，[CI 44985700064](https://github.com/Hopesy/Typos/actions/runs/44985700064) 全步骤通过，含 Linux Worker 构建。生产首页 200、构建标识 `v1.1.1 (9b0e714)`、新版图标路径及字标文件哈希均核对通过。
