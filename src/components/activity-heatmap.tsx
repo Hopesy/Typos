@@ -47,11 +47,11 @@ function getWeeksData(activities: ActivityStats[]) {
 }
 
 function getIntensityClass(total: number): string {
-  // 浅色使用实色分阶，保留陶土橙的饱和度；深色沿用灰阶。
+  // 主题色阶按活动量递进，浅色通过更大的明度差区分三个等级。
   if (total === 0) return 'bg-black/[0.03] dark:bg-white/[0.03]';  // 无活动 - 几乎透明
-  if (total === 1) return 'bg-hud-accent dark:bg-white/10';      // 1条活动
-  if (total === 2) return 'bg-hud-link dark:bg-white/20';        // 2条活动
-  if (total >= 3) return 'bg-[color-mix(in_srgb,var(--hud-accent),var(--hud-strong)_35%)] dark:bg-white/40'; // 3+条活动
+  if (total === 1) return 'bg-heatmap-low';     // 1条活动
+  if (total === 2) return 'bg-heatmap-medium';  // 2条活动
+  if (total >= 3) return 'bg-heatmap-high';     // 3+条活动
   return 'bg-black/[0.03] dark:bg-white/[0.03]';
 }
 

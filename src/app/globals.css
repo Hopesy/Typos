@@ -40,6 +40,9 @@
   --color-hud-strong: var(--hud-strong);
   --color-hud-accent: var(--hud-accent);
   --color-hud-link: var(--hud-link);
+  --color-heatmap-low: var(--heatmap-low);
+  --color-heatmap-medium: var(--heatmap-medium);
+  --color-heatmap-high: var(--heatmap-high);
   --color-hud-muted: var(--hud-muted);
   --color-hud-dim: var(--hud-dim);
   --color-hud-faint: var(--hud-faint);
@@ -60,7 +63,8 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* Light theme: #FAF9F5 paper surfaces, charcoal text, and terracotta accents. */
+/* Light theme: #FAF9F5 paper surfaces, charcoal text, and terracotta accents.
+   Heatmap colors use separate lightness levels to distinguish activity counts. */
 :root {
   color-scheme: light;
   --radius: 0.625rem;
@@ -99,6 +103,9 @@
   --hud-strong: #302f2b;
   --hud-accent: var(--primary);
   --hud-link: #a94f35;
+  --heatmap-low: #e7b39f;
+  --heatmap-medium: var(--primary);
+  --heatmap-high: #7d3522;
   --hud-muted: var(--muted-foreground);
   --hud-dim: rgba(83, 81, 70, 0.55);
   --hud-faint: rgba(83, 81, 70, 0.3);
@@ -168,6 +175,9 @@
   --hud-strong: rgba(255, 255, 255, 0.94);
   --hud-accent: var(--hud-strong);
   --hud-link: var(--hud-strong);
+  --heatmap-low: rgba(255, 255, 255, 0.1);
+  --heatmap-medium: rgba(255, 255, 255, 0.2);
+  --heatmap-high: rgba(255, 255, 255, 0.4);
   --hud-muted: rgba(255, 255, 255, 0.58);
   --hud-dim: rgba(255, 255, 255, 0.36);
   --hud-faint: rgba(255, 255, 255, 0.2);

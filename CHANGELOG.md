@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-11-22
+
+### Fixed
+- 拉开浅色足迹热力图的活动等级明度：一次为浅橙、两次为陶土橙、三次及以上为深棕；深色保持原灰阶。
+- 关闭文章正文在普通与沉浸编辑模式中的浏览器拼写检查提示，减少英文名称、网址和 Markdown 源码的红色波浪线干扰。
+
 ## [1.1.2] - 2026-11-22
 
 ### Added

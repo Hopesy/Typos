@@ -1420,6 +1420,7 @@ export default function AdminPage() {
                         <div className="flex flex-col border-b border-neutral-900 lg:border-b-0 lg:border-r">
                             <textarea
                                 ref={postContentRef}
+                                spellCheck={false}
                                 rows={25}
                                 value={postData.content}
                                 onChange={handlePostContentChange}
@@ -1947,6 +1948,7 @@ export default function AdminPage() {
                                                     <div className="flex min-h-0 flex-col border-b border-neutral-900 lg:border-b-0 lg:border-r">
                                                         <textarea
                                                             ref={postContentRef}
+                                                            spellCheck={false}
                                                             id="post-content"
                                                             value={postData.content}
                                                             onChange={handlePostContentChange}

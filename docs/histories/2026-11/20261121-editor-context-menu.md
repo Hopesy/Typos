@@ -62,3 +62,11 @@
 - 生产更新由原 Git Integration 完成，本轮未手工执行远端 D1 命令、登录生产后台或写入线上内容；迁移详细日志未单独读取。
 
 发布核验记录作为文档收尾提交，后续仍沿同一[活动计划](../../exec-plans/active/2026-11-13-project-hardening.md)接续。
+
+## 追加：关闭正文拼写提示（2026-11-22）
+
+用户提供正文中英文名称、网址带红色波浪线的截图，询问是否属于文字审核并要求去除。这是浏览器拼写检查的显示；基于 `aecc906`，在普通和沉浸模式的正文 textarea 同时显式设置 `spellCheck={false}`。
+
+独立本地草稿中实际检查两种模式的 `spellcheck` 属性为 `false`、对应 DOM 属性值为 false；模式往返保持内容一致，Markdown 预览正常。已查看沉浸截图，目标页面 ESLint 与 `git diff --check` 通过。本轮为两个输入属性调整，未新增单测或重复全量构建；证据位于 `.Typos-temp/editor-spellcheck/checks.json` 与 `immersive.png`。测试内容仅在独立页输入，原用户编辑页继续保留。
+
+2026-11-22 用户随后要求“推送吧”，本项与足迹浅色色阶优化一并纳入 `v1.1.3`，交付 `main` 及 annotated tag。版本同步后的最终源码全量 ESLint、TypeScript、16 文件/50 项测试及生产 Next build 通过，发布记录位于 `.Typos-temp/release-1.1.3/`。

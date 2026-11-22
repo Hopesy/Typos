@@ -7,6 +7,7 @@
 Markdown 导入按钮对外显示「上传 / Upload」，中英文共用既有 `admin.action.uploadMd` 文案键。
 
 - 普通文章编辑含标题、日期、slug、摘要、分类、封面、仅后台可见开关和正文。
+- 普通与沉浸模式的正文输入区均关闭浏览器拼写检查，避免英文名称、网址和 Markdown 源码显示拼写波浪线。
 - Markdown 工具、源码/预览、目录、清除/保存、可选双向按比例滚动同步。
 - 正文编辑维护最多 100 个历史快照，含 Ctrl/Cmd+Z、Shift+Z、Ctrl+Y。
 - Markdown 上传是“新建文章”：采用文件日期和元数据，但不沿用 frontmatter/文件名旧 slug，重新生成随机 slug。
