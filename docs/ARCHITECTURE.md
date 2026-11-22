@@ -2,7 +2,7 @@
 
 ## 定位与运行边界
 
-Typos 是从 MiniLoad 整理、改名并适配 Cloudflare 的个人发布系统：文章、日常碎片、照片瞬间、评论和单管理员后台。当前不是多用户 CMS，也不提供多角色审批。
+Typos 是独立维护的个人发布系统，围绕文章、日常碎片、照片瞬间、评论和单管理员后台组织功能，生产部署使用 Cloudflare Workers 与 D1。当前代码、版本与发布在 `Hopesy/Typos` 仓库维护，原始版权与来源声明见 [LICENSE](../LICENSE)。
 
 - 应用：Next.js 16 App Router、React 19、TypeScript、Tailwind CSS 4。
 - 生产：OpenNext 将应用打包为 Cloudflare Worker，静态资源由 Workers Assets 提供，数据通过 `DB` binding 访问 D1。
