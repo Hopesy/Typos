@@ -447,8 +447,8 @@ export function HomeManageView({
             <span className="block font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-500">
               {tr('home.preview')}
             </span>
-            <div className="flex justify-center rounded-lg border border-dashed border-neutral-800 bg-neutral-900/30 px-4 py-6">
-              <div className="inline-flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 rounded-md border border-hud-line bg-[#fffef9]/82 px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] text-hud shadow-sm dark:bg-[#121212]/80">
+            <div className="flex justify-center rounded-lg border border-dashed border-neutral-800 bg-[var(--admin-stage)] px-4 py-6">
+              <div className="inline-flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 rounded-md border border-hud-line bg-card/95 px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] text-hud shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_6px_18px_-6px_rgba(48,47,43,0.08)] dark:bg-[#121212]/85 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_24px_-6px_rgba(0,0,0,0.45)]">
                 <div className="flex h-5 items-center gap-2">
                   <span className="relative flex h-2 w-2 shrink-0 items-center justify-center">
                     <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
@@ -647,7 +647,7 @@ export function HomeManageView({
                     type="checkbox"
                     checked={toolDraft.visible}
                     onChange={(event) => setToolDraft((prev) => ({ ...prev, visible: event.target.checked }))}
-                    className="h-3.5 w-3.5 accent-white"
+                    className="h-3.5 w-3.5 accent-[var(--admin-primary-bg)]"
                   />
                   <span>{tr('home.visible')}</span>
                 </label>
@@ -965,7 +965,7 @@ export function HomeManageView({
                       type="checkbox"
                       checked={bookDraft.visible}
                       onChange={(event) => setBookDraft((prev) => ({ ...prev, visible: event.target.checked }))}
-                      className="h-3.5 w-3.5 accent-white"
+                      className="h-3.5 w-3.5 accent-[var(--admin-primary-bg)]"
                     />
                     <span>{tr('home.visible')}</span>
                   </label>

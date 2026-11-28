@@ -45,6 +45,7 @@ import { DashboardView, type DashboardData } from '@/components/admin/dashboard-
 import { EditorContextMenu, type EditorContextAction, type EditorContextMenuState } from '@/components/admin/editor-context-menu';
 import { HomeManageView } from '@/components/admin/home-manage-view';
 import { MarkdownTools, type MdTool } from '@/components/admin/markdown-tools';
+import { SidebarToggle } from '@/components/admin/sidebar-toggle';
 import { TokensView, type ApiToken } from '@/components/admin/tokens-view';
 import { buildPostDataFromMarkdown, createPostDraft, createPostEditData, downloadNameFromItem, type PostData } from '@/lib/admin-markdown';
 import { APP_BUILD_INFO, APP_VERSION_LABEL } from '@/lib/app-version';
@@ -1461,20 +1462,34 @@ export default function AdminPage() {
             {isMobileSidebarOpen && (
                 <button
                     type="button"
-                    aria-label="Close menu"
+                    aria-label={tr('nav.closeMenu')}
                     onClick={() => setIsMobileSidebarOpen(false)}
                     className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
                 />
             )}
             <aside
-                onClick={() => { if (typeof window !== 'undefined' && window.innerWidth >= 768) setIsSidebarCollapsed(!isSidebarCollapsed); }}
-                className={`md:relative md:flex fixed inset-y-0 left-0 z-50 w-[280px] -translate-x-full transition-transform duration-300 md:translate-x-0 md:transition-all ${isMobileSidebarOpen ? 'translate-x-0' : ''} ${isSidebarCollapsed ? 'md:w-16' : 'md:w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full group md:cursor-pointer`}
+                id="admin-sidebar"
+                className={`md:relative md:flex fixed inset-y-0 left-0 z-50 w-[280px] -translate-x-full transition-transform duration-300 md:translate-x-0 md:transition-[width] ${isMobileSidebarOpen ? 'translate-x-0' : ''} ${isSidebarCollapsed ? 'md:w-16' : 'md:w-60'} border-r border-neutral-900 bg-neutral-950 flex flex-col h-full shrink-0`}
             >
                 {/* Brand Area */}
-                <div className="p-4 border-b border-neutral-900 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex h-7 items-center gap-2">
+                <div
+                    className={`shrink-0 border-b border-neutral-900 flex items-center justify-between h-[60px] px-4 ${
+                        isSidebarCollapsed
+                            ? 'md:h-auto md:flex-col md:justify-center md:gap-2.5 md:px-0 md:pt-4 md:pb-3.5'
+                            : ''
+                    }`}
+                >
+                    <div className="flex h-7 items-center gap-2 min-w-0">
                         {isSidebarCollapsed ? (
-                            <BrandMark size={28} />
+                            <>
+                                <BrandMark size={28} className="hidden md:block" />
+                                <div className="flex items-center gap-2 md:hidden">
+                                    <BrandWordmark className="w-[108px]" />
+                                    <span title={APP_BUILD_INFO} className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                                        {APP_VERSION_LABEL}
+                                    </span>
+                                </div>
+                            </>
                         ) : (
                             <div className="flex items-center gap-2 animate-in fade-in duration-300">
                                 <BrandWordmark className="w-[108px]" />
@@ -1484,25 +1499,33 @@ export default function AdminPage() {
                             </div>
                         )}
                     </div>
-                    {/* Mobile close button */}
-                    <button
-                        type="button"
-                        onClick={() => setIsMobileSidebarOpen(false)}
-                        className="md:hidden p-1.5 -mr-1 text-neutral-500 hover:text-white transition-colors"
-                        aria-label="Close menu"
-                    >
-                        <FiChevronRight className="w-4 h-4 rotate-180" />
-                    </button>
+                    <div className="flex items-center shrink-0">
+                        <SidebarToggle
+                            collapsed={isSidebarCollapsed}
+                            onToggle={() => setIsSidebarCollapsed((prev) => !prev)}
+                        />
+                        {/* Mobile close button */}
+                        <button
+                            type="button"
+                            onClick={() => setIsMobileSidebarOpen(false)}
+                            className="md:hidden p-1.5 -mr-1 text-neutral-500 hover:text-white transition-colors"
+                            aria-label={tr('nav.closeMenu')}
+                        >
+                            <FiChevronRight className="w-4 h-4 rotate-180" />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="p-4" onClick={(e) => e.stopPropagation()}>
+                <div className="p-4">
                     <nav className="space-y-1">
                         {(['dashboard', 'home', 'post', 'daily', 'moment', 'comment', 'tokens'] as const).map((t) => (
 
                             <button
                                 key={t}
-                                onClick={(e) => {
-                                    e.stopPropagation();
+                                type="button"
+                                title={isSidebarCollapsed ? tr(`nav.${t}`) : undefined}
+                                aria-label={tr(`nav.${t}`)}
+                                onClick={() => {
                                     setExistingPosts([]); // 立即清空，防止闪烁
                                     setIsImmersiveMode(false);
                                     setEditorMenu(null);
@@ -1538,15 +1561,24 @@ export default function AdminPage() {
                         ))}
                     </nav>
                 </div>
-                <div className="mt-auto p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
+                <div className="mt-auto p-4 space-y-3">
                     <Separator className="bg-neutral-900" />
                     <nav className="space-y-1">
-                        <Link href="/" onClick={() => setIsMobileSidebarOpen(false)} className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:px-0 md:justify-center md:py-2 px-3 py-2.5' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'md:text-xs text-sm' : 'text-sm'} text-neutral-500 hover:text-white transition-colors group rounded-md hover:bg-neutral-900/50 cursor-pointer`}>
+                        <Link
+                            href="/"
+                            title={isSidebarCollapsed ? tr('nav.viewSite') : undefined}
+                            aria-label={tr('nav.viewSite')}
+                            onClick={() => setIsMobileSidebarOpen(false)}
+                            className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:px-0 md:justify-center md:py-2 px-3 py-2.5' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'md:text-xs text-sm' : 'text-sm'} text-neutral-500 hover:text-white transition-colors group rounded-md hover:bg-neutral-900/50 cursor-pointer`}
+                        >
                             <FiHome className={isSidebarCollapsed ? "md:w-3.5 md:h-3.5 w-4 h-4 group-hover:scale-105 transition-transform shrink-0" : "w-4 h-4 group-hover:scale-105 transition-transform shrink-0"} />
                             {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">{tr('nav.viewSite')}</span>}
                             {isSidebarCollapsed && <span className="md:hidden">{tr('nav.viewSite')}</span>}
                         </Link>
                         <button
+                            type="button"
+                            title={isSidebarCollapsed ? tr('nav.logout') : undefined}
+                            aria-label={tr('nav.logout')}
                             onClick={handleLogout}
                             className={`w-full flex items-center gap-3 ${isSidebarCollapsed ? 'md:px-0 md:justify-center md:py-2 px-3 py-2.5' : 'px-3 py-2.5'} ${isSidebarCollapsed ? 'md:text-xs text-sm' : 'text-sm'} text-red-500/60 hover:text-red-500 transition-colors group rounded-md hover:bg-red-950/20 cursor-pointer`}
                         >
@@ -1567,11 +1599,11 @@ export default function AdminPage() {
                                 type="button"
                                 onClick={() => setIsMobileSidebarOpen(true)}
                                 className="md:hidden shrink-0 p-2 -ml-1 text-neutral-400 hover:text-white transition-colors"
-                                aria-label="Open menu"
+                                aria-label={tr('nav.openMenu')}
                             >
                                 <FiMenu className="w-5 h-5" />
                             </button>
-                            <h1 className="text-base md:text-lg font-bold tracking-tight text-white mb-0 md:mb-1 capitalize flex items-center gap-2 min-w-0 truncate">
+                            <h1 className="text-base md:text-lg font-bold tracking-tight text-white mb-0 capitalize flex items-center gap-2 min-w-0 truncate">
                                 {type === 'dashboard'
                                     ? tr('title.dashboard')
                                     : type === 'home'

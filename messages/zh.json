@@ -191,7 +191,11 @@
       "tokens": "密钥",
       "contentType": "内容类型",
       "viewSite": "查看站点",
-      "logout": "退出登录"
+      "logout": "退出登录",
+      "expandSidebar": "展开侧边栏",
+      "collapseSidebar": "收起侧边栏",
+      "openMenu": "打开侧边栏菜单",
+      "closeMenu": "关闭侧边栏菜单"
     },
     "type": {
       "post": "文章",

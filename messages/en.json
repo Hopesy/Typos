@@ -191,7 +191,11 @@
       "tokens": "Tokens",
       "contentType": "Content Type",
       "viewSite": "View Site",
-      "logout": "Logout"
+      "logout": "Logout",
+      "expandSidebar": "Expand sidebar",
+      "collapseSidebar": "Collapse sidebar",
+      "openMenu": "Open sidebar menu",
+      "closeMenu": "Close sidebar menu"
     },
     "type": {
       "post": "Post",

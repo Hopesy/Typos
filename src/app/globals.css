@@ -1045,6 +1045,7 @@
     --admin-panel: #141414;
     --admin-panel-soft: rgba(23, 23, 23, 0.72);
     --admin-panel-strong: #1b1b1b;
+    --admin-stage: #141414;
     --admin-line: rgba(255, 255, 255, 0.1);
     --admin-line-soft: rgba(255, 255, 255, 0.06);
     --admin-line-strong: rgba(255, 255, 255, 0.18);
@@ -1079,6 +1080,7 @@
     --admin-panel: #fffef9;
     --admin-panel-soft: rgba(255, 254, 249, 0.72);
     --admin-panel-strong: #eeebe2;
+    --admin-stage: #f1efe7;
     --admin-line: rgba(23, 23, 23, 0.13);
     --admin-line-soft: rgba(23, 23, 23, 0.08);
     --admin-line-strong: rgba(23, 23, 23, 0.22);
@@ -1103,8 +1105,13 @@
   .admin-shell [class~="bg-neutral-900"],
   .admin-shell [class~="bg-neutral-900/50"],
   .admin-shell [class~="bg-neutral-900/40"],
+  .admin-shell [class~="bg-neutral-900/30"],
   .admin-shell [class~="bg-neutral-900/20"] {
     background-color: var(--admin-panel) !important;
+  }
+
+  .admin-shell [class~="bg-neutral-800/70"] {
+    background-color: var(--admin-line) !important;
   }
 
   .admin-shell [class~="hover:bg-neutral-900"]:hover,
@@ -1164,11 +1171,16 @@
 
   .admin-shell [class~="border-neutral-900"],
   .admin-shell [class~="border-neutral-800"],
+  .admin-shell [class~="border-neutral-800/80"],
   .admin-shell [class~="border-neutral-800/50"] {
     border-color: var(--admin-line) !important;
   }
 
+  .admin-shell [class~="border-neutral-700"],
+  .admin-shell [class~="border-neutral-600"],
+  .admin-shell [class~="border-neutral-500"],
   .admin-shell [class~="hover:border-neutral-800"]:hover,
+  .admin-shell [class~="hover:border-neutral-700"]:hover,
   .admin-shell [class~="hover:border-neutral-600"]:hover {
     border-color: var(--admin-line-strong) !important;
   }
